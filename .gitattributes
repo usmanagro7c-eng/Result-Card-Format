@@ -1,0 +1,14 @@
+# Normalize line endings in the repo, and check out LF everywhere.
+# Without this, every contributor's local core.autocrlf setting decides, which
+# produces whole-file diffs that are pure line-ending churn.
+* text=auto eol=lf
+
+# Binary assets must never be touched by EOL normalization
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
