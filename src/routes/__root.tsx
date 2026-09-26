@@ -210,6 +210,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Generate professional A4 school progress reports.",
       },
       { property: "og:type", content: "website" },
+      // These use name/content, so they are <meta> tags. Putting them in
+      // `links` emits invalid <link name=...> elements, which React 19's head
+      // hoisting orders differently on the server vs the client and triggers
+      // a hydration mismatch.
+      { name: "theme-color", content: "#28246a" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "Result Cards" },
     ],
 
     links: [
@@ -219,10 +227,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", type: "image/png", sizes: "16x16", href: "/favicon-16x16.png" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
       { rel: "manifest", href: "/site.webmanifest" },
-      { name: "theme-color", content: "#28246a" },
-      { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-title", content: "Result Cards" },
     ],
   }),
   shellComponent: RootShell,
