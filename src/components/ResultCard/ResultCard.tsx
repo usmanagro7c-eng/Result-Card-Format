@@ -133,30 +133,17 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
             <div className="h-[1.5px] w-full max-w-[95%] bg-neutral-900" />
           </div>
 
-          <div className="space-y-1">
-            <h2 className="text-[24px] font-black uppercase text-neutral-900">
-              <span className="border-b-[2px] border-neutral-900 pb-0.5">Progress Report</span>
-            </h2>
-            <p className="text-[16px] font-bold text-neutral-900 underline underline-offset-4 pt-1">
-              <OrdinalText text={student.term || "1st Term Examination"} />
-            </p>
-            <p className="text-[13px] font-semibold italic text-neutral-800">
-              Session {student.session || "2026–2027"}
-            </p>
-          </div>
-        </header>
-
-        {/* Student Information Section - Photo (opt-in), Name and Class */}
-        <section className="mt-4 rounded-none border border-neutral-900 bg-neutral-50/50 px-4 py-2.5 text-[14px]">
-          <div className={cn(showPhoto && "flex items-start gap-4")}>
+          <div className={cn(showPhoto && "flex items-center gap-4")}>
             {showPhoto ? (
               /*
-               * Sized to fit the card's measured headroom (~92px of slack once
-               * Summer Work and a 9th subject are present). Growing this further
-               * would push the sheet onto a second A4 page, so the box is a
-               * fixed 22x16.5mm rather than a flexible share of the row.
+               * The title block below is naturally ~91px tall, so a 28mm
+               * (106px) box only grows the header by ~15px. The photo therefore
+               * costs far less vertical budget here than it would beside the
+               * name row, where it would have forced that row from 43px to 105px.
+               * The box stays fixed rather than sharing the row, so growing the
+               * photo can never push the sheet onto a second A4 page.
                */
-              <div className="h-[22mm] w-[16.5mm] shrink-0 overflow-hidden border border-neutral-900 bg-white">
+              <div className="h-[28mm] w-[21mm] shrink-0 overflow-hidden border border-neutral-900 bg-white">
                 {photoDataUrl ? (
                   <img
                     src={photoDataUrl}
@@ -171,24 +158,38 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               </div>
             ) : null}
 
-            <div
-              className={cn(
-                "grid grid-cols-2 gap-x-8 font-medium",
-                showPhoto && "flex-1 self-center",
-              )}
-            >
-              <div className="flex items-baseline gap-2">
-                <span className="font-bold text-neutral-900">Name:</span>
-                <span className="font-semibold text-neutral-950 underline decoration-dotted underline-offset-4 flex-1">
-                  {student.name || "—"}
-                </span>
-              </div>
-              <div className="flex items-baseline justify-end gap-2 text-right">
-                <span className="font-bold text-neutral-900">Class:</span>
-                <span className="font-semibold text-neutral-950 underline decoration-dotted underline-offset-4">
-                  <OrdinalText text={student.className || "10th"} />
-                </span>
-              </div>
+            {/* flex-1 centres the title in the space beside the photo; without it
+                the title hugs its own width and the row reads lopsided. The
+                spacing utility stays on this inner element only, otherwise
+                toggling the photo off would double the gaps between the lines. */}
+            <div className={cn("space-y-1", showPhoto && "flex-1")}>
+              <h2 className="text-[24px] font-black uppercase text-neutral-900">
+                <span className="border-b-[2px] border-neutral-900 pb-0.5">Progress Report</span>
+              </h2>
+              <p className="text-[16px] font-bold text-neutral-900 underline underline-offset-4 pt-1">
+                <OrdinalText text={student.term || "1st Term Examination"} />
+              </p>
+              <p className="text-[13px] font-semibold italic text-neutral-800">
+                Session {student.session || "2026–2027"}
+              </p>
+            </div>
+          </div>
+        </header>
+
+        {/* Student Information Section - Only Name and Class */}
+        <section className="mt-4 rounded-none border border-neutral-900 bg-neutral-50/50 px-4 py-2.5 text-[14px]">
+          <div className="grid grid-cols-2 gap-x-8 font-medium">
+            <div className="flex items-baseline gap-2">
+              <span className="font-bold text-neutral-900">Name:</span>
+              <span className="font-semibold text-neutral-950 underline decoration-dotted underline-offset-4 flex-1">
+                {student.name || "—"}
+              </span>
+            </div>
+            <div className="flex items-baseline justify-end gap-2 text-right">
+              <span className="font-bold text-neutral-900">Class:</span>
+              <span className="font-semibold text-neutral-950 underline decoration-dotted underline-offset-4">
+                <OrdinalText text={student.className || "10th"} />
+              </span>
             </div>
           </div>
         </section>
