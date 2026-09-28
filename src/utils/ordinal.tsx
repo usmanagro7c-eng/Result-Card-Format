@@ -11,7 +11,7 @@ export function OrdinalText({ text }: { text: string }) {
     parts.push(text.slice(last, m.index));
     parts.push(digits + gap);
     parts.push(
-      <sup key={m.index} className="relative top-[-0.3em] text-[0.62em]">
+      <sup key={m.index} className="relative top-[-0.3em] no-underline text-[0.62em]">
         {suffix}
       </sup>,
     );
