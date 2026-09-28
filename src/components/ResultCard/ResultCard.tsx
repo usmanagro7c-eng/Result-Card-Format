@@ -133,7 +133,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
             <div className="h-[1.5px] w-full max-w-[95%] bg-neutral-900" />
           </div>
 
-          <div className={cn(showPhoto && "flex items-center gap-4")}>
+          <div className={cn(showPhoto && "grid grid-cols-[1fr_auto_1fr] items-center gap-4")}>
             {showPhoto ? (
               /*
                * The title block below is naturally ~91px tall, so a 28mm
@@ -143,7 +143,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                * The box stays fixed rather than sharing the row, so growing the
                * photo can never push the sheet onto a second A4 page.
                */
-              <div className="h-[28mm] w-[21mm] shrink-0 overflow-hidden border border-neutral-900 bg-white">
+              <div className="h-[28mm] w-[21mm] shrink-0 justify-self-start overflow-hidden border border-neutral-900 bg-white">
                 {photoDataUrl ? (
                   <img
                     src={photoDataUrl}
@@ -158,11 +158,14 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               </div>
             ) : null}
 
-            {/* flex-1 centres the title in the space beside the photo; without it
-                the title hugs its own width and the row reads lopsided. The
-                spacing utility stays on this inner element only, otherwise
-                toggling the photo off would double the gaps between the lines. */}
-            <div className={cn("space-y-1", showPhoto && "flex-1")}>
+            {/*
+             * Three equal outer columns with the title in the middle one, so the
+             * title stays centred on the *page* rather than drifting right into
+             * whatever space the photo leaves behind. The trailing spacer is what
+             * balances the photo's column; without it the title would sit off
+             * centre whenever the photo is shown.
+             */}
+            <div className="space-y-1">
               <h2 className="text-[24px] font-black uppercase text-neutral-900">
                 <span className="border-b-[2px] border-neutral-900 pb-0.5">Progress Report</span>
               </h2>
@@ -173,6 +176,8 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                 Session {student.session || "2026–2027"}
               </p>
             </div>
+
+            {showPhoto ? <div aria-hidden="true" /> : null}
           </div>
         </header>
 
