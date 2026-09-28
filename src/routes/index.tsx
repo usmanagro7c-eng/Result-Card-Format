@@ -219,12 +219,22 @@ function StudentsPage() {
 
   const stats = useMemo(() => {
     if (students.length === 0) return null;
-    const totalsList = students.map((s) => calculateTotals(s.subjects, settings.grades));
+    const totalsList = students.map((s) =>
+      calculateTotals(s.subjects, settings.grades, s.includeSummerWork ?? false),
+    );
     const avgPercentage =
       totalsList.reduce((sum, t) => sum + t.percentage, 0) / (totalsList.length || 1);
     const topStudent = [...students].sort((a, b) => {
-      const totA = calculateTotals(a.subjects, settings.grades).percentage;
-      const totB = calculateTotals(b.subjects, settings.grades).percentage;
+      const totA = calculateTotals(
+        a.subjects,
+        settings.grades,
+        a.includeSummerWork ?? false,
+      ).percentage;
+      const totB = calculateTotals(
+        b.subjects,
+        settings.grades,
+        b.includeSummerWork ?? false,
+      ).percentage;
       return totB - totA;
     })[0];
     return {
@@ -232,7 +242,11 @@ function StudentsPage() {
       avgPercentage: Math.round(avgPercentage * 10) / 10,
       topStudentName: topStudent?.name || "—",
       topPercentage: topStudent
-        ? calculateTotals(topStudent.subjects, settings.grades).percentage
+        ? calculateTotals(
+            topStudent.subjects,
+            settings.grades,
+            topStudent.includeSummerWork ?? false,
+          ).percentage
         : 0,
     };
   }, [students, settings.grades]);
@@ -516,7 +530,11 @@ function StudentsPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {filtered.map((student) => {
-                    const totals = calculateTotals(student.subjects, settings.grades);
+                    const totals = calculateTotals(
+                      student.subjects,
+                      settings.grades,
+                      student.includeSummerWork ?? false,
+                    );
                     const isSelected = selected.includes(student.id);
                     const isTopGrade = totals.grade === "A+" || totals.grade === "A";
                     const isLowGrade = totals.grade === "F" || totals.grade === "E";
@@ -706,7 +724,12 @@ function StudentsPage() {
       {isBulkPrinting && (
         <div className="print-root print-only">
           {selectedStudents.map((student) => (
-            <ResultCard key={student.id} student={student} settings={settings} />
+            <ResultCard
+              key={student.id}
+              student={student}
+              settings={settings}
+              includeSummerWork={student.includeSummerWork ?? false}
+            />
           ))}
         </div>
       )}
@@ -726,7 +749,11 @@ function StudentsPage() {
       >
         {selectedStudents.map((student) => (
           <div key={student.id} style={{ width: "794px", minHeight: "1123px", background: "#fff" }}>
-            <ResultCard student={student} settings={settings} />
+            <ResultCard
+              student={student}
+              settings={settings}
+              includeSummerWork={student.includeSummerWork ?? false}
+            />
           </div>
         ))}
       </div>
@@ -746,7 +773,11 @@ function StudentsPage() {
           }}
         >
           <div style={{ width: "794px", minHeight: "1123px", background: "#fff" }}>
-            <ResultCard student={singleStudentToExport} settings={settings} />
+            <ResultCard
+              student={singleStudentToExport}
+              settings={settings}
+              includeSummerWork={singleStudentToExport.includeSummerWork ?? false}
+            />
           </div>
         </div>
       )}
@@ -761,7 +792,11 @@ function StudentsPage() {
         <DrawerContent className="bg-white pb-[calc(1rem+env(safe-area-inset-bottom))]">
           {sheetStudent
             ? (() => {
-                const totals = calculateTotals(sheetStudent.subjects, settings.grades);
+                const totals = calculateTotals(
+                  sheetStudent.subjects,
+                  settings.grades,
+                  sheetStudent.includeSummerWork ?? false,
+                );
                 return (
                   <>
                     <DrawerTitle className="px-4 text-left text-base text-slate-900">

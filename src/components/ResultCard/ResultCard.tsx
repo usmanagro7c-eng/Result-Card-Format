@@ -2,11 +2,14 @@ import { forwardRef } from "react";
 import type { Settings, Student, Subject } from "@/types/result";
 import { calculateTotals } from "@/utils/calculations";
 import { OrdinalText } from "@/utils/ordinal";
+import { splitSummerWork } from "@/utils/summerWork";
+import { cn } from "@/lib/utils";
 
 export interface ResultCardProps {
   student: Student;
   subjects?: Subject[];
   settings: Settings;
+  includeSummerWork?: boolean;
   className?: string;
 }
 
@@ -62,11 +65,17 @@ function DefaultSchoolEmblem() {
  * to guarantee that html2canvas rasterizes characters without word overlap.
  */
 export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function ResultCard(
-  { student, subjects: propSubjects, settings, className = "" },
+  { student, subjects: propSubjects, settings, includeSummerWork = false, className = "" },
   ref,
 ) {
   const subjects = propSubjects ?? student.subjects;
-  const totals = calculateTotals(subjects, settings.grades);
+  const { academic, summerWork } = splitSummerWork(subjects);
+  const totals = calculateTotals(subjects, settings.grades, includeSummerWork);
+  // Colour must be applied per-cell rather than on <tr>: every <td> carries its
+  // own text-neutral-* class, and a row-level colour would lose to it. Italic is
+  // safe on the row (no cell sets font-style) and is set inline so html2canvas
+  // cannot miss it when rasterising the PDF.
+  const summerDimColor = includeSummerWork ? "" : "text-neutral-500";
 
   const teacherSig = student.teacherSignatureDataUrl || settings.teacherSignatureDataUrl;
   const headSig = student.headSignatureDataUrl || settings.headSignatureDataUrl;
@@ -180,22 +189,64 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                   </td>
                 </tr>
               ) : (
-                subjects.map((sub, index) => (
-                  <tr key={sub.id} className={index % 2 === 1 ? "bg-neutral-50/40" : "bg-white"}>
-                    <td className="border border-neutral-900 px-2 py-1.5 text-center font-semibold text-neutral-800">
-                      {index + 1}
-                    </td>
-                    <td className="border border-neutral-900 px-3 py-1.5 text-left font-bold text-neutral-900">
-                      {sub.name || "—"}
-                    </td>
-                    <td className="border border-neutral-900 px-3 py-1.5 text-center font-semibold text-neutral-900">
-                      {sub.totalMarks}
-                    </td>
-                    <td className="border border-neutral-900 px-3 py-1.5 text-center font-bold text-neutral-950">
-                      {sub.obtainedMarks}
-                    </td>
-                  </tr>
-                ))
+                <>
+                  {academic.map((sub, index) => (
+                    <tr key={sub.id} className={index % 2 === 1 ? "bg-neutral-50/40" : "bg-white"}>
+                      <td className="border border-neutral-900 px-2 py-1.5 text-center font-semibold text-neutral-800">
+                        {index + 1}
+                      </td>
+                      <td className="border border-neutral-900 px-3 py-1.5 text-left font-bold text-neutral-900">
+                        {sub.name || "—"}
+                      </td>
+                      <td className="border border-neutral-900 px-3 py-1.5 text-center font-semibold text-neutral-900">
+                        {sub.totalMarks}
+                      </td>
+                      <td className="border border-neutral-900 px-3 py-1.5 text-center font-bold text-neutral-950">
+                        {sub.obtainedMarks}
+                      </td>
+                    </tr>
+                  ))}
+
+                  {summerWork ? (
+                    <tr
+                      className={includeSummerWork ? "bg-white" : "bg-neutral-50/40"}
+                      style={includeSummerWork ? undefined : { fontStyle: "italic" }}
+                    >
+                      <td
+                        className={cn(
+                          "border border-neutral-900 px-2 py-1.5 text-center font-semibold text-neutral-800",
+                          summerDimColor,
+                        )}
+                      >
+                        {academic.length + 1}
+                      </td>
+                      <td
+                        className={cn(
+                          "border border-neutral-900 px-3 py-1.5 text-left font-bold text-neutral-900",
+                          summerDimColor,
+                        )}
+                      >
+                        {summerWork.name || "—"}
+                      </td>
+                      <td
+                        className={cn(
+                          "border border-neutral-900 px-3 py-1.5 text-center font-semibold text-neutral-900",
+                          summerDimColor,
+                        )}
+                      >
+                        {summerWork.totalMarks}
+                      </td>
+                      <td
+                        className={cn(
+                          "border border-neutral-900 px-3 py-1.5 text-center font-bold text-neutral-950",
+                          summerDimColor,
+                        )}
+                      >
+                        {summerWork.obtainedMarks}
+                      </td>
+                    </tr>
+                  ) : null}
+                </>
               )}
             </tbody>
             <tfoot>

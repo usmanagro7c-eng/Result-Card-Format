@@ -1,9 +1,21 @@
 import type { GradeRule, ResultTotals, Subject } from "@/types/result";
 import { resolveGrade } from "./grading";
+import { splitSummerWork } from "./summerWork";
 
-export function calculateTotals(subjects: Subject[], grades: GradeRule[]): ResultTotals {
-  const grandTotal = subjects.reduce((sum, s) => sum + (Number(s.totalMarks) || 0), 0);
-  const obtainedTotal = subjects.reduce((sum, s) => sum + (Number(s.obtainedMarks) || 0), 0);
+/**
+ * `includeSummerWork` is deliberately required rather than defaulted: a silent
+ * default would let one call site forget the flag and quietly report totals that
+ * disagree with the printed card. Making it required turns every missed caller
+ * into a compile error.
+ */
+export function calculateTotals(
+  subjects: Subject[],
+  grades: GradeRule[],
+  includeSummerWork: boolean,
+): ResultTotals {
+  const counted = includeSummerWork ? subjects : splitSummerWork(subjects).academic;
+  const grandTotal = counted.reduce((sum, s) => sum + (Number(s.totalMarks) || 0), 0);
+  const obtainedTotal = counted.reduce((sum, s) => sum + (Number(s.obtainedMarks) || 0), 0);
   const percentage = grandTotal > 0 ? (obtainedTotal / grandTotal) * 100 : 0;
 
   return {

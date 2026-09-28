@@ -1,19 +1,29 @@
 import { useCallback, useEffect, useRef } from "react";
-import { ArrowDown, ArrowUp, Minus, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Minus, Plus, RotateCcw, Sun, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import type { Subject } from "@/types/result";
 import { subjectErrors } from "@/utils/calculations";
+import { SUMMER_WORK_LABEL, SUMMER_WORK_TOTAL_MARKS, findSummerWork } from "@/utils/summerWork";
 import { DEFAULT_SUBJECTS, uid } from "@/store/resultStore";
 import { cn } from "@/lib/utils";
 
 interface Props {
   subjects: Subject[];
   onChange: (subjects: Subject[]) => void;
+  includeSummerWork?: boolean;
+  onIncludeSummerWorkChange: (value: boolean) => void;
 }
 
-export function SubjectTable({ subjects, onChange }: Props) {
+export function SubjectTable({
+  subjects,
+  onChange,
+  includeSummerWork = false,
+  onIncludeSummerWorkChange,
+}: Props) {
   const errors = subjectErrors(subjects);
+  const summerWork = findSummerWork(subjects);
 
   const patch = (id: string, values: Partial<Subject>) =>
     onChange(subjects.map((s) => (s.id === id ? { ...s, ...values } : s)));
@@ -44,6 +54,19 @@ export function SubjectTable({ subjects, onChange }: Props) {
     const next = Math.min(subject.totalMarks, Math.max(0, subject.obtainedMarks + delta));
     if (next === subject.obtainedMarks) return;
     patch(subject.id, { obtainedMarks: next });
+  };
+
+  const addSummerWork = () => {
+    if (summerWork) return;
+    onChange([
+      ...subjects,
+      {
+        id: uid(),
+        name: SUMMER_WORK_LABEL,
+        totalMarks: SUMMER_WORK_TOTAL_MARKS,
+        obtainedMarks: 0,
+      },
+    ]);
   };
 
   return (
@@ -291,6 +314,24 @@ export function SubjectTable({ subjects, onChange }: Props) {
                 </div>
               </div>
 
+              {/*
+                Sits after both the mobile and desktop blocks, so one insertion
+                covers both layouts. The switch controls only whether these
+                marks feed Grand Total — the row itself is always editable.
+              */}
+              {subject.id === summerWork?.id ? (
+                <div className="mt-2 flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+                  <span className="text-xs font-medium text-slate-600">
+                    Add these marks to Grand Total
+                  </span>
+                  <Switch
+                    checked={includeSummerWork}
+                    onCheckedChange={onIncludeSummerWorkChange}
+                    aria-label="Add Summer Work marks to Grand Total"
+                  />
+                </div>
+              ) : null}
+
               {errors[subject.id] ? (
                 <p className="mt-1 px-1 text-xs font-medium text-destructive">
                   {errors[subject.id]}
@@ -302,17 +343,33 @@ export function SubjectTable({ subjects, onChange }: Props) {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          className="min-h-11 sm:min-h-8"
-          onClick={() =>
-            onChange([...subjects, { id: uid(), name: "", totalMarks: 50, obtainedMarks: 0 }])
-          }
-        >
-          <Plus className="size-4" /> Add Subject
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="min-h-11 sm:min-h-8"
+            onClick={() =>
+              onChange([...subjects, { id: uid(), name: "", totalMarks: 50, obtainedMarks: 0 }])
+            }
+          >
+            <Plus className="size-4" /> Add Subject
+          </Button>
+
+          {/* Hidden once added: only the first row is the dedicated, toggleable
+              one, so a second would read as a normal subject. */}
+          {!summerWork ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="min-h-11 sm:min-h-8"
+              onClick={addSummerWork}
+            >
+              <Sun className="size-4" /> Add Summer Work
+            </Button>
+          ) : null}
+        </div>
 
         {subjects.length > 0 ? (
           <Button

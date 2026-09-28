@@ -129,7 +129,8 @@ function ResultEditor() {
 
   const errors = subjectErrors(student.subjects);
   const hasErrors = Object.keys(errors).length > 0;
-  const totals = calculateTotals(student.subjects, settings.grades);
+  const includeSummerWork = student.includeSummerWork ?? false;
+  const totals = calculateTotals(student.subjects, settings.grades, includeSummerWork);
 
   const handlePdf = async () => {
     const target =
@@ -337,6 +338,8 @@ function ResultEditor() {
               <SubjectTable
                 subjects={student.subjects}
                 onChange={(subjects) => set({ subjects })}
+                includeSummerWork={includeSummerWork}
+                onIncludeSummerWorkChange={(value) => set({ includeSummerWork: value })}
               />
             </div>
 
@@ -426,6 +429,7 @@ function ResultEditor() {
                   student={student}
                   subjects={student.subjects}
                   settings={settings}
+                  includeSummerWork={includeSummerWork}
                 />
               </ResultPreview>
             </div>
@@ -490,7 +494,12 @@ function ResultEditor() {
         }}
       >
         <div style={{ width: "794px", minHeight: "1123px", background: "#ffffff" }}>
-          <ResultCard student={student} subjects={student.subjects} settings={settings} />
+          <ResultCard
+            student={student}
+            subjects={student.subjects}
+            settings={settings}
+            includeSummerWork={includeSummerWork}
+          />
         </div>
       </div>
     </div>

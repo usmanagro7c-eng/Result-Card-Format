@@ -14,6 +14,7 @@ export interface Student {
   session: string;
   term: string;
   subjects: Subject[];
+  includeSummerWork?: boolean;
   remarks: string;
   teacherSignatureDataUrl?: string | null;
   headSignatureDataUrl?: string | null;

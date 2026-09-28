@@ -68,6 +68,7 @@ export function createStudent(settings: Settings, partial?: Partial<Student>): S
     session: partial?.session || settings.defaultSession,
     term: partial?.term || settings.defaultTerm,
     subjects: partial?.subjects || makeSubjects(settings.defaultSubjects),
+    includeSummerWork: partial?.includeSummerWork ?? false,
     remarks: partial?.remarks || "",
     teacherSignatureDataUrl: partial?.teacherSignatureDataUrl ?? null,
     headSignatureDataUrl: partial?.headSignatureDataUrl ?? null,
@@ -105,8 +106,17 @@ export function ResultStoreProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
 
   useEffect(() => {
+    // Students are stored as raw JSON with no schema version, so records written
+    // before `includeSummerWork` existed have no such key. Normalise on load
+    // rather than defaulting at every read site; the save effect below then
+    // persists the backfilled value.
     const loadedStudents = read<Student[]>(STUDENTS_KEY, []);
-    setStudents(loadedStudents ?? []);
+    setStudents(
+      (loadedStudents ?? []).map((s) => ({
+        ...s,
+        includeSummerWork: s.includeSummerWork ?? false,
+      })),
+    );
     setSettings({ ...DEFAULT_SETTINGS, ...read<Partial<Settings>>(SETTINGS_KEY, {}) });
     setReady(true);
   }, []);
