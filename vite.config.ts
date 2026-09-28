@@ -36,6 +36,7 @@ export default defineConfig(({ command, mode }) => {
         "react-dom/client",
         "react/jsx-runtime",
         "react/jsx-dev-runtime",
+        "@vercel/analytics/react",
       ],
       ignoreOutdatedRequests: true,
     },

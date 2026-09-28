@@ -12,6 +12,8 @@ import {
 import type { ReactNode } from "react";
 import { GraduationCap, Users, Settings as SettingsIcon, Plus, BookOpen } from "lucide-react";
 
+import { Analytics } from "@vercel/analytics/react";
+
 import appCss from "../styles.css?url";
 import { ResultStoreProvider, createStudent, useResultStore } from "../store/resultStore";
 import { Toaster } from "@/components/ui/sonner";
@@ -244,6 +246,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <body className="min-h-screen bg-slate-50 font-sans antialiased text-foreground">
         {children}
         <Scripts />
+        <Analytics />
       </body>
     </html>
   );
