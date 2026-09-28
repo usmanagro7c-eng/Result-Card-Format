@@ -153,7 +153,7 @@ export function ResultPreview({ children, showControls = true, className }: Resu
       <div
         ref={containerRef}
         className={cn(
-          "w-full overflow-x-auto",
+          "a4-viewport w-full overflow-x-auto",
           isFullscreen
             ? "fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-slate-200/95 p-2 backdrop-blur-sm"
             : "pb-6",
@@ -190,7 +190,7 @@ export function ResultPreview({ children, showControls = true, className }: Resu
               width: A4_WIDTH_PX,
               minHeight: A4_HEIGHT_PX,
             }}
-            className="bg-white shadow-[0_4px_25px_rgba(0,0,0,0.18)] ring-1 ring-neutral-300"
+            className="a4-frame bg-white shadow-[0_4px_25px_rgba(0,0,0,0.18)] ring-1 ring-neutral-300"
           >
             {children}
           </div>

@@ -169,7 +169,23 @@
 @media print {
   @page {
     size: A4 portrait;
-    margin: 10mm;
+    /*
+     * The card *is* the page: it carries its own 10mm/12mm padding and a
+     * decorative border inset 7mm from its edges. A page margin on top of that
+     * double-counts the inset, shrinking the sheet to 190x277mm and forcing the
+     * bottom of the card past the printable area (measured: 1220px of content in
+     * a 1047px box, so the bottom border is cut off).
+     */
+    margin: 0;
+  }
+
+  /*
+   * Preview chrome and elevation must not print. Box-shadows are reset globally
+   * rather than per class because Tailwind emits `ring-*` as a box-shadow too,
+   * which would otherwise print as a grey halo around the sheet.
+   */
+  * {
+    box-shadow: none !important;
   }
 
   html,
@@ -204,13 +220,43 @@
     margin-inline: 0 !important;
   }
 
+  /*
+   * The 794x1123px box only exists to size the on-screen preview. Its inline
+   * styles would otherwise stack a second 297mm of height inside a 297mm page.
+   */
+  .a4-frame {
+    width: auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  /* A scroll container clips in print; the sheet now fits the page exactly. */
+  .a4-viewport {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  .a4-chrome {
+    padding: 0 !important;
+  }
+
   .a4-page {
     width: 100% !important;
-    min-height: 275mm !important;
+    /*
+     * 296mm rather than 297mm: the card measured exactly 1122.5px (297mm) and
+     * the page is 1122.52px, so zero slack made rounding spill a blank second
+     * page. 1mm is invisible against the white sheet and keeps it on one page.
+     */
+    min-height: 296mm !important;
     margin: 0 auto !important;
-    box-shadow: none !important;
+    box-sizing: border-box !important;
     page-break-after: always;
     break-after: page;
-    box-sizing: border-box !important;
+  }
+
+  /* Avoid a trailing blank page for a single card, which is the common case. */
+  .a4-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
   }
 }

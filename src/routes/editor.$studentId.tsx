@@ -414,7 +414,7 @@ function ResultEditor() {
           )}
         >
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div className="border-b border-slate-100 px-5 py-3 flex items-center justify-between">
+            <div className="no-print border-b border-slate-100 px-5 py-3 flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Live Preview
               </span>
@@ -422,7 +422,7 @@ function ResultEditor() {
                 A4 Portrait
               </span>
             </div>
-            <div className="p-4">
+            <div className="a4-chrome p-4">
               <ResultPreview>
                 <ResultCard
                   ref={cardRef}
