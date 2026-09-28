@@ -79,6 +79,11 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
 
   const teacherSig = student.teacherSignatureDataUrl || settings.teacherSignatureDataUrl;
   const headSig = student.headSignatureDataUrl || settings.headSignatureDataUrl;
+  // Read straight off the student rather than taking a prop: the photo has no
+  // override case (unlike the subjects prop), so all five call sites — editor
+  // preview, print sheet, bulk print and both PDF renders — pick it up for free.
+  const showPhoto = student.showPhoto ?? false;
+  const photoDataUrl = student.photoDataUrl ?? null;
 
   return (
     <div
@@ -141,20 +146,49 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
           </div>
         </header>
 
-        {/* Student Information Section - Only Name and Class */}
+        {/* Student Information Section - Photo (opt-in), Name and Class */}
         <section className="mt-4 rounded-none border border-neutral-900 bg-neutral-50/50 px-4 py-2.5 text-[14px]">
-          <div className="grid grid-cols-2 gap-x-8 font-medium">
-            <div className="flex items-baseline gap-2">
-              <span className="font-bold text-neutral-900">Name:</span>
-              <span className="font-semibold text-neutral-950 underline decoration-dotted underline-offset-4 flex-1">
-                {student.name || "—"}
-              </span>
-            </div>
-            <div className="flex items-baseline justify-end gap-2 text-right">
-              <span className="font-bold text-neutral-900">Class:</span>
-              <span className="font-semibold text-neutral-950 underline decoration-dotted underline-offset-4">
-                <OrdinalText text={student.className || "10th"} />
-              </span>
+          <div className={cn(showPhoto && "flex items-start gap-4")}>
+            {showPhoto ? (
+              /*
+               * Sized to fit the card's measured headroom (~92px of slack once
+               * Summer Work and a 9th subject are present). Growing this further
+               * would push the sheet onto a second A4 page, so the box is a
+               * fixed 22x16.5mm rather than a flexible share of the row.
+               */
+              <div className="h-[22mm] w-[16.5mm] shrink-0 overflow-hidden border border-neutral-900 bg-white">
+                {photoDataUrl ? (
+                  <img
+                    src={photoDataUrl}
+                    alt="Student photo"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center text-[8px] uppercase tracking-wide text-neutral-400">
+                    Photo
+                  </span>
+                )}
+              </div>
+            ) : null}
+
+            <div
+              className={cn(
+                "grid grid-cols-2 gap-x-8 font-medium",
+                showPhoto && "flex-1 self-center",
+              )}
+            >
+              <div className="flex items-baseline gap-2">
+                <span className="font-bold text-neutral-900">Name:</span>
+                <span className="font-semibold text-neutral-950 underline decoration-dotted underline-offset-4 flex-1">
+                  {student.name || "—"}
+                </span>
+              </div>
+              <div className="flex items-baseline justify-end gap-2 text-right">
+                <span className="font-bold text-neutral-900">Class:</span>
+                <span className="font-semibold text-neutral-950 underline decoration-dotted underline-offset-4">
+                  <OrdinalText text={student.className || "10th"} />
+                </span>
+              </div>
             </div>
           </div>
         </section>

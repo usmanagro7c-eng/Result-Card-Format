@@ -15,6 +15,13 @@ export interface Student {
   term: string;
   subjects: Subject[];
   includeSummerWork?: boolean;
+  /**
+   * Opt-in: when false the card renders exactly as it did before photos existed,
+   * so a photo is never a forced layout change. The data may still be present
+   * while this is off, which lets the teacher toggle back and forth losslessly.
+   */
+  showPhoto?: boolean;
+  photoDataUrl?: string | null;
   remarks: string;
   teacherSignatureDataUrl?: string | null;
   headSignatureDataUrl?: string | null;

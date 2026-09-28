@@ -69,6 +69,8 @@ export function createStudent(settings: Settings, partial?: Partial<Student>): S
     term: partial?.term || settings.defaultTerm,
     subjects: partial?.subjects || makeSubjects(settings.defaultSubjects),
     includeSummerWork: partial?.includeSummerWork ?? false,
+    showPhoto: partial?.showPhoto ?? false,
+    photoDataUrl: partial?.photoDataUrl ?? null,
     remarks: partial?.remarks || "",
     teacherSignatureDataUrl: partial?.teacherSignatureDataUrl ?? null,
     headSignatureDataUrl: partial?.headSignatureDataUrl ?? null,
@@ -87,6 +89,8 @@ interface StoreValue {
   getStudent: (id: string) => Student | undefined;
   updateSettings: (patch: Partial<Settings>) => void;
   clearAllStudents: () => void;
+  /** True when the last save failed, e.g. localStorage is full. */
+  storageFull: boolean;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -104,17 +108,20 @@ export function ResultStoreProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [storageFull, setStorageFull] = useState(false);
 
   useEffect(() => {
     // Students are stored as raw JSON with no schema version, so records written
-    // before `includeSummerWork` existed have no such key. Normalise on load
-    // rather than defaulting at every read site; the save effect below then
-    // persists the backfilled value.
+    // before `includeSummerWork` / `showPhoto` existed have no such keys.
+    // Normalise on load rather than defaulting at every read site; the save
+    // effect below then persists the backfilled values.
     const loadedStudents = read<Student[]>(STUDENTS_KEY, []);
     setStudents(
       (loadedStudents ?? []).map((s) => ({
         ...s,
         includeSummerWork: s.includeSummerWork ?? false,
+        showPhoto: s.showPhoto ?? false,
+        photoDataUrl: s.photoDataUrl ?? null,
       })),
     );
     setSettings({ ...DEFAULT_SETTINGS, ...read<Partial<Settings>>(SETTINGS_KEY, {}) });
@@ -122,11 +129,25 @@ export function ResultStoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (ready) localStorage.setItem(STUDENTS_KEY, JSON.stringify(students));
+    if (!ready) return;
+    // `setItem` throws QuotaExceededError once the ~5MB origin budget is gone.
+    // Left unhandled it would abort this effect and silently stop every future
+    // save, so the failure is surfaced instead (editor shows a storage banner).
+    try {
+      localStorage.setItem(STUDENTS_KEY, JSON.stringify(students));
+      setStorageFull(false);
+    } catch {
+      setStorageFull(true);
+    }
   }, [students, ready]);
 
   useEffect(() => {
-    if (ready) localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    if (!ready) return;
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    } catch {
+      setStorageFull(true);
+    }
   }, [settings, ready]);
 
   const addStudent = useCallback((student: Student) => {
@@ -161,7 +182,14 @@ export function ResultStoreProvider({ children }: { children: ReactNode }) {
 
   const clearAllStudents = useCallback(() => {
     setStudents([]);
-    localStorage.setItem(STUDENTS_KEY, JSON.stringify([]));
+    // Freeing space is the remedy for `storageFull`, so swallow a failure here
+    // rather than letting it escape as an unhandled error.
+    try {
+      localStorage.setItem(STUDENTS_KEY, JSON.stringify([]));
+      setStorageFull(false);
+    } catch {
+      setStorageFull(true);
+    }
   }, []);
 
   const value = useMemo<StoreValue>(
@@ -176,6 +204,7 @@ export function ResultStoreProvider({ children }: { children: ReactNode }) {
       getStudent: (id: string) => students.find((s) => s.id === id),
       updateSettings: (patch) => setSettings((prev) => ({ ...prev, ...patch })),
       clearAllStudents,
+      storageFull,
     }),
     [
       ready,
@@ -186,6 +215,7 @@ export function ResultStoreProvider({ children }: { children: ReactNode }) {
       deleteStudent,
       duplicateStudent,
       clearAllStudents,
+      storageFull,
     ],
   );
 

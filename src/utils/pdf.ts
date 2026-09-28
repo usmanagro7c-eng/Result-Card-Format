@@ -42,6 +42,15 @@ async function renderElement(element: HTMLElement): Promise<string> {
       await document.fonts.ready;
     }
 
+    /*
+     * html2canvas rasterises whatever the browser has painted, so a photo that
+     * has not finished decoding would be captured blank. The fixed tick below
+     * is not a reliable substitute, so wait on decode() explicitly.
+     */
+    await Promise.all(
+      Array.from(clone.querySelectorAll("img")).map((img) => img.decode().catch(() => undefined)),
+    );
+
     // Short tick to allow DOM layout to settle
     await new Promise((resolve) => setTimeout(resolve, 80));
 

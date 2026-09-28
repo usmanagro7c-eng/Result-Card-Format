@@ -10,11 +10,15 @@ import {
   Pencil,
   Printer,
   Sparkles,
+  Trash2,
+  TriangleAlert,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -28,6 +32,7 @@ import { ResultPreview } from "@/components/ResultPreview/ResultPreview";
 import { SubjectTable } from "@/components/SubjectTable/SubjectTable";
 import { PRESET_REMARKS, useResultStore } from "@/store/resultStore";
 import { calculateTotals, subjectErrors } from "@/utils/calculations";
+import { compressImage } from "@/utils/image";
 import { generatePdf } from "@/utils/pdf";
 import { printDocument } from "@/utils/print";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -59,12 +64,14 @@ function ResultEditor() {
   const { studentId } = Route.useParams();
   const { print } = Route.useSearch();
   const navigate = useNavigate();
-  const { ready, students, getStudent, updateStudent, settings } = useResultStore();
+  const { ready, students, getStudent, updateStudent, settings, storageFull } = useResultStore();
 
   const student = getStudent(studentId);
   const cardRef = useRef<HTMLDivElement>(null);
   const exportCardRef = useRef<HTMLDivElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
   const printed = useRef(false);
 
   // Auto-trigger print if requested via query parameter
@@ -153,6 +160,22 @@ function ResultEditor() {
     updateStudent(student.id, patch);
   };
 
+  const handlePhotoUpload = async (file: File | undefined) => {
+    if (!file) return;
+    setPhotoBusy(true);
+    try {
+      const dataUrl = await compressImage(file);
+      set({ photoDataUrl: dataUrl });
+      toast.success(`Photo added (~${Math.round((dataUrl.length * 0.75) / 1024)} KB)`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not read that image file.");
+    } finally {
+      setPhotoBusy(false);
+      // Allow re-selecting the same file after a failed attempt.
+      if (photoInputRef.current) photoInputRef.current.value = "";
+    }
+  };
+
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 pt-4 sm:px-6">
       {/* Top Action Bar */}
@@ -237,6 +260,20 @@ function ResultEditor() {
         </div>
       </div>
 
+      {/* Autosave actually failed, so the "Auto-saved" badge above is lying.
+          Without this the teacher would only discover it after leaving the page. */}
+      {storageFull ? (
+        <div className="no-print mb-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+          <p className="leading-snug">
+            <span className="font-semibold">
+              Browser storage is full — changes are not being saved.
+            </span>{" "}
+            Remove a few student photos or delete a student to free space, then reload this page.
+          </p>
+        </div>
+      ) : null}
+
       {/* Mobile panel switcher — one panel at a time instead of a long stacked scroll */}
       <div
         className={cn(
@@ -317,6 +354,85 @@ function ResultEditor() {
                   className="bg-slate-50/50 border-slate-200 focus-visible:bg-white"
                 />
               </Field>
+            </div>
+
+            {/* Photo is opt-in per student: off means the card renders exactly as
+                it did before photos existed, and no empty box is left behind. */}
+            <div className="border-t border-slate-100 px-5 py-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <Label
+                    htmlFor="show-photo"
+                    className="text-sm font-semibold text-slate-800 cursor-pointer"
+                  >
+                    Show photo on result card
+                  </Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Adds a small photo box beside the student&rsquo;s name.
+                  </p>
+                </div>
+                <Switch
+                  id="show-photo"
+                  checked={student.showPhoto ?? false}
+                  onCheckedChange={(checked) => set({ showPhoto: checked })}
+                  aria-label="Show photo on result card"
+                />
+              </div>
+
+              {student.showPhoto ? (
+                <div className="mt-4 flex items-center gap-4">
+                  <div className="flex h-[74px] w-[56px] shrink-0 items-center justify-center overflow-hidden rounded-md border border-dashed border-slate-300 bg-slate-50">
+                    {student.photoDataUrl ? (
+                      <img
+                        src={student.photoDataUrl}
+                        alt="Student photo preview"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-[10px] uppercase text-slate-400">No photo</span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <input
+                      ref={photoInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => void handlePhotoUpload(e.target.files?.[0])}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={photoBusy}
+                      onClick={() => photoInputRef.current?.click()}
+                      className="min-h-9 gap-1.5 border-slate-300 text-sm text-slate-700 hover:bg-slate-100"
+                    >
+                      <Upload className="size-4" />
+                      {photoBusy
+                        ? "Processing..."
+                        : student.photoDataUrl
+                          ? "Change Photo"
+                          : "Upload Photo"}
+                    </Button>
+                    {student.photoDataUrl ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => set({ photoDataUrl: null })}
+                        className="min-h-9 gap-1.5 text-sm text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="size-4" /> Remove
+                      </Button>
+                    ) : null}
+                    <p className="text-[11px] text-muted-foreground">
+                      Resized automatically to keep the card small.
+                    </p>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
 
