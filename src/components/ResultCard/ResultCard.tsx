@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import type { Settings, Student, Subject } from "@/types/result";
 import { calculateTotals } from "@/utils/calculations";
+import { OrdinalText } from "@/utils/ordinal";
 
 export interface ResultCardProps {
   student: Student;
@@ -123,7 +124,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               <span className="border-b-[2px] border-neutral-900 pb-0.5">Progress Report</span>
             </h2>
             <p className="text-[16px] font-bold text-neutral-900 underline underline-offset-4 pt-1">
-              {student.term || "1st Term Examination"}
+              <OrdinalText text={student.term || "1st Term Examination"} />
             </p>
             <p className="text-[13px] font-semibold italic text-neutral-800">
               Session {student.session || "2026–2027"}
@@ -143,7 +144,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
             <div className="flex items-baseline justify-end gap-2 text-right">
               <span className="font-bold text-neutral-900">Class:</span>
               <span className="font-semibold text-neutral-950 underline decoration-dotted underline-offset-4">
-                {student.className || "10th"}
+                <OrdinalText text={student.className || "10th"} />
               </span>
             </div>
           </div>
