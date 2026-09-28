@@ -151,13 +151,13 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
 
         {/* Subject Marks Table */}
         <section className="mt-4">
-          <table className="w-full border-collapse border border-neutral-900 text-[13.5px]">
+          <table className="w-full border-collapse border border-neutral-900 text-[16px]">
             <thead>
               <tr className="bg-neutral-100/80 text-neutral-900">
-                <th className="w-[10%] border border-neutral-900 px-2 py-1.5 text-center font-bold">
+                <th className="w-[10%] border border-neutral-900 px-2 py-1.5 text-center text-[13.5px] font-bold">
                   Sr. No.
                 </th>
-                <th className="border border-neutral-900 px-3 py-1.5 text-left font-bold">
+                <th className="border border-neutral-900 px-3 py-1.5 text-center font-bold">
                   Subject
                 </th>
                 <th className="w-[24%] border border-neutral-900 px-3 py-1.5 text-center font-bold">
@@ -205,10 +205,10 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                 >
                   Grand Total
                 </td>
-                <td className="border border-neutral-900 px-3 py-1.5 text-center text-[14px]">
+                <td className="border border-neutral-900 px-3 py-1.5 text-center text-[17px]">
                   {totals.grandTotal}
                 </td>
-                <td className="border border-neutral-900 px-3 py-1.5 text-center text-[14px] font-black">
+                <td className="border border-neutral-900 px-3 py-1.5 text-center text-[17px] font-black">
                   {totals.obtainedTotal}
                 </td>
               </tr>
