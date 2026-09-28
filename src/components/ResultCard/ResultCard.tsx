@@ -199,7 +199,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               )}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 border-neutral-900 bg-neutral-100/90 font-bold text-neutral-900">
+              <tr className="bg-neutral-100/90 font-bold text-neutral-900">
                 <td
                   colSpan={2}
                   className="border border-neutral-900 px-3 py-1.5 text-right uppercase"
