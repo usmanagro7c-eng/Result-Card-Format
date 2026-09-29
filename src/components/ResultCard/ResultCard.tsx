@@ -169,8 +169,19 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               <h2 className="text-[24px] font-black uppercase text-neutral-900">
                 <span className="border-b-[2px] border-neutral-900 pb-0.5">Progress Report</span>
               </h2>
-              <p className="text-[16px] font-bold text-neutral-900 underline underline-offset-4 pt-1">
-                <OrdinalText text={student.term || "1st Term Examination"} />
+              {/*
+               * The underline is a border, not `text-decoration`. A decoration
+               * propagates into the raised <sup> inside OrdinalText, and because
+               * that suffix sits above the baseline the decoration either rode up
+               * with it (breaking the line) or, once opted out, vanished and left
+               * a gap. A single border spanning the whole text is immune to
+               * both: it is positioned from the text box, not from the runs.
+               * The same technique is already used for the title above.
+               */}
+              <p className="text-[16px] font-bold text-neutral-900 pt-1">
+                <span className="inline-block border-b border-neutral-900 pb-[1px]">
+                  <OrdinalText text={student.term || "1st Term Examination"} />
+                </span>
               </p>
               <p className="text-[13px] font-semibold italic text-neutral-800">
                 Session {student.session || "2026–2027"}
@@ -186,14 +197,18 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
           <div className="grid grid-cols-2 gap-x-8 font-medium">
             <div className="flex items-baseline gap-2">
               <span className="font-bold text-neutral-900">Name:</span>
-              <span className="font-semibold text-neutral-950 underline decoration-dotted underline-offset-4 flex-1">
-                {student.name || "—"}
+              <span className="font-semibold text-neutral-950 flex-1">
+                <span className="inline-block border-b border-dotted border-neutral-950 pb-[1px]">
+                  {student.name || "—"}
+                </span>
               </span>
             </div>
             <div className="flex items-baseline justify-end gap-2 text-right">
               <span className="font-bold text-neutral-900">Class:</span>
-              <span className="font-semibold text-neutral-950 underline decoration-dotted underline-offset-4">
-                <OrdinalText text={student.className || "10th"} />
+              <span className="font-semibold text-neutral-950">
+                <span className="inline-block border-b border-dotted border-neutral-950 pb-[1px]">
+                  <OrdinalText text={student.className || "10th"} />
+                </span>
               </span>
             </div>
           </div>
