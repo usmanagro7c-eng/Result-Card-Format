@@ -240,14 +240,21 @@
     padding: 0 !important;
   }
 
+  .print-shell {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+
   .a4-page {
     width: 100% !important;
     /*
-     * 296mm rather than 297mm: the card measured exactly 1122.5px (297mm) and
-     * the page is 1122.52px, so zero slack made rounding spill a blank second
-     * page. 1mm is invisible against the white sheet and keeps it on one page.
+     * 294mm, not 296mm and not 297mm. 296mm left only 2.2px of slack, which any
+     * rounding could spill; 297mm had no slack at all. 294mm keeps roughly 9px
+     * of buffer, and the 3mm difference is invisible against the white sheet.
      */
-    min-height: 296mm !important;
+    min-height: 294mm !important;
     margin: 0 auto !important;
     box-sizing: border-box !important;
     page-break-after: always;

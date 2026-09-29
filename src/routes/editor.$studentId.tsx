@@ -177,7 +177,7 @@ function ResultEditor() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 pt-4 sm:px-6">
+    <div className="print-shell mx-auto w-full max-w-7xl px-4 pb-12 pt-4 sm:px-6">
       {/* Top Action Bar */}
       <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1">

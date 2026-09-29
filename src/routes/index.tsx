@@ -191,8 +191,17 @@ function StudentsPage() {
     if (selectedStudents.length === 0) return;
     setIsBulkPrinting(true);
     setTimeout(() => {
+      // Tear down on `afterprint` rather than a fixed delay. A short timer can
+      // unmount the cards while the browser is still paginating a large batch,
+      // which is what left the last sheets looking truncated. The fallback only
+      // covers browsers that never fire the event, so it is generous.
+      const done = () => {
+        setIsBulkPrinting(false);
+        window.removeEventListener("afterprint", done);
+      };
+      window.addEventListener("afterprint", done);
+      window.setTimeout(done, 60_000);
       printDocument();
-      setTimeout(() => setIsBulkPrinting(false), 1000);
     }, 200);
   };
 
@@ -254,7 +263,7 @@ function StudentsPage() {
   const hasFilters = query || classFilter !== "all" || sessionFilter !== "all";
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pb-12 pt-6 sm:px-6">
+    <div className="print-shell mx-auto w-full max-w-6xl px-4 pb-12 pt-6 sm:px-6">
       {/* Page Header */}
       <div className="no-print mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -735,8 +744,16 @@ function StudentsPage() {
       )}
 
       {/* Bulk PDF off-screen render */}
+      {/*
+       * Off-screen render targets for html2canvas. `no-print` keeps them out of
+       * the printed layout: they are `position: fixed, opacity: 0`, but their
+       * cards still carry `break-after: page` and so could contribute page
+       * breaks of their own. Only `@media print` is affected, and the PDF
+       * export runs in screen media, so capture is unaffected.
+       */}
       <div
         ref={bulkPdfRef}
+        className="no-print"
         aria-hidden="true"
         style={{
           position: "fixed",
@@ -762,6 +779,7 @@ function StudentsPage() {
       {singleStudentToExport && (
         <div
           ref={singlePdfRef}
+          className="no-print"
           aria-hidden="true"
           style={{
             position: "fixed",
