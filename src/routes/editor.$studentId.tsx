@@ -427,8 +427,18 @@ function ResultEditor() {
                         <Trash2 className="size-4" /> Remove
                       </Button>
                     ) : null}
-                    <p className="text-[11px] text-muted-foreground">
-                      Resized automatically to keep the card small.
+                    {/*
+                     * Spells out the print size rather than saying "passport
+                     * size", which it is not: 21x28mm is smaller than the common
+                     * 35x45mm and 38x25mm ID specs. The preview box here is 3:4
+                     * (0.757) and the card box is exactly 3:4 (0.75), so what is
+                     * shown here is what prints, and a 3:4 portrait photo is the
+                     * one that needs no cropping at all.
+                     */}
+                    <p className="text-[11px] leading-relaxed text-muted-foreground">
+                      A portrait 3:4 photo works best. Square or landscape photos get cropped to fit
+                      the box. The photo prints at 21×28mm on the card, and the upload is resized
+                      automatically so it does not fill up your browser storage.
                     </p>
                   </div>
                 </div>
