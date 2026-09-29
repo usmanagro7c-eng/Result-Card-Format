@@ -80,8 +80,8 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
   const teacherSig = student.teacherSignatureDataUrl || settings.teacherSignatureDataUrl;
   const headSig = student.headSignatureDataUrl || settings.headSignatureDataUrl;
   // Read straight off the student rather than taking a prop: the photo has no
-  // override case (unlike the subjects prop), so all five call sites — editor
-  // preview, print sheet, bulk print and both PDF renders — pick it up for free.
+  // override case (unlike the subjects prop), so all five call sites Ã¢â‚¬â€ editor
+  // preview, print sheet, bulk print and both PDF renders Ã¢â‚¬â€ pick it up for free.
   const showPhoto = student.showPhoto ?? false;
   const photoDataUrl = student.photoDataUrl ?? null;
 
@@ -89,7 +89,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
     <div
       ref={ref}
       data-result-card
-      className={`a4-page relative flex flex-col justify-between bg-white text-neutral-950 font-serif leading-normal ${className}`}
+      className={`a4-page relative flex flex-col justify-between bg-white text-neutral-950 font-doc leading-normal ${className}`}
       style={{
         width: "210mm",
         minHeight: "297mm",
@@ -118,7 +118,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               <DefaultSchoolEmblem />
             )}
             <div className="text-center">
-              <h1 className="text-[26px] font-bold uppercase leading-tight font-serif text-neutral-900">
+              <h1 className="text-[26px] font-bold uppercase leading-tight font-doc text-neutral-900">
                 {settings.schoolName || "The Country School"}
               </h1>
               {settings.schoolTagline ? (
@@ -184,7 +184,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                 </span>
               </p>
               <p className="text-[13px] font-semibold italic text-neutral-800">
-                Session {student.session || "2026–2027"}
+                Session {student.session || "2026Ã¢â‚¬â€œ2027"}
               </p>
             </div>
 
@@ -199,7 +199,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               <span className="font-bold text-neutral-900">Name:</span>
               <span className="font-semibold text-neutral-950 flex-1">
                 <span className="inline-block border-b border-dotted border-neutral-950 pb-[1px]">
-                  {student.name || "—"}
+                  {student.name || "Ã¢â‚¬â€"}
                 </span>
               </span>
             </div>
@@ -251,7 +251,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                         {index + 1}
                       </td>
                       <td className="border border-neutral-900 px-3 py-1.5 text-left font-bold text-neutral-900">
-                        {sub.name || "—"}
+                        {sub.name || "Ã¢â‚¬â€"}
                       </td>
                       <td className="border border-neutral-900 px-3 py-1.5 text-center font-semibold text-neutral-900">
                         {sub.totalMarks}
@@ -281,7 +281,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                           summerDimColor,
                         )}
                       >
-                        {summerWork.name || "—"}
+                        {summerWork.name || "Ã¢â‚¬â€"}
                       </td>
                       <td
                         className={cn(
@@ -330,7 +330,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               <span className="block text-[10.5px] uppercase text-neutral-700 font-sans font-bold">
                 Grand Total
               </span>
-              <span className="text-[17px] font-black text-neutral-900 font-serif">
+              <span className="text-[17px] font-black text-neutral-900 font-doc">
                 {totals.grandTotal}
               </span>
             </div>
@@ -338,7 +338,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               <span className="block text-[10.5px] uppercase text-neutral-700 font-sans font-bold">
                 Obtained Marks
               </span>
-              <span className="text-[17px] font-black text-neutral-900 font-serif">
+              <span className="text-[17px] font-black text-neutral-900 font-doc">
                 {totals.obtainedTotal}
               </span>
             </div>
@@ -346,7 +346,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               <span className="block text-[10.5px] uppercase text-neutral-700 font-sans font-bold">
                 Percentage
               </span>
-              <span className="text-[17px] font-black text-neutral-900 font-serif">
+              <span className="text-[17px] font-black text-neutral-900 font-doc">
                 {totals.percentage}%
               </span>
             </div>
@@ -354,7 +354,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               <span className="block text-[10.5px] uppercase text-neutral-700 font-sans font-bold">
                 Grade
               </span>
-              <span className="text-[18px] font-black text-neutral-950 font-serif">
+              <span className="text-[18px] font-black text-neutral-950 font-doc">
                 {totals.grade}
               </span>
             </div>
@@ -368,7 +368,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               Remarks:
             </span>
             <span className="text-[13.5px] font-semibold italic text-neutral-900 underline underline-offset-4 decoration-neutral-400">
-              {student.remarks ? `"${student.remarks}"` : "—"}
+              {student.remarks ? `"${student.remarks}"` : "Ã¢â‚¬â€"}
             </span>
           </div>
         </section>
