@@ -368,7 +368,7 @@ function ResultEditor() {
                     Show photo on result card
                   </Label>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    Adds a small photo box beside the student&rsquo;s name.
+                    Adds a small photo box beside the Progress Report heading.
                   </p>
                 </div>
                 <Switch
