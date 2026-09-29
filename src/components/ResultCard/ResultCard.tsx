@@ -80,8 +80,8 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
   const teacherSig = student.teacherSignatureDataUrl || settings.teacherSignatureDataUrl;
   const headSig = student.headSignatureDataUrl || settings.headSignatureDataUrl;
   // Read straight off the student rather than taking a prop: the photo has no
-  // override case (unlike the subjects prop), so all five call sites Ã¢â‚¬â€ editor
-  // preview, print sheet, bulk print and both PDF renders Ã¢â‚¬â€ pick it up for free.
+  // override case (unlike the subjects prop), so all five call sites â€” editor
+  // preview, print sheet, bulk print and both PDF renders â€” pick it up for free.
   const showPhoto = student.showPhoto ?? false;
   const photoDataUrl = student.photoDataUrl ?? null;
 
@@ -118,11 +118,11 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               <DefaultSchoolEmblem />
             )}
             <div className="text-center">
-              <h1 className="text-[26px] font-bold uppercase leading-tight font-doc text-neutral-900">
+              <h1 className="text-[27px] font-bold uppercase leading-tight font-doc text-neutral-900">
                 {settings.schoolName || "The Country School"}
               </h1>
               {settings.schoolTagline ? (
-                <p className="text-[12px] text-neutral-700 italic font-sans font-medium mt-0.5">
+                <p className="text-[13px] text-neutral-700 italic font-sans font-medium mt-0.5">
                   {settings.schoolTagline}
                 </p>
               ) : null}
@@ -151,7 +151,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <span className="flex h-full w-full items-center justify-center text-[8px] uppercase tracking-wide text-neutral-400">
+                  <span className="flex h-full w-full items-center justify-center text-[9px] uppercase tracking-wide text-neutral-400">
                     Photo
                   </span>
                 )}
@@ -166,7 +166,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
              * centre whenever the photo is shown.
              */}
             <div className="space-y-1">
-              <h2 className="text-[24px] font-black uppercase text-neutral-900">
+              <h2 className="text-[25px] font-black uppercase text-neutral-900">
                 <span className="border-b-[2px] border-neutral-900 pb-0.5">Progress Report</span>
               </h2>
               {/*
@@ -178,13 +178,13 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                * both: it is positioned from the text box, not from the runs.
                * The same technique is already used for the title above.
                */}
-              <p className="text-[16px] font-bold text-neutral-900 pt-1">
+              <p className="text-[17px] font-bold text-neutral-900 pt-1">
                 <span className="inline-block border-b border-neutral-900 pb-[1px]">
                   <OrdinalText text={student.term || "1st Term Examination"} />
                 </span>
               </p>
-              <p className="text-[13px] font-semibold italic text-neutral-800">
-                Session {student.session || "2026Ã¢â‚¬â€œ2027"}
+              <p className="text-[14px] font-semibold italic text-neutral-800">
+                Session {student.session || "2026â€“2027"}
               </p>
             </div>
 
@@ -193,13 +193,13 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
         </header>
 
         {/* Student Information Section - Only Name and Class */}
-        <section className="mt-4 rounded-none border border-neutral-900 bg-neutral-50/50 px-4 py-2.5 text-[14px]">
+        <section className="mt-4 rounded-none border border-neutral-900 bg-neutral-50/50 px-4 py-2.5 text-[15px]">
           <div className="grid grid-cols-2 gap-x-8 font-medium">
             <div className="flex items-baseline gap-2">
               <span className="font-bold text-neutral-900">Name:</span>
               <span className="font-semibold text-neutral-950 flex-1">
                 <span className="inline-block border-b border-dotted border-neutral-950 pb-[1px]">
-                  {student.name || "Ã¢â‚¬â€"}
+                  {student.name || "â€”"}
                 </span>
               </span>
             </div>
@@ -216,10 +216,10 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
 
         {/* Subject Marks Table */}
         <section className="mt-4">
-          <table className="w-full border-collapse border border-neutral-900 text-[16px]">
+          <table className="w-full border-collapse border border-neutral-900 text-[17px]">
             <thead>
               <tr className="bg-neutral-100/80 text-neutral-900">
-                <th className="w-[10%] border border-neutral-900 px-2 py-1.5 text-center text-[13.5px] font-bold">
+                <th className="w-[10%] border border-neutral-900 px-2 py-1.5 text-center text-[14.5px] font-bold">
                   Sr. No.
                 </th>
                 <th className="border border-neutral-900 px-3 py-1.5 text-center font-bold">
@@ -251,7 +251,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                         {index + 1}
                       </td>
                       <td className="border border-neutral-900 px-3 py-1.5 text-left font-bold text-neutral-900">
-                        {sub.name || "Ã¢â‚¬â€"}
+                        {sub.name || "â€”"}
                       </td>
                       <td className="border border-neutral-900 px-3 py-1.5 text-center font-semibold text-neutral-900">
                         {sub.totalMarks}
@@ -281,7 +281,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                           summerDimColor,
                         )}
                       >
-                        {summerWork.name || "Ã¢â‚¬â€"}
+                        {summerWork.name || "â€”"}
                       </td>
                       <td
                         className={cn(
@@ -312,10 +312,10 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                 >
                   Grand Total
                 </td>
-                <td className="border border-neutral-900 px-3 py-1.5 text-center text-[17px]">
+                <td className="border border-neutral-900 px-3 py-1.5 text-center text-[18px]">
                   {totals.grandTotal}
                 </td>
-                <td className="border border-neutral-900 px-3 py-1.5 text-center text-[17px] font-black">
+                <td className="border border-neutral-900 px-3 py-1.5 text-center text-[18px] font-black">
                   {totals.obtainedTotal}
                 </td>
               </tr>
@@ -327,34 +327,34 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
         <section className="mt-4">
           <div className="grid grid-cols-4 border-2 border-neutral-900 text-center divide-x-2 divide-neutral-900 bg-white">
             <div className="p-2">
-              <span className="block text-[10.5px] uppercase text-neutral-700 font-sans font-bold">
+              <span className="block text-[11.5px] uppercase text-neutral-700 font-sans font-bold">
                 Grand Total
               </span>
-              <span className="text-[17px] font-black text-neutral-900 font-doc">
+              <span className="text-[18px] font-black text-neutral-900 font-doc">
                 {totals.grandTotal}
               </span>
             </div>
             <div className="p-2">
-              <span className="block text-[10.5px] uppercase text-neutral-700 font-sans font-bold">
+              <span className="block text-[11.5px] uppercase text-neutral-700 font-sans font-bold">
                 Obtained Marks
               </span>
-              <span className="text-[17px] font-black text-neutral-900 font-doc">
+              <span className="text-[18px] font-black text-neutral-900 font-doc">
                 {totals.obtainedTotal}
               </span>
             </div>
             <div className="p-2">
-              <span className="block text-[10.5px] uppercase text-neutral-700 font-sans font-bold">
+              <span className="block text-[11.5px] uppercase text-neutral-700 font-sans font-bold">
                 Percentage
               </span>
-              <span className="text-[17px] font-black text-neutral-900 font-doc">
+              <span className="text-[18px] font-black text-neutral-900 font-doc">
                 {totals.percentage}%
               </span>
             </div>
             <div className="p-2 bg-neutral-100/60">
-              <span className="block text-[10.5px] uppercase text-neutral-700 font-sans font-bold">
+              <span className="block text-[11.5px] uppercase text-neutral-700 font-sans font-bold">
                 Grade
               </span>
-              <span className="text-[18px] font-black text-neutral-950 font-doc">
+              <span className="text-[19px] font-black text-neutral-950 font-doc">
                 {totals.grade}
               </span>
             </div>
@@ -364,18 +364,18 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
         {/* Remarks Section */}
         <section className="mt-4 rounded-none border border-neutral-900 p-2.5 bg-neutral-50/30">
           <div className="flex items-start gap-2">
-            <span className="font-bold text-[13.5px] text-neutral-900 uppercase whitespace-nowrap">
+            <span className="font-bold text-[14.5px] text-neutral-900 uppercase whitespace-nowrap">
               Remarks:
             </span>
-            <span className="text-[13.5px] font-semibold italic text-neutral-900 underline underline-offset-4 decoration-neutral-400">
-              {student.remarks ? `"${student.remarks}"` : "Ã¢â‚¬â€"}
+            <span className="text-[14.5px] font-semibold italic text-neutral-900 underline underline-offset-4 decoration-neutral-400">
+              {student.remarks ? `"${student.remarks}"` : "â€”"}
             </span>
           </div>
         </section>
 
         {/* Signatures Section */}
         <section className="mt-8 pt-6">
-          <div className="grid grid-cols-2 gap-12 text-center text-[13.5px]">
+          <div className="grid grid-cols-2 gap-12 text-center text-[14.5px]">
             {/* Teacher's Signature */}
             <div className="flex flex-col items-center justify-end">
               <div className="h-12 w-48 flex items-end justify-center mb-1">
@@ -388,7 +388,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                 ) : null}
               </div>
               <div className="w-48 border-b-[1.5px] border-neutral-900" />
-              <p className="mt-1 font-bold text-neutral-900 uppercase text-[12px]">
+              <p className="mt-1 font-bold text-neutral-900 uppercase text-[13px]">
                 Teacher&rsquo;s Signature
               </p>
             </div>
@@ -405,7 +405,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                 ) : null}
               </div>
               <div className="w-48 border-b-[1.5px] border-neutral-900" />
-              <p className="mt-1 font-bold text-neutral-900 uppercase text-[12px]">
+              <p className="mt-1 font-bold text-neutral-900 uppercase text-[13px]">
                 Head&rsquo;s Signature
               </p>
             </div>
