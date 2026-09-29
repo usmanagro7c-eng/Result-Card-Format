@@ -11,7 +11,17 @@ export function OrdinalText({ text }: { text: string }) {
     parts.push(text.slice(last, m.index));
     parts.push(digits + gap);
     parts.push(
-      <sup key={m.index} className="relative top-[-0.3em] no-underline text-[0.62em]">
+      /*
+       * NOTE: callers must draw any underline with a bottom border on a wrapper,
+       * never with `text-decoration`. A decoration propagates into this run, and
+       * because the suffix is raised above the baseline it either rides up with
+       * it and breaks the line, or has to be opted out and then leaves a gap
+       * where the underline should be. A border on the enclosing text box is
+       * positioned from the box rather than the runs, so it passes cleanly
+       * underneath. Every underlined field on the card follows that rule, which
+       * is why nothing has to opt this run out here.
+       */
+      <sup key={m.index} className="relative top-[-0.3em] text-[0.62em]">
         {suffix}
       </sup>,
     );
