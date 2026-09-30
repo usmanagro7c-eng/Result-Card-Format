@@ -263,11 +263,20 @@ function StudentsPage() {
   const hasFilters = query || classFilter !== "all" || sessionFilter !== "all";
 
   return (
-    <div className="print-shell mx-auto w-full max-w-6xl px-4 pb-12 pt-6 sm:px-6">
+    <div className="print-shell mx-auto w-full max-w-6xl px-4 pb-20 pt-6 sm:px-6 md:pb-12">
       {/* Page Header */}
       <div className="no-print mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Students</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl tracking-tight">
+              Students
+            </h1>
+            {students.length > 0 && (
+              <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-900">
+                {students.length}
+              </span>
+            )}
+          </div>
           <p className="mt-1 text-sm text-slate-500">
             {settings.defaultTerm} &middot; Session {settings.defaultSession}
           </p>
@@ -287,7 +296,7 @@ function StudentsPage() {
           )}
           <Button
             onClick={handleCreate}
-            className="min-h-11 gap-1.5 rounded-lg bg-slate-900 text-sm text-white shadow-sm hover:bg-slate-800 sm:min-h-9"
+            className="min-h-11 gap-1.5 rounded-lg bg-blue-900 text-sm text-white shadow-sm hover:bg-blue-800 sm:min-h-9 font-semibold"
           >
             <Plus className="size-4" />
             Add Student
@@ -298,60 +307,64 @@ function StudentsPage() {
       {/* Stats Cards */}
       {stats ? (
         <div className="no-print mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+          <div className="group relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Total
               </span>
-              <div className="flex size-8 items-center justify-center rounded-lg bg-slate-100">
+              <div className="flex size-8 items-center justify-center rounded-xl bg-slate-100">
                 <Users className="size-4 text-slate-600" />
               </div>
             </div>
-            <p className="mt-2 text-3xl font-black text-slate-900">{stats.total}</p>
+            <p className="mt-3 text-3xl font-black text-slate-900">{stats.total}</p>
             <p className="text-xs text-slate-400 mt-0.5">Students enrolled</p>
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-slate-300 to-slate-400 rounded-b-2xl" />
           </div>
 
-          <div className="group relative overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm transition-shadow hover:shadow-md">
+          <div className="group relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-blue-50/50 to-white p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-blue-400">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400">
                 Average
               </span>
-              <div className="flex size-8 items-center justify-center rounded-lg bg-blue-100">
+              <div className="flex size-8 items-center justify-center rounded-xl bg-blue-100">
                 <TrendingUp className="size-4 text-blue-600" />
               </div>
             </div>
-            <p className="mt-2 text-3xl font-black text-blue-700">{stats.avgPercentage}%</p>
+            <p className="mt-3 text-3xl font-black text-blue-800">{stats.avgPercentage}%</p>
             <p className="text-xs text-blue-400 mt-0.5">Class percentage</p>
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-400 to-blue-600 rounded-b-2xl" />
           </div>
 
-          <div className="group relative overflow-hidden rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-sm transition-shadow hover:shadow-md">
+          <div className="group relative overflow-hidden rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-emerald-50/50 to-white p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">
                 Top
               </span>
-              <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-100">
+              <div className="flex size-8 items-center justify-center rounded-xl bg-emerald-100">
                 <Award className="size-4 text-emerald-600" />
               </div>
             </div>
-            <p className="mt-2 text-base font-bold text-emerald-700 truncate">
+            <p className="mt-3 text-base font-bold text-emerald-800 truncate">
               {stats.topStudentName}
             </p>
-            <p className="text-xs text-emerald-400 mt-0.5">{stats.topPercentage}% marks</p>
+            <p className="text-xs text-emerald-500 mt-0.5">{stats.topPercentage}% marks</p>
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-b-2xl" />
           </div>
 
-          <div className="group relative overflow-hidden rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-4 shadow-sm transition-shadow hover:shadow-md">
+          <div className="group relative overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 via-violet-50/50 to-white p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-violet-400">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400">
                 Exam
               </span>
-              <div className="flex size-8 items-center justify-center rounded-lg bg-violet-100">
+              <div className="flex size-8 items-center justify-center rounded-xl bg-violet-100">
                 <BookOpen className="size-4 text-violet-600" />
               </div>
             </div>
-            <p className="mt-2 text-sm font-bold text-violet-700 leading-snug truncate">
+            <p className="mt-3 text-sm font-bold text-violet-800 leading-snug truncate">
               {settings.defaultTerm}
             </p>
             <p className="text-xs text-violet-400 mt-0.5">{settings.defaultSession}</p>
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-400 to-violet-600 rounded-b-2xl" />
           </div>
         </div>
       ) : null}
@@ -361,7 +374,7 @@ function StudentsPage() {
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
           <Input
-            className="h-11 bg-white pl-9 pr-10 text-sm placeholder:text-slate-400 focus-visible:ring-slate-400 sm:h-10"
+            className="h-11 bg-white pl-9 pr-10 text-sm placeholder:text-slate-400 border-slate-200 shadow-sm focus-visible:ring-blue-500/30 sm:h-10"
             placeholder="Search students by name, class or remarks..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -380,7 +393,7 @@ function StudentsPage() {
         <div className="flex flex-wrap items-center gap-2">
           {classes.length > 1 && (
             <Select value={classFilter} onValueChange={setClassFilter}>
-              <SelectTrigger className="h-10 w-[130px] border-slate-200 bg-white text-sm">
+              <SelectTrigger className="h-10 w-[130px] border-slate-200 bg-white text-sm shadow-sm">
                 <SelectValue placeholder="All Classes" />
               </SelectTrigger>
               <SelectContent>
@@ -396,7 +409,7 @@ function StudentsPage() {
 
           {sessions.length > 1 && (
             <Select value={sessionFilter} onValueChange={setSessionFilter}>
-              <SelectTrigger className="h-10 w-[150px] border-slate-200 bg-white text-sm">
+              <SelectTrigger className="h-10 w-[150px] border-slate-200 bg-white text-sm shadow-sm">
                 <SelectValue placeholder="All Sessions" />
               </SelectTrigger>
               <SelectContent>
@@ -429,12 +442,12 @@ function StudentsPage() {
 
       {/* Bulk Action Bar */}
       {selected.length > 0 && (
-        <div className="no-print mb-4 flex flex-col gap-3 rounded-xl border border-slate-900/10 bg-slate-900 px-4 py-3 shadow-lg sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="no-print mb-4 flex flex-col gap-3 rounded-2xl border border-blue-900/10 bg-gradient-to-r from-blue-950 to-slate-900 px-4 py-3.5 shadow-xl shadow-slate-900/15 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <div className="flex items-center gap-2.5">
-            <span className="flex size-6 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white">
+            <span className="flex size-6 items-center justify-center rounded-full bg-white/20 text-xs font-black text-white">
               {selected.length}
             </span>
-            <span className="text-sm font-medium text-white/90">
+            <span className="text-sm font-semibold text-white/90">
               {selected.length} student{selected.length > 1 ? "s" : ""} selected
             </span>
           </div>
@@ -462,7 +475,7 @@ function StudentsPage() {
               size="sm"
               onClick={handleBulkPdf}
               disabled={busy}
-              className="min-h-11 flex-1 gap-1.5 bg-white text-xs font-semibold text-slate-900 shadow-sm hover:bg-slate-100 sm:min-h-8 sm:flex-none"
+              className="min-h-11 flex-1 gap-1.5 bg-white text-xs font-bold text-slate-900 shadow-sm hover:bg-slate-100 sm:min-h-8 sm:flex-none"
             >
               <FileDown className="size-3.5" />
               {busy ? progressText || "Generating..." : `Download PDF (${selected.length})`}
@@ -472,31 +485,34 @@ function StudentsPage() {
       )}
 
       {/* Student Table */}
-      <div className="no-print overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="no-print overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {!ready ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
-            <div className="size-10 rounded-full border-4 border-slate-200 border-t-slate-500 animate-spin" />
-            <p className="text-sm">Loading students...</p>
+          <div className="flex flex-col items-center justify-center py-24 gap-4 text-slate-400">
+            <div className="relative size-12">
+              <div className="size-12 rounded-full border-4 border-slate-100" />
+              <div className="absolute inset-0 size-12 rounded-full border-4 border-transparent border-t-blue-600 animate-spin" />
+            </div>
+            <p className="text-sm font-medium">Loading students...</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4 px-6 text-center">
-            <div className="flex size-16 items-center justify-center rounded-2xl bg-slate-100">
-              <Users className="size-8 text-slate-400" />
+          <div className="flex flex-col items-center justify-center py-24 gap-5 px-6 text-center">
+            <div className="flex size-20 items-center justify-center rounded-3xl bg-slate-100">
+              <Users className="size-10 text-slate-300" />
             </div>
             <div>
-              <p className="text-lg font-bold text-slate-800">
+              <p className="text-lg font-extrabold text-slate-800">
                 {students.length === 0 ? "No students yet" : "No matching students"}
               </p>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-sm text-slate-500 mt-1.5 max-w-[280px] mx-auto">
                 {students.length === 0
-                  ? "Add your first student to get started."
+                  ? "Add your first student to get started generating result cards."
                   : "Try adjusting your search or filters."}
               </p>
             </div>
             {students.length === 0 ? (
               <Button
                 onClick={handleCreate}
-                className="gap-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800"
+                className="gap-1.5 rounded-xl bg-blue-900 text-white hover:bg-blue-800 px-5 font-semibold"
               >
                 <Plus className="size-4" /> Add First Student
               </Button>
@@ -504,6 +520,7 @@ function StudentsPage() {
               <Button
                 variant="outline"
                 size="sm"
+                className="rounded-xl"
                 onClick={() => {
                   setQuery("");
                   setClassFilter("all");
@@ -516,12 +533,12 @@ function StudentsPage() {
           </div>
         ) : (
           <>
-            {/* Table Header */}
+            {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    <th className="w-12 px-3 py-3.5 text-center sm:w-10 sm:px-4">
+                  <tr className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                    <th className="w-12 px-3 py-4 text-center sm:w-10 sm:px-4">
                       <Checkbox
                         checked={isAllSelected}
                         onCheckedChange={toggleSelectAll}
@@ -529,16 +546,16 @@ function StudentsPage() {
                         className="size-5"
                       />
                     </th>
-                    <th className="px-2 py-3.5 sm:px-4">Student</th>
-                    <th className="hidden px-4 py-3.5 text-center md:table-cell">Class</th>
-                    <th className="hidden px-4 py-3.5 text-center md:table-cell">Marks</th>
-                    <th className="hidden px-4 py-3.5 text-center md:table-cell">%</th>
-                    <th className="px-2 py-3.5 text-center sm:px-4">Grade</th>
-                    <th className="w-14 px-2 py-3.5 text-right sm:w-auto sm:px-4">Actions</th>
+                    <th className="px-2 py-4 sm:px-4">Student</th>
+                    <th className="hidden px-4 py-4 text-center md:table-cell">Class</th>
+                    <th className="hidden px-4 py-4 text-center md:table-cell">Marks</th>
+                    <th className="hidden px-4 py-4 text-center md:table-cell">%</th>
+                    <th className="px-2 py-4 text-center sm:px-4">Grade</th>
+                    <th className="w-14 px-2 py-4 text-right sm:w-auto sm:px-4">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {filtered.map((student) => {
+                  {filtered.map((student, rowIndex) => {
                     const totals = calculateTotals(
                       student.subjects,
                       settings.grades,
@@ -547,15 +564,24 @@ function StudentsPage() {
                     const isSelected = selected.includes(student.id);
                     const isTopGrade = totals.grade === "A+" || totals.grade === "A";
                     const isLowGrade = totals.grade === "F" || totals.grade === "E";
+                    const avatarColors = [
+                      "from-blue-700 to-blue-900",
+                      "from-violet-700 to-violet-900",
+                      "from-emerald-700 to-emerald-900",
+                      "from-amber-600 to-amber-800",
+                      "from-rose-700 to-rose-900",
+                      "from-cyan-700 to-cyan-900",
+                    ];
+                    const avatarColor = avatarColors[rowIndex % avatarColors.length];
 
                     return (
                       <tr
                         key={student.id}
-                        className={`group transition-colors hover:bg-slate-50/80 ${
-                          isSelected ? "bg-slate-50" : ""
+                        className={`group transition-colors hover:bg-blue-50/30 ${
+                          isSelected ? "bg-blue-50/50" : ""
                         }`}
                       >
-                        <td className="px-3 py-3 text-center sm:px-4 sm:py-3.5">
+                        <td className="px-3 py-3.5 text-center sm:px-4">
                           <Checkbox
                             checked={isSelected}
                             onCheckedChange={(checked) =>
@@ -573,7 +599,9 @@ function StudentsPage() {
                         <td className="px-2 py-3 sm:px-4 sm:py-3.5">
                           <div className="flex items-center gap-2.5 sm:gap-3">
                             {/* Avatar */}
-                            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 text-xs font-bold text-white shadow-sm">
+                            <div
+                              className={`flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${avatarColor} text-xs font-black text-white shadow-sm`}
+                            >
                               {(student.name || "?")[0]?.toUpperCase()}
                             </div>
                             <div className="min-w-0">
@@ -584,12 +612,12 @@ function StudentsPage() {
                                     params: { studentId: student.id },
                                   })
                                 }
-                                className="block max-w-full truncate text-left font-semibold text-slate-900 transition-colors hover:text-slate-600"
+                                className="block max-w-full truncate text-left font-bold text-slate-900 transition-colors hover:text-blue-900"
                               >
                                 {student.name || "Untitled Student"}
                               </button>
 
-                              {/* Mobile-only summary chips (class / marks / %) */}
+                              {/* Mobile-only summary chips */}
                               <div className="mt-1 flex flex-wrap items-center gap-1 md:hidden">
                                 <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600">
                                   {student.className || "—"}
@@ -612,7 +640,7 @@ function StudentsPage() {
                         </td>
 
                         <td className="hidden px-4 py-3.5 text-center md:table-cell">
-                          <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+                          <span className="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-700">
                             {student.className || "—"}
                           </span>
                         </td>
@@ -628,7 +656,7 @@ function StudentsPage() {
 
                         <td className="px-2 py-3 text-center sm:px-4 sm:py-3.5">
                           <span
-                            className={`inline-flex items-center justify-center rounded-lg px-2.5 py-0.5 text-xs font-bold ${
+                            className={`inline-flex items-center justify-center rounded-lg px-2.5 py-0.5 text-xs font-black ${
                               isTopGrade
                                 ? "bg-emerald-100 text-emerald-700"
                                 : isLowGrade
@@ -645,14 +673,12 @@ function StudentsPage() {
                           <button
                             onClick={() => setSheetStudent(student)}
                             aria-label={`Actions for ${student.name || "student"}`}
-                            className="flex size-11 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 md:hidden"
+                            className="flex size-11 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 md:hidden"
                           >
                             <MoreHorizontal className="size-5" />
                           </button>
 
-                          {/* Desktop: full inline actions, always at full opacity.
-                              The old hover-reveal left them at 60% opacity forever
-                              on touch devices, where hover never fires. */}
+                          {/* Desktop: full inline actions */}
                           <div className="hidden items-center justify-end gap-0.5 md:flex">
                             <button
                               title="Edit"
@@ -663,7 +689,7 @@ function StudentsPage() {
                                   params: { studentId: student.id },
                                 })
                               }
-                              className="flex size-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                              className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-700"
                             >
                               <Pencil className="size-3.5" />
                             </button>
@@ -673,7 +699,7 @@ function StudentsPage() {
                               aria-label="Download PDF"
                               disabled={busy}
                               onClick={() => handleDirectPdf(student)}
-                              className="flex size-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:opacity-40"
+                              className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-700 disabled:opacity-40"
                             >
                               <Download className="size-3.5" />
                             </button>
@@ -688,7 +714,7 @@ function StudentsPage() {
                                   search: { print: true },
                                 })
                               }
-                              className="flex size-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                              className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-700"
                             >
                               <Printer className="size-3.5" />
                             </button>
@@ -697,7 +723,7 @@ function StudentsPage() {
                               title="Duplicate"
                               aria-label="Duplicate"
                               onClick={() => handleDuplicate(student.id)}
-                              className="flex size-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                              className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                             >
                               <Copy className="size-3.5" />
                             </button>
@@ -706,7 +732,7 @@ function StudentsPage() {
                               title="Delete"
                               aria-label="Delete"
                               onClick={() => setPendingDelete(student)}
-                              className="flex size-8 items-center justify-center rounded-lg text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-700"
+                              className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
                             >
                               <Trash2 className="size-3.5" />
                             </button>
@@ -720,7 +746,7 @@ function StudentsPage() {
             </div>
 
             {/* Table Footer */}
-            <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-400">
+            <div className="border-t border-slate-100 bg-slate-50/50 px-4 py-3 text-xs font-medium text-slate-400">
               Showing {filtered.length} of {students.length} student
               {students.length !== 1 ? "s" : ""}
               {hasFilters && " (filtered)"}
@@ -817,15 +843,28 @@ function StudentsPage() {
                 );
                 return (
                   <>
-                    <DrawerTitle className="px-4 text-left text-base text-slate-900">
+                    {/* Drag handle */}
+                    <div className="mx-auto mt-2 mb-4 h-1 w-10 rounded-full bg-slate-200" />
+                    <DrawerTitle className="px-5 text-left text-base font-extrabold text-slate-900">
                       {sheetStudent.name || "Untitled Student"}
                     </DrawerTitle>
-                    <DrawerDescription className="px-4 text-left text-xs text-slate-500">
-                      {sheetStudent.className || "—"} · {totals.obtainedTotal}/{totals.grandTotal} ·{" "}
-                      {totals.percentage}% · Grade {totals.grade}
+                    <DrawerDescription className="px-5 mt-1 text-left text-xs text-slate-500">
+                      {sheetStudent.className || "—"} &middot; {totals.obtainedTotal}/
+                      {totals.grandTotal} &middot; {totals.percentage}% &middot; Grade{" "}
+                      <span
+                        className={`font-bold ${
+                          totals.grade === "A+" || totals.grade === "A"
+                            ? "text-emerald-600"
+                            : totals.grade === "F" || totals.grade === "E"
+                              ? "text-rose-600"
+                              : "text-amber-600"
+                        }`}
+                      >
+                        {totals.grade}
+                      </span>
                     </DrawerDescription>
 
-                    <div className="mt-3 flex flex-col border-t border-slate-100">
+                    <div className="mt-4 flex flex-col border-t border-slate-100">
                       <SheetAction
                         icon={<Pencil className="size-4" />}
                         label="Edit Marks"
@@ -844,7 +883,7 @@ function StudentsPage() {
                       />
                       <SheetAction
                         icon={<Copy className="size-4" />}
-                        label="Duplicate"
+                        label="Duplicate Student"
                         onClick={() => handleDuplicate(sheetStudent.id)}
                       />
                       <SheetAction
@@ -861,26 +900,28 @@ function StudentsPage() {
         </DrawerContent>
       </Drawer>
 
-      {/* Delete confirmation — 44px targets make accidental taps likely */}
+      {/* Delete confirmation */}
       <AlertDialog
         open={pendingDelete !== null}
         onOpenChange={(open) => {
           if (!open) setPendingDelete(null);
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this student?</AlertDialogTitle>
+            <AlertDialogTitle className="text-lg font-extrabold">
+              Delete this student?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {pendingDelete?.name || "This student"} and all their marks will be permanently
               removed. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="min-h-11">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="min-h-11 rounded-xl">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              className="min-h-11 bg-rose-600 text-white hover:bg-rose-700"
+              className="min-h-11 rounded-xl bg-rose-600 text-white hover:bg-rose-700"
             >
               Delete
             </AlertDialogAction>
@@ -910,13 +951,16 @@ function SheetAction({
         type="button"
         onClick={onClick}
         disabled={disabled}
-        className={`flex min-h-14 w-full items-center gap-3 px-4 text-left text-[15px] font-medium transition-colors disabled:opacity-40 ${
-          destructive ? "text-rose-600 active:bg-rose-50" : "text-slate-800 active:bg-slate-100"
+        className={`flex min-h-14 w-full items-center gap-3.5 px-5 text-left text-[15px] font-semibold transition-colors disabled:opacity-40 ${
+          destructive
+            ? "text-rose-600 hover:bg-rose-50 active:bg-rose-100"
+            : "text-slate-800 hover:bg-slate-50 active:bg-slate-100"
         }`}
       >
-        <span className="text-slate-400">{icon}</span>
+        <span className={destructive ? "text-rose-400" : "text-slate-400"}>{icon}</span>
         {label}
       </button>
     </DrawerClose>
   );
 }
+
