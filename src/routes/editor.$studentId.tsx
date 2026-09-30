@@ -280,14 +280,10 @@ function ResultEditor() {
 
       {/* Cannot-fit Warning */}
       {fitState.cannotFit ? (
-        <div className="no-print mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-500" />
-          <p className="leading-snug">
-            <span className="font-semibold">
-              This card is about {Math.max(1, Math.round(fitState.overMm))}mm too tall for one A4 page.
-            </span>{" "}
-            Spacing has already been tightened as far as it will go. Remove a subject or summer-work
-            row, shorten the remarks, or use the default 10mm printer margin in Settings.
+        <div className="no-print mb-4 flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs font-semibold text-amber-900">
+          <TriangleAlert className="size-4 shrink-0 text-amber-500" />
+          <p>
+            Card is ~{Math.max(1, Math.round(fitState.overMm))}mm too tall for 1 page. Reduce subjects or remarks to fit.
           </p>
         </div>
       ) : null}
@@ -380,17 +376,12 @@ function ResultEditor() {
             {/* Photo toggle */}
             <div className="border-t border-slate-100 px-3.5 py-3 sm:px-5 sm:py-4">
               <div className="flex items-center justify-between gap-3">
-                <div>
-                  <Label
-                    htmlFor="show-photo"
-                    className="cursor-pointer text-sm font-semibold text-slate-800"
-                  >
-                    Show photo on result card
-                  </Label>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">
-                    Adds a small photo box beside the Progress Report heading.
-                  </p>
-                </div>
+                <Label
+                  htmlFor="show-photo"
+                  className="cursor-pointer text-sm font-semibold text-slate-800"
+                >
+                  Show photo on result card
+                </Label>
                 <Switch
                   id="show-photo"
                   checked={student.showPhoto ?? false}
@@ -447,9 +438,6 @@ function ResultEditor() {
                         <Trash2 className="size-4" /> Remove
                       </Button>
                     ) : null}
-                    <p className="text-[11px] leading-relaxed text-muted-foreground">
-                      A portrait 3:4 photo works best.
-                    </p>
                   </div>
                 </div>
               ) : null}
@@ -579,9 +567,6 @@ function ResultEditor() {
                   }`}
                 >
                   {totals.percentage}% · {totals.grade}
-                </span>
-                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-500">
-                  A4 Portrait
                 </span>
               </div>
             </div>
