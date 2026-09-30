@@ -456,9 +456,7 @@ function ResultEditor() {
                      * one that needs no cropping at all.
                      */}
                     <p className="text-[11px] leading-relaxed text-muted-foreground">
-                      A portrait 3:4 photo works best. Square or landscape photos get cropped to fit
-                      the box. The photo prints at 21×28mm on the card, and the upload is resized
-                      automatically so it does not fill up your browser storage.
+                      A portrait 3:4 photo works best.
                     </p>
                   </div>
                 </div>
