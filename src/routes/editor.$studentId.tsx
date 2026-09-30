@@ -186,9 +186,9 @@ function ResultEditor() {
   };
 
   return (
-    <div className="print-shell mx-auto w-full max-w-7xl px-4 pb-24 pt-4 sm:px-6 md:pb-12">
+    <div className="print-shell mx-auto w-full max-w-7xl px-3 pb-6 pt-3 sm:px-6 sm:pb-12 sm:pt-4">
       {/* Top Action Bar */}
-      <div className="no-print mb-5 flex flex-wrap items-center justify-between gap-3">
+      <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-2.5 sm:mb-5 sm:gap-3">
         <div className="flex items-center gap-1">
           <Button
             asChild
@@ -343,7 +343,7 @@ function ResultEditor() {
           {/* ── Student Info Card ── */}
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             {/* Card header */}
-            <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-5 py-3.5">
+            <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5 sm:py-3.5">
               <div className="flex size-7 items-center justify-center rounded-lg bg-blue-900 text-white">
                 <Users className="size-3.5" />
               </div>
@@ -351,7 +351,7 @@ function ResultEditor() {
             </div>
 
             {/* Name + Class fields */}
-            <div className="grid gap-4 p-5 sm:grid-cols-2">
+            <div className="grid gap-3 p-3.5 sm:gap-4 sm:p-5 sm:grid-cols-2">
               <Field
                 label="Student Name"
                 required
@@ -378,7 +378,7 @@ function ResultEditor() {
             </div>
 
             {/* Photo toggle */}
-            <div className="border-t border-slate-100 px-5 py-4">
+            <div className="border-t border-slate-100 px-3.5 py-3 sm:px-5 sm:py-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <Label
@@ -400,7 +400,7 @@ function ResultEditor() {
               </div>
 
               {student.showPhoto ? (
-                <div className="mt-4 flex items-center gap-4">
+                <div className="mt-3 flex items-center gap-3.5 sm:mt-4 sm:gap-4">
                   <div className="flex h-[74px] w-[56px] shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-slate-300 bg-slate-50">
                     {student.photoDataUrl ? (
                       <img
@@ -459,7 +459,7 @@ function ResultEditor() {
           {/* ── Subject Marks Card ── */}
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             {/* Card header */}
-            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-5 py-3.5">
+            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5 sm:py-3.5">
               <div className="flex items-center gap-2.5">
                 <div className="flex size-7 items-center justify-center rounded-lg bg-violet-600 text-white">
                   <BookOpen className="size-3.5" />
@@ -471,7 +471,7 @@ function ResultEditor() {
               </span>
             </div>
 
-            <div className="p-5">
+            <div className="p-3 sm:p-5">
               <SubjectTable
                 subjects={student.subjects}
                 onChange={(subjects) => set({ subjects })}
@@ -498,11 +498,11 @@ function ResultEditor() {
                         : "text-amber-600",
                 },
               ].map((item) => (
-                <div key={item.label} className="px-2 py-3 text-center sm:px-3">
-                  <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
+                <div key={item.label} className="px-1.5 py-2 text-center sm:px-3 sm:py-3">
+                  <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5 sm:mb-1">
                     {item.label}
                   </span>
-                  <span className={`text-xl font-black tabular-nums ${item.color}`}>
+                  <span className={`text-lg sm:text-xl font-black tabular-nums ${item.color}`}>
                     {item.raiseSign ? <GradeText text={String(item.value)} /> : item.value}
                   </span>
                 </div>
@@ -510,7 +510,7 @@ function ResultEditor() {
             </div>
 
             {hasErrors && (
-              <div className="border-t border-rose-100 bg-rose-50 px-5 py-2.5">
+              <div className="border-t border-rose-100 bg-rose-50 px-4 py-2 sm:px-5 sm:py-2.5">
                 <p className="text-xs font-semibold text-rose-600">
                   ⚠️ Fix mark errors above before printing or downloading PDF.
                 </p>
@@ -520,13 +520,13 @@ function ResultEditor() {
 
           {/* ── Remarks Card ── */}
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-5 py-3.5">
+            <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5 sm:py-3.5">
               <div className="flex size-7 items-center justify-center rounded-lg bg-amber-500 text-white">
                 <Sparkles className="size-3.5" />
               </div>
               <h2 className="text-sm font-bold text-slate-800">Remarks</h2>
             </div>
-            <div className="space-y-3 p-5">
+            <div className="space-y-2.5 p-3.5 sm:space-y-3 sm:p-5">
               <Select value="" onValueChange={(value) => set({ remarks: value })}>
                 <SelectTrigger className="w-full border-slate-200 bg-slate-50/50 text-sm">
                   <SelectValue placeholder="Choose a predefined remark..." />
@@ -560,7 +560,7 @@ function ResultEditor() {
         >
           <div className="a4-panel overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             {/* Preview header */}
-            <div className="no-print flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-5 py-3">
+            <div className="no-print flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-3.5 py-2.5 sm:px-5 sm:py-3">
               <div className="flex items-center gap-2">
                 <Eye className="size-3.5 text-slate-400" />
                 <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
@@ -585,8 +585,8 @@ function ResultEditor() {
                 </span>
               </div>
             </div>
-            <div className="a4-chrome p-4">
-              <ResultPreview printerMarginMm={settings.printerMarginMm}>
+            <div className="a4-chrome p-1.5 sm:p-4">
+              <ResultPreview key={mobileTab} printerMarginMm={settings.printerMarginMm}>
                 <ResultCard
                   ref={cardRef}
                   student={student}

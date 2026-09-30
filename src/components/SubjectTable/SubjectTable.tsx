@@ -106,34 +106,66 @@ export function SubjectTable({
                 hasError ? "bg-rose-50/40 p-2 sm:p-0" : "",
               )}
             >
-              {/* MOBILE: stacked card — name, then Total | Obtained(steppers), then actions */}
-              <div className="space-y-2.5 rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs sm:hidden">
-                <Input
-                  className={cn(
-                    "h-11 rounded-xl bg-slate-50/50 font-medium placeholder:text-slate-400 focus-visible:bg-white focus-visible:ring-blue-500/30",
-                    !subject.name.trim() ? "border-rose-400 focus-visible:ring-rose-300" : "border-slate-200",
-                  )}
-                  value={subject.name}
-                  placeholder="Subject name (e.g. English)"
-                  aria-label="Subject name"
-                  onChange={(e) => patch(subject.id, { name: e.target.value })}
-                />
+              {/* MOBILE: ultra-compact 2-line layout */}
+              <div className="space-y-2 rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-2xs sm:hidden">
+                {/* Row 1: Subject Name + Action Icons */}
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    className={cn(
+                      "h-9 min-w-0 flex-1 rounded-lg bg-slate-50/50 text-sm font-medium placeholder:text-slate-400 focus-visible:bg-white focus-visible:ring-blue-500/30",
+                      !subject.name.trim() ? "border-rose-400 focus-visible:ring-rose-300" : "border-slate-200",
+                    )}
+                    value={subject.name}
+                    placeholder="Subject name (e.g. English)"
+                    aria-label="Subject name"
+                    onChange={(e) => patch(subject.id, { name: e.target.value })}
+                  />
 
-                <div className="grid grid-cols-[5.5rem_1fr] items-end gap-2.5">
-                  <div>
-                    <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Total
-                    </span>
+                  <div className="flex items-center shrink-0">
+                    <button
+                      type="button"
+                      disabled={index === 0}
+                      title="Move up"
+                      aria-label="Move up"
+                      onClick={() => move(index, -1)}
+                      className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-20"
+                    >
+                      <ArrowUp className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={index === subjects.length - 1}
+                      title="Move down"
+                      aria-label="Move down"
+                      onClick={() => move(index, 1)}
+                      className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-20"
+                    >
+                      <ArrowDown className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Remove subject"
+                      aria-label="Remove subject"
+                      onClick={() => onChange(subjects.filter((s) => s.id !== subject.id))}
+                      className="flex size-8 items-center justify-center rounded-lg text-rose-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Row 2: Total Marks and Obtained Marks in a 2-column strip */}
+                <div className="grid grid-cols-[5.5rem_1fr] items-center gap-2">
+                  <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50/60 px-2 py-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total:</span>
                     <Input
                       type="number"
                       inputMode="numeric"
                       enterKeyHint="next"
                       min={1}
                       className={cn(
-                        "h-11 rounded-xl bg-slate-50/50 text-center font-bold focus-visible:bg-white focus-visible:ring-blue-500/30",
-                        subject.totalMarks <= 0
-                          ? "border-rose-400 focus-visible:ring-rose-300"
-                          : "border-slate-200",
+                        "h-7 w-full border-0 bg-transparent p-0 text-center text-sm font-bold shadow-none focus-visible:ring-0",
+                        subject.totalMarks <= 0 ? "text-rose-600" : "text-slate-800",
                       )}
                       value={subject.totalMarks === 0 ? "" : subject.totalMarks}
                       placeholder="—"
@@ -146,89 +178,45 @@ export function SubjectTable({
                     />
                   </div>
 
-                  <div>
-                    <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Obtained
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      <HoldButton
-                        label={`Decrease ${subject.name || "subject"} marks`}
-                        onStep={() => stepObtained(subject, -1)}
-                        disabled={subject.obtainedMarks <= 0}
-                        className="h-11 w-11 shrink-0 rounded-xl border-slate-200 text-slate-600 shadow-xs active:bg-slate-100"
-                      >
-                        <Minus className="size-4" />
-                      </HoldButton>
+                  <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50/60 px-1.5 py-1">
+                    <span className="pl-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Obt:</span>
+                    <HoldButton
+                      label={`Decrease ${subject.name || "subject"} marks`}
+                      onStep={() => stepObtained(subject, -1)}
+                      disabled={subject.obtainedMarks <= 0}
+                      className="size-7 shrink-0 rounded-md border-slate-200 text-slate-600 shadow-2xs active:bg-slate-100"
+                    >
+                      <Minus className="size-3" />
+                    </HoldButton>
 
-                      <Input
-                        type="number"
-                        inputMode="numeric"
-                        enterKeyHint="next"
-                        min={0}
-                        className={cn(
-                          "h-11 min-w-0 flex-1 rounded-xl bg-slate-50/50 text-center text-base font-black focus-visible:bg-white focus-visible:ring-blue-500/30",
-                          isOverLimit || subject.obtainedMarks < 0
-                            ? "border-rose-400 text-rose-600 focus-visible:ring-rose-300"
-                            : "border-slate-200 text-slate-900",
-                        )}
-                        value={subject.obtainedMarks === 0 ? "" : subject.obtainedMarks}
-                        placeholder="—"
-                        aria-label={`Obtained marks for ${subject.name || "subject"}`}
-                        onChange={(e) =>
-                          patch(subject.id, {
-                            obtainedMarks: e.target.value === "" ? 0 : Number(e.target.value),
-                          })
-                        }
-                      />
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      enterKeyHint="next"
+                      min={0}
+                      className={cn(
+                        "h-7 min-w-0 flex-1 border-0 bg-transparent p-0 text-center text-sm font-black shadow-none focus-visible:ring-0",
+                        isOverLimit || subject.obtainedMarks < 0 ? "text-rose-600" : "text-slate-900",
+                      )}
+                      value={subject.obtainedMarks === 0 ? "" : subject.obtainedMarks}
+                      placeholder="—"
+                      aria-label={`Obtained marks for ${subject.name || "subject"}`}
+                      onChange={(e) =>
+                        patch(subject.id, {
+                          obtainedMarks: e.target.value === "" ? 0 : Number(e.target.value),
+                        })
+                      }
+                    />
 
-                      <HoldButton
-                        label={`Increase ${subject.name || "subject"} marks`}
-                        onStep={() => stepObtained(subject, 1)}
-                        disabled={subject.obtainedMarks >= subject.totalMarks}
-                        className="h-11 w-11 shrink-0 rounded-xl border-slate-200 text-slate-600 shadow-xs active:bg-slate-100"
-                      >
-                        <Plus className="size-4" />
-                      </HoldButton>
-                    </div>
+                    <HoldButton
+                      label={`Increase ${subject.name || "subject"} marks`}
+                      onStep={() => stepObtained(subject, 1)}
+                      disabled={subject.obtainedMarks >= subject.totalMarks}
+                      className="size-7 shrink-0 rounded-md border-slate-200 text-slate-600 shadow-2xs active:bg-slate-100"
+                    >
+                      <Plus className="size-3" />
+                    </HoldButton>
                   </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-1 border-t border-slate-100 pt-2.5">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="size-10 rounded-xl border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800"
-                    disabled={index === 0}
-                    title="Move up"
-                    aria-label="Move up"
-                    onClick={() => move(index, -1)}
-                  >
-                    <ArrowUp className="size-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="size-10 rounded-xl border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800"
-                    disabled={index === subjects.length - 1}
-                    title="Move down"
-                    aria-label="Move down"
-                    onClick={() => move(index, 1)}
-                  >
-                    <ArrowDown className="size-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-10 rounded-xl text-rose-500 hover:bg-rose-50 hover:text-rose-700"
-                    title="Remove subject"
-                    aria-label="Remove subject"
-                    onClick={() => onChange(subjects.filter((s) => s.id !== subject.id))}
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
                 </div>
               </div>
 
