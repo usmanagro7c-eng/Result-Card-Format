@@ -277,9 +277,6 @@ function StudentsPage() {
               </span>
             )}
           </div>
-          <p className="mt-1 text-sm text-slate-500">
-            {settings.defaultTerm} &middot; Session {settings.defaultSession}
-          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {students.length > 0 && (
@@ -316,8 +313,7 @@ function StudentsPage() {
                 <Users className="size-4 text-slate-600" />
               </div>
             </div>
-            <p className="mt-3 text-3xl font-black text-slate-900">{stats.total}</p>
-            <p className="text-xs text-slate-400 mt-0.5">Students enrolled</p>
+            <p className="mt-2.5 text-3xl font-black text-slate-900">{stats.total}</p>
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-slate-300 to-slate-400 rounded-b-2xl" />
           </div>
 
@@ -330,8 +326,7 @@ function StudentsPage() {
                 <TrendingUp className="size-4 text-blue-600" />
               </div>
             </div>
-            <p className="mt-3 text-3xl font-black text-blue-800">{stats.avgPercentage}%</p>
-            <p className="text-xs text-blue-400 mt-0.5">Class percentage</p>
+            <p className="mt-2.5 text-3xl font-black text-blue-800">{stats.avgPercentage}%</p>
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-400 to-blue-600 rounded-b-2xl" />
           </div>
 
@@ -344,10 +339,10 @@ function StudentsPage() {
                 <Award className="size-4 text-emerald-600" />
               </div>
             </div>
-            <p className="mt-3 text-base font-bold text-emerald-800 truncate">
+            <p className="mt-2.5 text-base font-bold text-emerald-800 truncate">
               {stats.topStudentName}
             </p>
-            <p className="text-xs text-emerald-500 mt-0.5">{stats.topPercentage}% marks</p>
+            <p className="text-xs font-semibold text-emerald-600 mt-0.5">{stats.topPercentage}%</p>
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-b-2xl" />
           </div>
 
