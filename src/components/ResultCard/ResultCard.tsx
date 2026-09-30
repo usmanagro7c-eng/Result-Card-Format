@@ -17,7 +17,7 @@ function DefaultSchoolEmblem() {
   return (
     <svg
       viewBox="0 0 100 100"
-      className="size-16 text-neutral-900"
+      className="size-20 text-neutral-900"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.5"
@@ -112,7 +112,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               <img
                 src={settings.logoDataUrl}
                 alt="School Logo"
-                className="h-16 w-16 object-contain"
+                className="h-20 w-20 object-contain"
               />
             ) : (
               <DefaultSchoolEmblem />
