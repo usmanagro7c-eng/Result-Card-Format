@@ -6,7 +6,7 @@ import { DEFAULT_PRINTER_MARGIN_MM, normalizePrinterMarginMm } from "@/lib/cardG
 
 const A4_WIDTH_PX = 794; // 210mm at 96dpi
 const A4_HEIGHT_PX = 1123; // 297mm at 96dpi
-const MIN_SCALE = 0.3;
+const MIN_SCALE = 0.2;
 const MAX_SCALE = 2;
 
 const ZOOM_PRESETS = [0.5, 0.75, 1] as const;
@@ -91,7 +91,15 @@ export function ResultPreview({
   printerMarginMm,
 }: ResultPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [autoScale, setAutoScale] = useState(0.85);
+  const [autoScale, setAutoScale] = useState(() => {
+    if (typeof window !== "undefined") {
+      const w = window.innerWidth;
+      if (w < 768) {
+        return Math.max(MIN_SCALE, Math.min(1.0, (w - 24) / A4_WIDTH_PX));
+      }
+    }
+    return 0.85;
+  });
   const [manualZoom, setManualZoom] = useState<number | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -101,14 +109,25 @@ export function ResultPreview({
     const calculateScale = () => {
       const containerWidth = el.clientWidth;
       if (containerWidth > 0) {
-        const computed = Math.min(1.0, (containerWidth - 16) / A4_WIDTH_PX);
+        const pad = containerWidth < 500 ? 8 : 16;
+        const computed = Math.min(1.0, (containerWidth - pad) / A4_WIDTH_PX);
         setAutoScale(Math.max(MIN_SCALE, computed));
       }
     };
     calculateScale();
+    const rafId = requestAnimationFrame(calculateScale);
+    const timerId = setTimeout(calculateScale, 100);
+
     const observer = new ResizeObserver(calculateScale);
     observer.observe(el);
-    return () => observer.disconnect();
+    window.addEventListener("resize", calculateScale);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timerId);
+      observer.disconnect();
+      window.removeEventListener("resize", calculateScale);
+    };
   }, [isFullscreen]);
 
   // Exiting fullscreen on print guarantees the card is never hidden by the
@@ -141,10 +160,10 @@ export function ResultPreview({
   return (
     <div className={cn("w-full flex flex-col items-center", className)}>
       {showControls ? (
-        <div className="no-print mb-2 flex w-full flex-wrap items-center justify-between gap-2 px-1">
+        <div className="no-print mb-2 flex w-full flex-wrap items-center justify-between gap-1.5 px-0.5 sm:px-1">
           <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <span className="hidden sm:inline">A4 Document Preview</span>
-            <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] tabular-nums">
+            <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] tabular-nums font-semibold text-slate-700">
               {Math.round(activeScale * 100)}%
             </span>
           </div>
@@ -158,35 +177,46 @@ export function ResultPreview({
                   variant={Math.abs(activeScale - preset) < 0.01 ? "secondary" : "ghost"}
                   size="sm"
                   onClick={() => setZoom(preset)}
-                  className="h-9 px-2.5 text-xs tabular-nums"
+                  className="h-8 px-2 text-xs tabular-nums"
                 >
                   {preset * 100}%
                 </Button>
               ))}
             </div>
 
+            {/* Quick 100% / Fit toggle on mobile */}
             <Button
               type="button"
-              variant="ghost"
+              variant={Math.abs(activeScale - 1) < 0.05 ? "secondary" : "outline"}
               size="sm"
-              onClick={() => stepZoom(-0.1)}
-              disabled={activeScale <= MIN_SCALE + 0.01}
-              aria-label="Zoom out"
-              className="size-11 p-0 sm:size-9"
+              onClick={() => setZoom(Math.abs(activeScale - 1) < 0.05 ? autoScale : 1)}
+              className="h-8 px-2 text-xs font-bold sm:hidden"
             >
-              <span className="text-lg leading-none">−</span>
+              {Math.abs(activeScale - 1) < 0.05 ? "Fit" : "100%"}
             </Button>
 
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => stepZoom(0.1)}
+              onClick={() => stepZoom(-0.15)}
+              disabled={activeScale <= MIN_SCALE + 0.01}
+              aria-label="Zoom out"
+              className="size-8 p-0 text-slate-700 hover:bg-slate-100"
+            >
+              <span className="text-base font-bold leading-none">−</span>
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => stepZoom(0.15)}
               disabled={activeScale >= MAX_SCALE - 0.01}
               aria-label="Zoom in"
-              className="size-11 p-0 sm:size-9"
+              className="size-8 p-0 text-slate-700 hover:bg-slate-100"
             >
-              <span className="text-lg leading-none">+</span>
+              <span className="text-base font-bold leading-none">+</span>
             </Button>
 
             {!isAuto && (
@@ -195,9 +225,9 @@ export function ResultPreview({
                 variant="ghost"
                 size="sm"
                 onClick={() => setManualZoom(null)}
-                className="h-11 gap-1 px-2 text-[11px] sm:h-9"
+                className="h-8 gap-1 px-1.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-50"
               >
-                <RotateCcw className="size-3.5" /> Fit
+                <RotateCcw className="size-3" /> Fit
               </Button>
             )}
 
@@ -208,9 +238,9 @@ export function ResultPreview({
               onClick={() => setIsFullscreen((v) => !v)}
               aria-label={isFullscreen ? "Exit fullscreen preview" : "Fullscreen preview"}
               title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-              className="size-11 p-0 sm:size-9"
+              className="size-8 p-0 text-slate-700 hover:bg-slate-100"
             >
-              {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              {isFullscreen ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
             </Button>
           </div>
         </div>
@@ -222,7 +252,7 @@ export function ResultPreview({
           "a4-viewport w-full overflow-x-auto",
           isFullscreen
             ? "fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-slate-200/95 p-2 backdrop-blur-sm"
-            : "pb-6",
+            : "pb-3 sm:pb-6",
         )}
       >
         {isFullscreen ? (
@@ -230,36 +260,48 @@ export function ResultPreview({
             type="button"
             aria-label="Close fullscreen preview"
             onClick={() => setIsFullscreen(false)}
-            className="fixed right-3 top-3 z-50 flex size-11 items-center justify-center rounded-full bg-slate-900/85 text-white shadow-lg"
+            className="fixed right-3 top-3 z-50 flex size-10 items-center justify-center rounded-full bg-slate-900/85 text-white shadow-lg"
           >
-            <Minimize2 className="size-5" />
+            <Minimize2 className="size-4" />
           </button>
         ) : null}
 
         {/*
-          `a4-scale` carries the transform so the print stylesheet can reset it
-          with a single `transform: none !important`. The scale must never sit
-          on a node that print CSS cannot reach, or the printed sheet renders
-          shrunken and clipped.
+          `a4-scale-wrapper` has the EXACT scaled layout dimensions.
+          Its margin: 0 auto centers it horizontally without creating overflow.
+          Inside it, `a4-scale` is anchored to top-left of the wrapper (top: 0, left: 0),
+          so scaling matches the wrapper dimensions exactly with 0px offset.
         */}
         <div
-          className="a4-scale"
+          className="a4-scale-wrapper relative mx-auto"
           style={{
-            transform: `scale(${activeScale})`,
-            transformOrigin: "top left",
-            width: "fit-content",
-            marginInline: "auto",
+            width: `${Math.round(A4_WIDTH_PX * activeScale)}px`,
+            height: `${Math.round(A4_HEIGHT_PX * activeScale)}px`,
+            flexShrink: 0,
           }}
         >
           <div
+            className="a4-scale"
             style={{
-              width: A4_WIDTH_PX,
-              minHeight: A4_HEIGHT_PX,
+              position: "absolute",
+              top: 0,
+              left: 0,
+              transform: `scale(${activeScale})`,
+              transformOrigin: "top left",
+              width: `${A4_WIDTH_PX}px`,
+              minHeight: `${A4_HEIGHT_PX}px`,
             }}
-            className="a4-frame relative bg-white shadow-[0_4px_25px_rgba(0,0,0,0.18)] ring-1 ring-neutral-300"
           >
-            {children}
-            {showGuides ? <MarginGuides marginMm={marginMm} /> : null}
+            <div
+              style={{
+                width: A4_WIDTH_PX,
+                minHeight: A4_HEIGHT_PX,
+              }}
+              className="a4-frame relative bg-white shadow-[0_4px_25px_rgba(0,0,0,0.18)] ring-1 ring-neutral-300"
+            >
+              {children}
+              {showGuides ? <MarginGuides marginMm={marginMm} /> : null}
+            </div>
           </div>
         </div>
       </div>

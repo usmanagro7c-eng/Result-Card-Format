@@ -248,7 +248,16 @@
     width: 100% !important;
   }
 
+  .a4-scale-wrapper {
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    position: static !important;
+    display: block !important;
+  }
+
   .a4-scale {
+    position: static !important;
     transform: none !important;
     height: auto !important;
     width: 100% !important;
