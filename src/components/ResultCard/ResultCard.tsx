@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import type { Settings, Student, Subject } from "@/types/result";
 import { calculateTotals } from "@/utils/calculations";
-import { OrdinalText } from "@/utils/raisedText";
+import { GradeText, OrdinalText } from "@/utils/raisedText";
 import { splitSummerWork } from "@/utils/summerWork";
 import { cn } from "@/lib/utils";
 
@@ -355,7 +355,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                 Grade
               </span>
               <span className="text-[19px] font-black text-neutral-950 font-doc">
-                {totals.grade}
+                <GradeText text={totals.grade} />
               </span>
             </div>
           </div>

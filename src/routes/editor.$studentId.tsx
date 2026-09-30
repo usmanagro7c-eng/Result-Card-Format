@@ -35,6 +35,7 @@ import { calculateTotals, subjectErrors } from "@/utils/calculations";
 import { compressImage } from "@/utils/image";
 import { generatePdf } from "@/utils/pdf";
 import { printDocument } from "@/utils/print";
+import { GradeText } from "@/utils/raisedText";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
@@ -475,7 +476,7 @@ function ResultEditor() {
                 { label: "Total", value: totals.grandTotal },
                 { label: "Obtained", value: totals.obtainedTotal },
                 { label: "Percentage", value: `${totals.percentage}%` },
-                { label: "Grade", value: totals.grade, highlight: true },
+                { label: "Grade", value: totals.grade, highlight: true, raiseSign: true },
               ].map((item) => (
                 <div key={item.label} className="px-3 py-3 text-center">
                   <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">
@@ -484,7 +485,7 @@ function ResultEditor() {
                   <span
                     className={`text-lg font-black ${item.highlight ? "text-slate-900" : "text-slate-700"}`}
                   >
-                    {item.value}
+                    {item.raiseSign ? <GradeText text={String(item.value)} /> : item.value}
                   </span>
                 </div>
               ))}

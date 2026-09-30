@@ -22,6 +22,27 @@ export function Raised({ children }: { children: ReactNode }) {
   return <sup className="relative top-[-0.3em] text-[0.62em]">{children}</sup>;
 }
 
+/**
+ * Grade names are free text that a school edits in Settings ("A+", "B-", "A1",
+ * "Excellent"), so only a trailing run of + or - is treated as a sign worth
+ * raising. Anything else is returned untouched, which keeps custom names
+ * readable instead of mangling whatever happens to be typed last.
+ *
+ * The trailing whitespace is captured and re-emitted rather than trimmed so a
+ * name that picked up a stray space in Settings still renders correctly.
+ */
+export function GradeText({ text }: { text: string }) {
+  const m = /([+-]+)(\s*)$/.exec(text);
+  if (!m) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, m.index)}
+      <Raised>{m[1]}</Raised>
+      {m[2]}
+    </>
+  );
+}
+
 export function OrdinalText({ text }: { text: string }) {
   const re = /(\d+)(\s*)(st|nd|rd|th)(?![\p{L}\p{N}])/giu;
   const parts: ReactNode[] = [];
