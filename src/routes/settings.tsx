@@ -67,8 +67,12 @@ function SettingsPage() {
 
   if (!ready) {
     return (
-      <div className="px-4 py-24 text-center text-sm text-muted-foreground">
-        Loading settings...
+      <div className="flex flex-col items-center justify-center gap-4 px-4 py-32 text-center">
+        <div className="relative size-12">
+          <div className="size-12 rounded-full border-4 border-slate-100" />
+          <div className="absolute inset-0 size-12 rounded-full border-4 border-transparent border-t-blue-600 animate-spin" />
+        </div>
+        <p className="text-sm font-medium text-slate-500">Loading settings...</p>
       </div>
     );
   }
@@ -102,23 +106,35 @@ function SettingsPage() {
   };
 
   const testGrade = resolveGrade(testPercentage, settings.grades);
+  const isTopTestGrade = testGrade === "A+" || testGrade === "A";
+  const isLowTestGrade = testGrade === "F" || testGrade === "E";
+
+  const defaultTotalMarks = settings.defaultSubjects.reduce(
+    (sum, s) => sum + (Number(s.totalMarks) || 0),
+    0,
+  );
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8">
+    <div className="mx-auto w-full max-w-4xl px-4 pt-6 pb-24 sm:px-6 sm:py-8">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
           <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm" className="gap-1 text-xs">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900"
+            >
               <Link to="/">
-                <ArrowLeft className="size-3.5" /> Back to Students
+                <ArrowLeft className="size-4" /> Back to Students
               </Link>
             </Button>
           </div>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-neutral-900">
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
             School &amp; Grading Settings
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-slate-500">
             Configure school identity, logo, signatures, grading thresholds, and default subjects.
           </p>
         </div>
@@ -127,24 +143,24 @@ function SettingsPage() {
           variant="outline"
           size="sm"
           onClick={handleRestoreAllDefaults}
-          className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          className="gap-1.5 rounded-xl border-slate-300 text-xs font-semibold text-slate-600 shadow-2xs hover:bg-slate-100 hover:text-slate-900"
         >
           <RotateCcw className="size-3.5" /> Restore All Defaults
         </Button>
       </div>
 
-      <div className="mt-8 space-y-8">
+      <div className="mt-8 space-y-7">
         {/* School Information & Branding */}
-        <section className="rounded-lg border border-border bg-card p-6 shadow-xs">
-          <div className="flex items-center gap-2.5 pb-4 border-b border-border">
-            <div className="flex size-8 items-center justify-center rounded-md bg-neutral-100 text-neutral-800">
-              <Building2 className="size-4" />
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-blue-100 text-blue-800">
+              <Building2 className="size-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-neutral-900">
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
                 School Information &amp; Header
               </h2>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-500">
                 These details appear on the header of every generated Progress Report.
               </p>
             </div>
@@ -152,52 +168,51 @@ function SettingsPage() {
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs font-semibold text-neutral-700">School Name</Label>
+              <Label className="text-xs font-bold text-slate-700">School Name</Label>
               <Input
                 value={settings.schoolName}
                 onChange={(e) => updateSettings({ schoolName: e.target.value })}
                 placeholder="e.g. The Country School"
-                className="font-medium"
+                className="rounded-xl border-slate-200 bg-slate-50/50 font-semibold focus-visible:bg-white focus-visible:ring-blue-500/30"
               />
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs font-semibold text-neutral-700">
+              <Label className="text-xs font-bold text-slate-700">
                 School Tagline / Affiliation
               </Label>
               <Input
                 value={settings.schoolTagline}
                 onChange={(e) => updateSettings({ schoolTagline: e.target.value })}
                 placeholder="e.g. A project of Bloomfield Hall | Since 1984"
+                className="rounded-xl border-slate-200 bg-slate-50/50 focus-visible:bg-white focus-visible:ring-blue-500/30"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-neutral-700">
-                Default Academic Session
-              </Label>
+              <Label className="text-xs font-bold text-slate-700">Default Academic Session</Label>
               <Input
                 value={settings.defaultSession}
                 onChange={(e) => updateSettings({ defaultSession: e.target.value })}
                 placeholder="2026–2027"
+                className="rounded-xl border-slate-200 bg-slate-50/50 focus-visible:bg-white focus-visible:ring-blue-500/30"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-neutral-700">
-                Default Examination / Term
-              </Label>
+              <Label className="text-xs font-bold text-slate-700">Default Examination / Term</Label>
               <Input
                 value={settings.defaultTerm}
                 onChange={(e) => updateSettings({ defaultTerm: e.target.value })}
                 placeholder="1st Term Examination"
+                className="rounded-xl border-slate-200 bg-slate-50/50 focus-visible:bg-white focus-visible:ring-blue-500/30"
               />
             </div>
           </div>
 
           {/* Logo & Signature Uploads */}
-          <div className="mt-6 border-t border-border pt-6">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">
+          <div className="mt-7 border-t border-slate-100 pt-6">
+            <h3 className="mb-4 text-xs font-extrabold uppercase tracking-wider text-slate-500">
               Logo &amp; Official Signatures
             </h3>
             <div className="grid gap-4 sm:grid-cols-3">
@@ -238,24 +253,26 @@ function SettingsPage() {
         </section>
 
         {/* Printer Safety */}
-        <section className="rounded-lg border border-border bg-card p-6 shadow-xs">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border">
-            <div className="flex items-center gap-2.5">
-              <div className="flex size-8 items-center justify-center rounded-md bg-neutral-100 text-neutral-800">
-                <Printer className="size-4" />
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex size-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                <Printer className="size-5" />
               </div>
               <div>
-                <h2 className="text-sm font-bold uppercase tracking-wider">Printer Safety</h2>
-                <p className="text-xs text-muted-foreground">
-                  How much of the paper edge your printer cannot reach
+                <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
+                  Printer Safety &amp; Margins
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Controls how close decorative borders reach to the physical paper edge.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs font-semibold text-neutral-700">Unprintable margin</Label>
+          <div className="mt-5 space-y-3">
+            <div className="space-y-1.5 max-w-sm">
+              <Label className="text-xs font-bold text-slate-700">Unprintable Edge Margin</Label>
               <Select
                 value={String(normalizePrinterMarginMm(settings.printerMarginMm))}
                 onValueChange={(value) => {
@@ -268,10 +285,10 @@ function SettingsPage() {
                   );
                 }}
               >
-                <SelectTrigger className="border-slate-200 bg-slate-50/50 text-sm">
+                <SelectTrigger className="h-10 rounded-xl border-slate-200 bg-slate-50/50 text-sm font-medium focus-visible:bg-white focus-visible:ring-blue-500/30">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl">
                   {PRINTER_MARGIN_OPTIONS.map((option) => (
                     <SelectItem key={option.value} value={String(option.value)}>
                       {option.label}
@@ -279,29 +296,30 @@ function SettingsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                The decorative border is the outermost mark on the page, so this is what decides
-                whether its bottom edge reaches the paper. Pick the value your printer&apos;s
-                specification sheet lists as its minimum margin, or 10&nbsp;mm if you are unsure. A
-                larger margin moves the border inward and gives the card slightly less room, which
-                it will rebalance on its own.
+            </div>
+
+            <div className="rounded-xl bg-slate-50 p-3 border border-slate-200/60">
+              <p className="text-xs leading-relaxed text-slate-500">
+                Sets border distance from the paper edge to prevent clipping (default:{" "}
+                <span className="font-semibold text-slate-700">10 mm</span>). Card content
+                automatically adjusts to fit.
               </p>
             </div>
           </div>
         </section>
 
         {/* Configurable Grading System */}
-        <section className="rounded-lg border border-border bg-card p-6 shadow-xs">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border">
-            <div className="flex items-center gap-2.5">
-              <div className="flex size-8 items-center justify-center rounded-md bg-neutral-100 text-neutral-800">
-                <GraduationCap className="size-4" />
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800">
+                <GraduationCap className="size-5" />
               </div>
               <div>
-                <h2 className="text-sm font-bold uppercase tracking-wider text-neutral-900">
+                <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
                   Configurable Grading Scale
                 </h2>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-slate-500">
                   Define percentage thresholds for each letter grade (e.g. A+, A, B, C, D, E, F).
                 </p>
               </div>
@@ -311,41 +329,52 @@ function SettingsPage() {
               variant="outline"
               size="sm"
               onClick={handleResetGrading}
-              className="text-xs gap-1.5"
+              className="gap-1.5 rounded-xl border-slate-300 text-xs font-semibold text-slate-600 shadow-2xs hover:bg-slate-100"
             >
               <RotateCcw className="size-3" /> Reset Standard Scale
             </Button>
           </div>
 
           {/* Interactive Live Grade Simulator */}
-          <div className="mt-4 rounded-md border border-neutral-200 bg-neutral-50/70 p-3 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="size-4 text-amber-500" />
-              <span className="text-xs font-semibold text-neutral-800">Live Grade Tester:</span>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200/80 bg-gradient-to-r from-amber-50/80 via-amber-50/40 to-white p-3.5 shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-7 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+                <Sparkles className="size-4" />
+              </div>
+              <span className="text-xs font-bold text-slate-800">Live Grade Tester:</span>
               <div className="flex items-center gap-1.5">
                 <Input
                   type="number"
                   min={0}
                   max={100}
                   step={0.1}
-                  className="h-8 w-20 bg-white text-center text-xs font-bold"
+                  className="h-8 w-20 rounded-lg border-slate-200 bg-white text-center text-xs font-black shadow-2xs"
                   value={testPercentage}
                   onChange={(e) => setTestPercentage(Number(e.target.value))}
                 />
-                <span className="text-xs font-bold text-neutral-700">%</span>
+                <span className="text-xs font-extrabold text-slate-700">%</span>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Determined Grade:</span>
-              <span className="inline-flex items-center justify-center rounded-md bg-neutral-900 px-3 py-1 text-xs font-black text-white">
-                {testGrade}
+              <span className="text-xs font-medium text-slate-500">Result:</span>
+              <span
+                className={`inline-flex items-center justify-center rounded-xl px-3.5 py-1 text-xs font-black shadow-2xs ${
+                  isTopTestGrade
+                    ? "bg-emerald-600 text-white"
+                    : isLowTestGrade
+                      ? "bg-rose-600 text-white"
+                      : "bg-amber-500 text-white"
+                }`}
+              >
+                Grade {testGrade}
               </span>
             </div>
           </div>
 
+          {/* Grade Rules Table */}
           <div className="mt-5 space-y-2">
-            <div className="hidden grid-cols-[1fr_7rem_7rem_3rem] gap-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:grid">
+            <div className="hidden grid-cols-[1fr_7rem_7rem_3rem] items-center gap-3 rounded-xl bg-slate-100/80 px-3.5 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 sm:grid">
               <span>Grade Name</span>
               <span className="text-center">Min %</span>
               <span className="text-center">Max %</span>
@@ -355,50 +384,62 @@ function SettingsPage() {
             {settings.grades.map((grade, index) => (
               <div
                 key={grade.id}
-                className="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_7rem_7rem_3rem] items-center"
+                className="grid grid-cols-2 gap-2 rounded-xl border border-slate-200/80 bg-white p-2.5 shadow-2xs sm:grid-cols-[1fr_7rem_7rem_3rem] sm:items-center sm:gap-3 sm:border-slate-200/60 sm:p-2 sm:shadow-none"
               >
-                <Input
-                  className="col-span-2 sm:col-span-1 font-bold text-neutral-900"
-                  value={grade.name}
-                  placeholder="Grade (e.g. A+)"
-                  onChange={(e) => {
-                    const next = [...settings.grades];
-                    next[index] = { ...grade, name: e.target.value };
-                    setGrades(next);
-                  }}
-                />
+                <div className="col-span-2 sm:col-span-1">
+                  <Input
+                    className="h-9 rounded-lg border-slate-200 bg-slate-50/40 font-bold text-slate-900 focus-visible:bg-white focus-visible:ring-blue-500/30"
+                    value={grade.name}
+                    placeholder="Grade (e.g. A+)"
+                    onChange={(e) => {
+                      const next = [...settings.grades];
+                      next[index] = { ...grade, name: e.target.value };
+                      setGrades(next);
+                    }}
+                  />
+                </div>
 
-                <Input
-                  type="number"
-                  min={0}
-                  max={100}
-                  className="text-center font-medium"
-                  value={grade.min}
-                  onChange={(e) => {
-                    const next = [...settings.grades];
-                    next[index] = { ...grade, min: Number(e.target.value) };
-                    setGrades(next);
-                  }}
-                />
+                <div>
+                  <span className="mb-1 block text-[10px] font-bold uppercase text-slate-400 sm:hidden">
+                    Min %
+                  </span>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    className="h-9 rounded-lg border-slate-200 bg-slate-50/40 text-center font-semibold text-slate-700 focus-visible:bg-white focus-visible:ring-blue-500/30"
+                    value={grade.min}
+                    onChange={(e) => {
+                      const next = [...settings.grades];
+                      next[index] = { ...grade, min: Number(e.target.value) };
+                      setGrades(next);
+                    }}
+                  />
+                </div>
 
-                <Input
-                  type="number"
-                  min={0}
-                  max={100}
-                  className="text-center font-medium"
-                  value={grade.max}
-                  onChange={(e) => {
-                    const next = [...settings.grades];
-                    next[index] = { ...grade, max: Number(e.target.value) };
-                    setGrades(next);
-                  }}
-                />
+                <div>
+                  <span className="mb-1 block text-[10px] font-bold uppercase text-slate-400 sm:hidden">
+                    Max %
+                  </span>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    className="h-9 rounded-lg border-slate-200 bg-slate-50/40 text-center font-semibold text-slate-700 focus-visible:bg-white focus-visible:ring-blue-500/30"
+                    value={grade.max}
+                    onChange={(e) => {
+                      const next = [...settings.grades];
+                      next[index] = { ...grade, max: Number(e.target.value) };
+                      setGrades(next);
+                    }}
+                  />
+                </div>
 
                 <div className="col-span-2 flex justify-end sm:col-span-1">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                    className="size-8 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600"
                     aria-label="Remove grade"
                     onClick={() => setGrades(settings.grades.filter((g) => g.id !== grade.id))}
                   >
@@ -411,12 +452,13 @@ function SettingsPage() {
 
           <div className="mt-4">
             <Button
-              variant="secondary"
+              type="button"
+              variant="outline"
               size="sm"
               onClick={() =>
                 setGrades([...settings.grades, { id: uid(), name: "", min: 0, max: 0 }])
               }
-              className="gap-1.5 text-xs"
+              className="gap-1.5 rounded-xl border-emerald-200 bg-emerald-50/80 text-xs font-bold text-emerald-900 shadow-2xs hover:bg-emerald-100"
             >
               <Plus className="size-3.5" /> Add Grade Level
             </Button>
@@ -424,18 +466,18 @@ function SettingsPage() {
         </section>
 
         {/* Default Subjects for New Students */}
-        <section className="rounded-lg border border-border bg-card p-6 shadow-xs">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border">
-            <div className="flex items-center gap-2.5">
-              <div className="flex size-8 items-center justify-center rounded-md bg-neutral-100 text-neutral-800">
-                <PenTool className="size-4" />
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-violet-800">
+                <PenTool className="size-5" />
               </div>
               <div>
-                <h2 className="text-sm font-bold uppercase tracking-wider text-neutral-900">
+                <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
                   Default Subjects &amp; Total Marks
                 </h2>
-                <p className="text-xs text-muted-foreground">
-                  Pre-populated when creating any new student. Reference total: 495 marks.
+                <p className="text-xs text-slate-500">
+                  Pre-populated when creating any new student.
                 </p>
               </div>
             </div>
@@ -444,23 +486,26 @@ function SettingsPage() {
               variant="outline"
               size="sm"
               onClick={handleResetSubjects}
-              className="text-xs gap-1.5"
+              className="gap-1.5 rounded-xl border-slate-300 text-xs font-semibold text-slate-600 shadow-2xs hover:bg-slate-100"
             >
-              <RotateCcw className="size-3" /> Reset Marks
+              <RotateCcw className="size-3" /> Reset Standard Marks
             </Button>
           </div>
 
           <div className="mt-5 space-y-2">
-            <div className="hidden grid-cols-[1fr_8rem_3rem] gap-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:grid">
+            <div className="hidden grid-cols-[1fr_8rem_3rem] items-center gap-3 rounded-xl bg-slate-100/80 px-3.5 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 sm:grid">
               <span>Subject Name</span>
               <span className="text-center">Total Marks</span>
               <span className="text-right">Action</span>
             </div>
 
             {settings.defaultSubjects.map((subject, index) => (
-              <div key={index} className="grid grid-cols-[1fr_8rem_3rem] gap-2 items-center">
+              <div
+                key={index}
+                className="grid grid-cols-[1fr_8rem_3rem] items-center gap-2.5 rounded-xl border border-slate-200/70 bg-white px-3 py-2 shadow-2xs transition-all hover:border-slate-300"
+              >
                 <Input
-                  className="font-medium text-neutral-900"
+                  className="h-9 rounded-lg border-slate-200 bg-slate-50/40 text-sm font-semibold text-slate-900 focus-visible:bg-white focus-visible:ring-blue-500/30"
                   value={subject.name}
                   placeholder="Subject name"
                   onChange={(e) => {
@@ -473,7 +518,7 @@ function SettingsPage() {
                 <Input
                   type="number"
                   min={1}
-                  className="text-center font-bold text-neutral-900"
+                  className="h-9 rounded-lg border-slate-200 bg-slate-50/40 text-center font-black text-slate-900 focus-visible:bg-white focus-visible:ring-blue-500/30"
                   value={subject.totalMarks}
                   onChange={(e) => {
                     const next = [...settings.defaultSubjects];
@@ -486,7 +531,7 @@ function SettingsPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                    className="size-8 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600"
                     aria-label="Remove default subject"
                     onClick={() =>
                       updateSettings({
@@ -501,26 +546,24 @@ function SettingsPage() {
             ))}
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
             <Button
-              variant="secondary"
+              type="button"
+              variant="outline"
               size="sm"
               onClick={() =>
                 updateSettings({
                   defaultSubjects: [...settings.defaultSubjects, { name: "", totalMarks: 50 }],
                 })
               }
-              className="gap-1.5 text-xs"
+              className="gap-1.5 rounded-xl border-violet-200 bg-violet-50/80 text-xs font-bold text-violet-900 shadow-2xs hover:bg-violet-100"
             >
               <Plus className="size-3.5" /> Add Default Subject
             </Button>
 
-            <div className="text-xs font-bold text-neutral-800">
-              Default Grand Total:{" "}
-              <span className="text-primary font-black">
-                {settings.defaultSubjects.reduce((sum, s) => sum + (Number(s.totalMarks) || 0), 0)}{" "}
-                Marks
-              </span>
+            <div className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3.5 py-1.5 text-xs font-bold text-slate-700">
+              <span>Default Grand Total:</span>
+              <span className="font-black text-blue-900">{defaultTotalMarks} Marks</span>
             </div>
           </div>
         </section>
@@ -543,18 +586,18 @@ function ImageUploadField({
   onClear: () => void;
 }) {
   return (
-    <div className="rounded-lg border border-border p-3.5 bg-neutral-50/50 flex flex-col justify-between">
+    <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-slate-50/60 p-4 shadow-2xs">
       <div>
-        <Label className="text-xs font-bold text-neutral-900 block">{label}</Label>
-        {helpText ? <p className="text-[11px] text-muted-foreground mt-0.5">{helpText}</p> : null}
+        <Label className="block text-xs font-bold text-slate-900">{label}</Label>
+        {helpText ? <p className="mt-0.5 text-[11px] text-slate-500">{helpText}</p> : null}
 
-        <div className="mt-3 flex h-20 w-full items-center justify-center rounded-md border border-dashed border-neutral-300 bg-white p-1">
+        <div className="mt-3 flex h-24 w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-slate-300 bg-white p-2">
           {value ? (
-            <img src={value} alt={label} className="h-full max-h-18 object-contain" />
+            <img src={value} alt={label} className="h-full max-h-20 w-auto object-contain" />
           ) : (
-            <div className="flex flex-col items-center gap-1 text-muted-foreground">
-              <ImageIcon className="size-5 opacity-40" />
-              <span className="text-[10px]">No image uploaded</span>
+            <div className="flex flex-col items-center gap-1 text-slate-400">
+              <ImageIcon className="size-6 opacity-40" />
+              <span className="text-[11px] font-medium">No image uploaded</span>
             </div>
           )}
         </div>
@@ -568,7 +611,7 @@ function ImageUploadField({
             className="hidden"
             onChange={(e) => onFile(e.target.files?.[0])}
           />
-          <span className="inline-flex h-8 w-full cursor-pointer items-center justify-center rounded-md border border-neutral-300 bg-white px-2 text-xs font-semibold text-neutral-800 shadow-2xs hover:bg-neutral-50">
+          <span className="inline-flex h-9 w-full cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 active:scale-98 transition-transform">
             {value ? "Change File" : "Upload File"}
           </span>
         </label>
@@ -579,7 +622,7 @@ function ImageUploadField({
             variant="ghost"
             size="sm"
             onClick={onClear}
-            className="h-8 px-2 text-xs text-destructive hover:bg-destructive/10"
+            className="h-9 rounded-xl px-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50"
           >
             Remove
           </Button>
