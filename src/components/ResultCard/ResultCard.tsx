@@ -1,9 +1,23 @@
-import { forwardRef } from "react";
+import { forwardRef, useRef } from "react";
 import type { Settings, Student, Subject } from "@/types/result";
 import { calculateTotals } from "@/utils/calculations";
 import { GradeText, OrdinalText } from "@/utils/raisedText";
 import { splitSummerWork } from "@/utils/summerWork";
 import { cn } from "@/lib/utils";
+import {
+  CONTENT_PX_MM,
+  CONTENT_PY_MM,
+  FIT_LEVERS,
+  frameInsetMm,
+  innerFrameInsetMm,
+  normalizePrinterMarginMm,
+  padXMm,
+  padYMm,
+  PAGE_HEIGHT_MM,
+  PAGE_WIDTH_MM,
+  type FitLever,
+} from "@/lib/cardGeometry";
+import { CARD_CONTENT_ATTR, useCardFit, type CardFitState } from "@/hooks/useCardFit";
 
 export interface ResultCardProps {
   student: Student;
@@ -11,6 +25,13 @@ export interface ResultCardProps {
   settings: Settings;
   includeSummerWork?: boolean;
   className?: string;
+  /**
+   * Notified when the card is too tall for the sheet even after the fit engine
+   * has taken back every gap it is allowed to. Only the editor subscribes, to
+   * show a banner: the print and export paths have no way to shrink a card, so
+   * telling the user *before* they print is the only thing that helps.
+   */
+  onFitStateChange?: ((state: CardFitState) => void) | undefined;
 }
 
 function DefaultSchoolEmblem() {
@@ -56,6 +77,26 @@ function DefaultSchoolEmblem() {
 }
 
 /**
+ * The fit-lever CSS custom properties at their defaults, as a React style object.
+ *
+ * These are the values the card has always used, so a card that fits renders
+ * exactly as it did before the fit engine existed. Declaring them on the element
+ * (rather than only in the engine) means an unmeasured card - a server render, or
+ * the first paint before the layout effect runs - is already correct.
+ *
+ * `--card-content-px` is not a lever: the horizontal padding is never reduced,
+ * because narrowing the content box would rewrap text and change what the card
+ * says.
+ */
+function leverDefaults(): Record<string, string> {
+  const vars: Record<string, string> = { "--card-content-px": `${CONTENT_PX_MM}mm` };
+  for (const lever of FIT_LEVERS as readonly FitLever[]) {
+    vars[lever.name] = lever.defaultValue;
+  }
+  return vars;
+}
+
+/**
  * Pure presentational A4 progress report.
  * Conforms exactly to the 10th Class Progress Report format.
  * Contains no app controls so it can be safely used for single printing,
@@ -65,9 +106,25 @@ function DefaultSchoolEmblem() {
  * to guarantee that html2canvas rasterizes characters without word overlap.
  */
 export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function ResultCard(
-  { student, subjects: propSubjects, settings, includeSummerWork = false, className = "" },
-  ref,
+  {
+    student,
+    subjects: propSubjects,
+    settings,
+    includeSummerWork = false,
+    className = "",
+    onFitStateChange,
+  },
+  forwardedRef,
 ) {
+  // The fit engine needs a node of its own, and the exported component still has
+  // to hand its ref to the caller, so both are tracked here.
+  const measuredRef = useRef<HTMLDivElement | null>(null);
+  const setMeasured = (node: HTMLDivElement | null) => {
+    measuredRef.current = node;
+    if (typeof forwardedRef === "function") forwardedRef(node);
+    else if (forwardedRef) forwardedRef.current = node;
+  };
+
   const subjects = propSubjects ?? student.subjects;
   const { academic, summerWork } = splitSummerWork(subjects);
   const totals = calculateTotals(subjects, settings.grades, includeSummerWork);
@@ -85,26 +142,70 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
   const showPhoto = student.showPhoto ?? false;
   const photoDataUrl = student.photoDataUrl ?? null;
 
+  /*
+   * Sheet layout. The printer margin is the only input: the frame moves with it
+   * so it always lands outside the printer's unprintable band, and the root
+   * padding follows so the content never crosses the frame. See cardGeometry.ts.
+   */
+  const printerMarginMm = normalizePrinterMarginMm(settings.printerMarginMm);
+  const padY = padYMm(printerMarginMm);
+  const padX = padXMm(printerMarginMm);
+
+  useCardFit(measuredRef, {
+    layoutKey: printerMarginMm,
+    rowCount: academic.length + (summerWork ? 1 : 0) + 2,
+    onStateChange: onFitStateChange,
+  });
+
   return (
     <div
-      ref={ref}
+      ref={setMeasured}
       data-result-card
       className={`a4-page relative flex flex-col justify-between bg-white text-neutral-950 font-doc leading-normal ${className}`}
       style={{
-        width: "210mm",
-        minHeight: "297mm",
-        padding: "10mm 12mm",
+        width: `${PAGE_WIDTH_MM}mm`,
+        minHeight: `${PAGE_HEIGHT_MM}mm`,
+        padding: `${padY}mm ${padX}mm`,
         boxSizing: "border-box",
         letterSpacing: "0px",
         wordSpacing: "normal",
+        /*
+         * Fit-lever defaults, owned by React so a card that has not been
+         * measured yet (server render, pre-hydration) is still laid out
+         * correctly. The fit engine overwrites these same properties on the
+         * node; React only ever rewrites the style keys it knows about, so the
+         * two cannot fight over them.
+         */
+        ...leverDefaults(),
       }}
     >
-      {/* Outer Decorative Border Frame */}
-      <div className="pointer-events-none absolute inset-[7mm] border-[2px] border-neutral-900" />
-      <div className="pointer-events-none absolute inset-[8.5mm] border-[0.75px] border-neutral-900" />
+      {/*
+        Outer Decorative Border Frame
+        Offsets are relative to the card's padding box, i.e. to the edge of the
+        paper, so the lowest ink on the sheet sits `printerMarginMm` above the
+        bottom edge. Both lines are absolute, so moving them costs the content
+        layout nothing.
+      */}
+      <div
+        className="pointer-events-none absolute border-[2px] border-neutral-900"
+        style={{ inset: `${frameInsetMm(printerMarginMm)}mm` }}
+      />
+      <div
+        className="pointer-events-none absolute border-[0.75px] border-neutral-900"
+        style={{ inset: `${innerFrameInsetMm(printerMarginMm)}mm` }}
+      />
 
-      {/* Main Document Content inside inner frame */}
-      <div className="relative z-10 flex h-full flex-col justify-between px-[5mm] py-[4mm]">
+      {/*
+        Main Document Content inside inner frame
+        The gaps are CSS variables rather than fixed classes so the fit engine
+        can hand height back when the content is too tall for the sheet. Their
+        defaults are the values this card has always used.
+      */}
+      <div
+        {...{ [CARD_CONTENT_ATTR]: "" }}
+        className="relative z-10 flex h-full flex-col justify-between"
+        style={{ padding: "var(--card-content-pad) var(--card-content-px)" }}
+      >
         {/* Header Section */}
         <header className="text-center">
           <div className="flex items-center justify-center gap-4">
@@ -129,7 +230,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
             </div>
           </div>
 
-          <div className="my-2 flex items-center justify-center">
+          <div className="my-[var(--card-title-gap)] flex items-center justify-center">
             <div className="h-[1.5px] w-full max-w-[95%] bg-neutral-900" />
           </div>
 
@@ -193,7 +294,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
         </header>
 
         {/* Student Information Section - Only Name and Class */}
-        <section className="mt-4 rounded-none border border-neutral-900 bg-neutral-50/50 px-4 py-2.5 text-[15px]">
+        <section className="mt-[var(--card-section-gap)] rounded-none border border-neutral-900 bg-neutral-50/50 px-4 py-2.5 text-[15px]">
           <div className="grid grid-cols-2 gap-x-8 font-medium">
             <div className="flex items-baseline gap-2">
               <span className="font-bold text-neutral-900">Name:</span>
@@ -215,20 +316,20 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
         </section>
 
         {/* Subject Marks Table */}
-        <section className="mt-4">
+        <section className="mt-[var(--card-section-gap)]">
           <table className="w-full border-collapse border border-neutral-900 text-[17px]">
             <thead>
               <tr className="bg-neutral-100/80 text-neutral-900">
-                <th className="w-[10%] border border-neutral-900 px-2 py-1.5 text-center text-[14.5px] font-bold">
+                <th className="w-[10%] border border-neutral-900 px-2 py-[var(--card-row-pad)] text-center text-[14.5px] font-bold">
                   Sr. No.
                 </th>
-                <th className="border border-neutral-900 px-3 py-1.5 text-center font-bold">
+                <th className="border border-neutral-900 px-3 py-[var(--card-row-pad)] text-center font-bold">
                   Subject
                 </th>
-                <th className="w-[24%] border border-neutral-900 px-3 py-1.5 text-center font-bold">
+                <th className="w-[24%] border border-neutral-900 px-3 py-[var(--card-row-pad)] text-center font-bold">
                   Total Marks
                 </th>
-                <th className="w-[24%] border border-neutral-900 px-3 py-1.5 text-center font-bold">
+                <th className="w-[24%] border border-neutral-900 px-3 py-[var(--card-row-pad)] text-center font-bold">
                   Obtained Marks
                 </th>
               </tr>
@@ -247,16 +348,16 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                 <>
                   {academic.map((sub, index) => (
                     <tr key={sub.id} className={index % 2 === 1 ? "bg-neutral-50/40" : "bg-white"}>
-                      <td className="border border-neutral-900 px-2 py-1.5 text-center font-semibold text-neutral-800">
+                      <td className="border border-neutral-900 px-2 py-[var(--card-row-pad)] text-center font-semibold text-neutral-800">
                         {index + 1}
                       </td>
-                      <td className="border border-neutral-900 px-3 py-1.5 text-left font-bold text-neutral-900">
+                      <td className="border border-neutral-900 px-3 py-[var(--card-row-pad)] text-left font-bold text-neutral-900">
                         {sub.name || "â€”"}
                       </td>
-                      <td className="border border-neutral-900 px-3 py-1.5 text-center font-semibold text-neutral-900">
+                      <td className="border border-neutral-900 px-3 py-[var(--card-row-pad)] text-center font-semibold text-neutral-900">
                         {sub.totalMarks}
                       </td>
-                      <td className="border border-neutral-900 px-3 py-1.5 text-center font-bold text-neutral-950">
+                      <td className="border border-neutral-900 px-3 py-[var(--card-row-pad)] text-center font-bold text-neutral-950">
                         {sub.obtainedMarks}
                       </td>
                     </tr>
@@ -269,7 +370,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                     >
                       <td
                         className={cn(
-                          "border border-neutral-900 px-2 py-1.5 text-center font-semibold text-neutral-800",
+                          "border border-neutral-900 px-2 py-[var(--card-row-pad)] text-center font-semibold text-neutral-800",
                           summerDimColor,
                         )}
                       >
@@ -277,7 +378,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                       </td>
                       <td
                         className={cn(
-                          "border border-neutral-900 px-3 py-1.5 text-left font-bold text-neutral-900",
+                          "border border-neutral-900 px-3 py-[var(--card-row-pad)] text-left font-bold text-neutral-900",
                           summerDimColor,
                         )}
                       >
@@ -285,7 +386,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                       </td>
                       <td
                         className={cn(
-                          "border border-neutral-900 px-3 py-1.5 text-center font-semibold text-neutral-900",
+                          "border border-neutral-900 px-3 py-[var(--card-row-pad)] text-center font-semibold text-neutral-900",
                           summerDimColor,
                         )}
                       >
@@ -293,7 +394,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                       </td>
                       <td
                         className={cn(
-                          "border border-neutral-900 px-3 py-1.5 text-center font-bold text-neutral-950",
+                          "border border-neutral-900 px-3 py-[var(--card-row-pad)] text-center font-bold text-neutral-950",
                           summerDimColor,
                         )}
                       >
@@ -308,14 +409,14 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               <tr className="bg-neutral-100/90 font-bold text-neutral-900">
                 <td
                   colSpan={2}
-                  className="border border-neutral-900 px-3 py-1.5 text-right uppercase"
+                  className="border border-neutral-900 px-3 py-[var(--card-row-pad)] text-right uppercase"
                 >
                   Grand Total
                 </td>
-                <td className="border border-neutral-900 px-3 py-1.5 text-center text-[18px]">
+                <td className="border border-neutral-900 px-3 py-[var(--card-row-pad)] text-center text-[18px]">
                   {totals.grandTotal}
                 </td>
-                <td className="border border-neutral-900 px-3 py-1.5 text-center text-[18px] font-black">
+                <td className="border border-neutral-900 px-3 py-[var(--card-row-pad)] text-center text-[18px] font-black">
                   {totals.obtainedTotal}
                 </td>
               </tr>
@@ -324,7 +425,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
         </section>
 
         {/* Academic Performance Summary Box */}
-        <section className="mt-4">
+        <section className="mt-[var(--card-section-gap)]">
           <div className="grid grid-cols-4 border-2 border-neutral-900 text-center divide-x-2 divide-neutral-900 bg-white">
             <div className="p-2">
               <span className="block text-[11.5px] uppercase text-neutral-700 font-sans font-bold">
@@ -362,7 +463,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
         </section>
 
         {/* Remarks Section */}
-        <section className="mt-4 rounded-none border border-neutral-900 p-2.5 bg-neutral-50/30">
+        <section className="mt-[var(--card-section-gap)] rounded-none border border-neutral-900 p-2.5 bg-neutral-50/30">
           <div className="flex items-start gap-2">
             <span className="font-bold text-[14.5px] text-neutral-900 uppercase whitespace-nowrap">
               Remarks:
@@ -374,7 +475,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
         </section>
 
         {/* Signatures Section */}
-        <section className="mt-8 pt-6">
+        <section className="mt-[var(--card-sig-gap)] pt-[var(--card-sig-pad)]">
           <div className="grid grid-cols-2 gap-12 text-center text-[14.5px]">
             {/* Teacher's Signature */}
             <div className="flex flex-col items-center justify-end">
