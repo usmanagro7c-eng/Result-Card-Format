@@ -70,24 +70,30 @@ export function SubjectTable({
   };
 
   return (
-    <div className="space-y-3">
-      <div className="hidden grid-cols-[1fr_6rem_6rem_5.5rem] gap-2 px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
+    <div className="space-y-3.5">
+      <div className="hidden grid-cols-[1fr_6.5rem_6.5rem_6rem] items-center gap-2.5 rounded-xl bg-slate-100/80 px-3.5 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 sm:grid">
         <span>Subject</span>
         <span className="text-center">Total Marks</span>
-        <span className="text-center">Obtained Marks</span>
+        <span className="text-center">Obtained</span>
         <span className="text-right">Actions</span>
       </div>
 
       {subjects.length === 0 ? (
-        <div className="space-y-3 rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          <p>No subjects added yet.</p>
-          <Button type="button" variant="outline" size="sm" onClick={resetToStandard}>
+        <div className="space-y-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center text-sm text-slate-500">
+          <p className="font-medium">No subjects added yet.</p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={resetToStandard}
+            className="rounded-xl border-slate-300 font-semibold"
+          >
             <RotateCcw className="size-3.5" /> Load Class Subjects
           </Button>
         </div>
       ) : null}
 
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {subjects.map((subject, index) => {
           const hasError = !!errors[subject.id];
           const isOverLimit = subject.obtainedMarks > subject.totalMarks;
@@ -96,16 +102,16 @@ export function SubjectTable({
             <div
               key={subject.id}
               className={cn(
-                "rounded-md border p-2 transition-colors sm:border-0 sm:p-0",
-                hasError ? "bg-destructive/5 sm:bg-transparent" : "",
+                "rounded-2xl transition-all",
+                hasError ? "bg-rose-50/40 p-2 sm:p-0" : "",
               )}
             >
               {/* MOBILE: stacked card — name, then Total | Obtained(steppers), then actions */}
-              <div className="space-y-2 sm:hidden">
+              <div className="space-y-2.5 rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs sm:hidden">
                 <Input
                   className={cn(
-                    "h-11",
-                    !subject.name.trim() ? "border-destructive focus-visible:ring-destructive" : "",
+                    "h-11 rounded-xl bg-slate-50/50 font-medium placeholder:text-slate-400 focus-visible:bg-white focus-visible:ring-blue-500/30",
+                    !subject.name.trim() ? "border-rose-400 focus-visible:ring-rose-300" : "border-slate-200",
                   )}
                   value={subject.name}
                   placeholder="Subject name (e.g. English)"
@@ -113,9 +119,9 @@ export function SubjectTable({
                   onChange={(e) => patch(subject.id, { name: e.target.value })}
                 />
 
-                <div className="grid grid-cols-[5.5rem_1fr] items-end gap-2">
+                <div className="grid grid-cols-[5.5rem_1fr] items-end gap-2.5">
                   <div>
-                    <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       Total
                     </span>
                     <Input
@@ -124,10 +130,10 @@ export function SubjectTable({
                       enterKeyHint="next"
                       min={1}
                       className={cn(
-                        "h-11 text-center font-medium",
+                        "h-11 rounded-xl bg-slate-50/50 text-center font-bold focus-visible:bg-white focus-visible:ring-blue-500/30",
                         subject.totalMarks <= 0
-                          ? "border-destructive focus-visible:ring-destructive"
-                          : "",
+                          ? "border-rose-400 focus-visible:ring-rose-300"
+                          : "border-slate-200",
                       )}
                       value={subject.totalMarks === 0 ? "" : subject.totalMarks}
                       placeholder="—"
@@ -141,7 +147,7 @@ export function SubjectTable({
                   </div>
 
                   <div>
-                    <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       Obtained
                     </span>
                     <div className="flex items-center gap-1.5">
@@ -149,7 +155,7 @@ export function SubjectTable({
                         label={`Decrease ${subject.name || "subject"} marks`}
                         onStep={() => stepObtained(subject, -1)}
                         disabled={subject.obtainedMarks <= 0}
-                        className="h-11 w-11 shrink-0 border-slate-200 text-slate-600"
+                        className="h-11 w-11 shrink-0 rounded-xl border-slate-200 text-slate-600 shadow-xs active:bg-slate-100"
                       >
                         <Minus className="size-4" />
                       </HoldButton>
@@ -160,10 +166,10 @@ export function SubjectTable({
                         enterKeyHint="next"
                         min={0}
                         className={cn(
-                          "h-11 min-w-0 flex-1 text-center text-base font-bold",
+                          "h-11 min-w-0 flex-1 rounded-xl bg-slate-50/50 text-center text-base font-black focus-visible:bg-white focus-visible:ring-blue-500/30",
                           isOverLimit || subject.obtainedMarks < 0
-                            ? "border-destructive text-destructive focus-visible:ring-destructive"
-                            : "",
+                            ? "border-rose-400 text-rose-600 focus-visible:ring-rose-300"
+                            : "border-slate-200 text-slate-900",
                         )}
                         value={subject.obtainedMarks === 0 ? "" : subject.obtainedMarks}
                         placeholder="—"
@@ -179,7 +185,7 @@ export function SubjectTable({
                         label={`Increase ${subject.name || "subject"} marks`}
                         onStep={() => stepObtained(subject, 1)}
                         disabled={subject.obtainedMarks >= subject.totalMarks}
-                        className="h-11 w-11 shrink-0 border-slate-200 text-slate-600"
+                        className="h-11 w-11 shrink-0 rounded-xl border-slate-200 text-slate-600 shadow-xs active:bg-slate-100"
                       >
                         <Plus className="size-4" />
                       </HoldButton>
@@ -187,12 +193,12 @@ export function SubjectTable({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-1.5 border-t border-slate-100 pt-2">
+                <div className="flex items-center justify-end gap-1 border-t border-slate-100 pt-2.5">
                   <Button
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="size-11"
+                    className="size-10 rounded-xl border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800"
                     disabled={index === 0}
                     title="Move up"
                     aria-label="Move up"
@@ -204,7 +210,7 @@ export function SubjectTable({
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="size-11"
+                    className="size-10 rounded-xl border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800"
                     disabled={index === subjects.length - 1}
                     title="Move down"
                     aria-label="Move down"
@@ -216,7 +222,7 @@ export function SubjectTable({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="size-11 text-destructive hover:bg-destructive/10"
+                    className="size-10 rounded-xl text-rose-500 hover:bg-rose-50 hover:text-rose-700"
                     title="Remove subject"
                     aria-label="Remove subject"
                     onClick={() => onChange(subjects.filter((s) => s.id !== subject.id))}
@@ -226,11 +232,12 @@ export function SubjectTable({
                 </div>
               </div>
 
-              {/* DESKTOP: single compact row */}
-              <div className="hidden grid-cols-[1fr_6rem_6rem_5.5rem] items-center gap-2 sm:grid">
+              {/* DESKTOP: single row with modern card styling */}
+              <div className="hidden grid-cols-[1fr_6.5rem_6.5rem_6rem] items-center gap-2.5 rounded-xl border border-slate-200/70 bg-white px-3 py-2 shadow-2xs transition-all hover:border-slate-300 sm:grid">
                 <Input
                   className={cn(
-                    !subject.name.trim() ? "border-destructive focus-visible:ring-destructive" : "",
+                    "h-9 rounded-lg border-slate-200 bg-slate-50/40 text-sm font-medium focus-visible:bg-white focus-visible:ring-blue-500/30",
+                    !subject.name.trim() ? "border-rose-400 focus-visible:ring-rose-300" : "",
                   )}
                   value={subject.name}
                   placeholder="Subject name (e.g. English)"
@@ -242,9 +249,9 @@ export function SubjectTable({
                   inputMode="numeric"
                   min={1}
                   className={cn(
-                    "text-center font-medium",
+                    "h-9 rounded-lg border-slate-200 bg-slate-50/40 text-center font-bold focus-visible:bg-white focus-visible:ring-blue-500/30",
                     subject.totalMarks <= 0
-                      ? "border-destructive focus-visible:ring-destructive"
+                      ? "border-rose-400 focus-visible:ring-rose-300"
                       : "",
                   )}
                   value={subject.totalMarks === 0 ? "" : subject.totalMarks}
@@ -261,10 +268,10 @@ export function SubjectTable({
                   inputMode="numeric"
                   min={0}
                   className={cn(
-                    "text-center font-bold",
+                    "h-9 rounded-lg border-slate-200 bg-slate-50/40 text-center font-black focus-visible:bg-white focus-visible:ring-blue-500/30",
                     isOverLimit || subject.obtainedMarks < 0
-                      ? "border-destructive text-destructive focus-visible:ring-destructive"
-                      : "",
+                      ? "border-rose-400 text-rose-600 focus-visible:ring-rose-300"
+                      : "text-slate-900",
                   )}
                   value={subject.obtainedMarks === 0 ? "" : subject.obtainedMarks}
                   placeholder="Obtained"
@@ -278,9 +285,9 @@ export function SubjectTable({
                 <div className="flex justify-end gap-1">
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="icon"
-                    className="size-8"
+                    className="size-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                     disabled={index === 0}
                     title="Move up"
                     aria-label="Move up"
@@ -290,9 +297,9 @@ export function SubjectTable({
                   </Button>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="icon"
-                    className="size-8"
+                    className="size-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                     disabled={index === subjects.length - 1}
                     title="Move down"
                     aria-label="Move down"
@@ -304,7 +311,7 @@ export function SubjectTable({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="size-8 text-destructive hover:bg-destructive/10"
+                    className="size-8 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600"
                     title="Remove subject"
                     aria-label="Remove subject"
                     onClick={() => onChange(subjects.filter((s) => s.id !== subject.id))}
@@ -314,14 +321,10 @@ export function SubjectTable({
                 </div>
               </div>
 
-              {/*
-                Sits after both the mobile and desktop blocks, so one insertion
-                covers both layouts. The switch controls only whether these
-                marks feed Grand Total — the row itself is always editable.
-              */}
+              {/* Summer work toggle row */}
               {subject.id === summerWork?.id ? (
-                <div className="mt-2 flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-                  <span className="text-xs font-medium text-slate-600">
+                <div className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-2.5">
+                  <span className="text-xs font-semibold text-amber-900">
                     Add these marks to Grand Total
                   </span>
                   <Switch
@@ -333,7 +336,7 @@ export function SubjectTable({
               ) : null}
 
               {errors[subject.id] ? (
-                <p className="mt-1 px-1 text-xs font-medium text-destructive">
+                <p className="mt-1 px-1 text-xs font-semibold text-rose-500">
                   {errors[subject.id]}
                 </p>
               ) : null}
@@ -342,13 +345,13 @@ export function SubjectTable({
         })}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
         <div className="flex flex-wrap items-center gap-2">
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
             size="sm"
-            className="min-h-11 sm:min-h-8"
+            className="min-h-10 gap-1.5 rounded-xl border-blue-200 bg-blue-50/80 font-bold text-blue-900 shadow-2xs hover:bg-blue-100 sm:min-h-8"
             onClick={() =>
               onChange([...subjects, { id: uid(), name: "", totalMarks: 50, obtainedMarks: 0 }])
             }
@@ -356,14 +359,12 @@ export function SubjectTable({
             <Plus className="size-4" /> Add Subject
           </Button>
 
-          {/* Hidden once added: only the first row is the dedicated, toggleable
-              one, so a second would read as a normal subject. */}
           {!summerWork ? (
             <Button
               type="button"
-              variant="secondary"
+              variant="outline"
               size="sm"
-              className="min-h-11 sm:min-h-8"
+              className="min-h-10 gap-1.5 rounded-xl border-amber-200 bg-amber-50/80 font-bold text-amber-900 shadow-2xs hover:bg-amber-100 sm:min-h-8"
               onClick={addSummerWork}
             >
               <Sun className="size-4" /> Add Summer Work
@@ -376,7 +377,7 @@ export function SubjectTable({
             type="button"
             variant="ghost"
             size="sm"
-            className="min-h-11 text-xs text-muted-foreground sm:min-h-8"
+            className="min-h-10 text-xs font-medium text-slate-400 hover:text-slate-700 sm:min-h-8"
             onClick={resetToStandard}
           >
             <RotateCcw className="size-3.5" /> Reset to Class Standard

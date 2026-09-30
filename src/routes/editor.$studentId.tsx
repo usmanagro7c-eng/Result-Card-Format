@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
+  BookOpen,
   ChevronLeft,
   ChevronRight,
   Eye,
@@ -13,6 +14,7 @@ import {
   Trash2,
   TriangleAlert,
   Upload,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -117,8 +119,12 @@ function ResultEditor() {
 
   if (!ready) {
     return (
-      <div className="px-4 py-24 text-center text-sm text-muted-foreground">
-        Loading student result card...
+      <div className="flex flex-col items-center justify-center gap-4 px-4 py-32 text-center">
+        <div className="relative size-12">
+          <div className="size-12 rounded-full border-4 border-slate-100" />
+          <div className="absolute inset-0 size-12 rounded-full border-4 border-transparent border-t-blue-600 animate-spin" />
+        </div>
+        <p className="text-sm font-medium text-slate-500">Loading result card...</p>
       </div>
     );
   }
@@ -180,24 +186,24 @@ function ResultEditor() {
   };
 
   return (
-    <div className="print-shell mx-auto w-full max-w-7xl px-4 pb-12 pt-4 sm:px-6">
+    <div className="print-shell mx-auto w-full max-w-7xl px-4 pb-24 pt-4 sm:px-6 md:pb-12">
       {/* Top Action Bar */}
-      <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="no-print mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1">
           <Button
             asChild
             variant="ghost"
             size="sm"
-            className="min-h-11 gap-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 sm:min-h-9"
+            className="min-h-11 gap-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 sm:min-h-9 font-semibold"
           >
             <Link to="/">
-              <ArrowLeft className="size-4" /> Back
+              <ArrowLeft className="size-4" /> Students
             </Link>
           </Button>
 
           {totalStudents > 1 && currentIndex >= 0 ? (
             <div className="flex items-center gap-0.5 border-l border-slate-200 pl-2">
-              <span className="mr-0.5 hidden text-xs text-slate-400 min-[380px]:inline">
+              <span className="mr-1 hidden text-xs font-medium text-slate-400 min-[380px]:inline">
                 {currentIndex + 1} / {totalStudents}
               </span>
               <button
@@ -229,21 +235,19 @@ function ResultEditor() {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="hidden items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs text-emerald-600 md:flex">
+          {/* Auto-save badge — visible on all screen sizes */}
+          <div className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700">
             <FileCheck2 className="size-3.5" />
-            <span>Auto-saved</span>
+            <span className="hidden sm:inline">Auto-saved</span>
           </div>
 
-          {/* On mobile the sticky bottom bar owns both actions: window.print()
-              is a no-op in Android Chrome, and a duplicate PDF button here
-              would just repeat the one already pinned to the bottom. */}
           {!isMobile && (
             <>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={printDocument}
-                className="min-h-9 gap-1.5 border-slate-300 text-sm text-slate-700 hover:bg-slate-100"
+                className="min-h-9 gap-1.5 border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100"
               >
                 <Printer className="size-4" />
                 Print
@@ -253,7 +257,7 @@ function ResultEditor() {
                 size="sm"
                 onClick={handlePdf}
                 disabled={busy || hasErrors}
-                className="min-h-9 gap-1.5 bg-slate-900 text-sm text-white shadow-sm hover:bg-slate-800"
+                className="min-h-9 gap-1.5 bg-blue-900 text-sm font-semibold text-white shadow-sm hover:bg-blue-800 disabled:opacity-60"
               >
                 <FileDown className="size-4" />
                 {busy ? "Preparing..." : "Download PDF"}
@@ -263,38 +267,32 @@ function ResultEditor() {
         </div>
       </div>
 
-      {/* Autosave actually failed, so the "Auto-saved" badge above is lying.
-          Without this the teacher would only discover it after leaving the page. */}
+      {/* Storage Full Warning */}
       {storageFull ? (
-        <div className="no-print mb-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-          <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+        <div className="no-print mb-4 flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0 text-rose-500" />
           <p className="leading-snug">
-            <span className="font-semibold">
-              Browser storage is full — changes are not being saved.
-            </span>{" "}
+            <span className="font-semibold">Browser storage is full — changes are not being saved.</span>{" "}
             Remove a few student photos or delete a student to free space, then reload this page.
           </p>
         </div>
       ) : null}
 
-      {/* The card's own fit engine ran out of room to give back. Printing now
-          would clip the bottom, so say so rather than shipping a broken sheet. */}
+      {/* Cannot-fit Warning */}
       {fitState.cannotFit ? (
-        <div className="no-print mb-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+        <div className="no-print mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-500" />
           <p className="leading-snug">
             <span className="font-semibold">
-              This card is about {Math.max(1, Math.round(fitState.overMm))}mm too tall for one A4
-              page.
+              This card is about {Math.max(1, Math.round(fitState.overMm))}mm too tall for one A4 page.
             </span>{" "}
             Spacing has already been tightened as far as it will go. Remove a subject or summer-work
-            row, shorten the remarks, or use the default 10mm printer margin in Settings — then it
-            will print on a single sheet.
+            row, shorten the remarks, or use the default 10mm printer margin in Settings.
           </p>
         </div>
       ) : null}
 
-      {/* Mobile panel switcher — one panel at a time instead of a long stacked scroll */}
+      {/* Mobile Panel Switcher */}
       <div
         className={cn(
           "no-print mb-4 grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1",
@@ -309,9 +307,9 @@ function ResultEditor() {
           aria-selected={mobileTab === "form"}
           onClick={() => setMobileTab("form")}
           className={cn(
-            "flex min-h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors",
+            "flex min-h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all",
             mobileTab === "form"
-              ? "bg-white text-slate-900 shadow-sm"
+              ? "bg-white text-blue-900 shadow-sm"
               : "text-slate-500 hover:text-slate-700",
           )}
         >
@@ -323,9 +321,9 @@ function ResultEditor() {
           aria-selected={mobileTab === "preview"}
           onClick={() => setMobileTab("preview")}
           className={cn(
-            "flex min-h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors",
+            "flex min-h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all",
             mobileTab === "preview"
-              ? "bg-white text-slate-900 shadow-sm"
+              ? "bg-white text-blue-900 shadow-sm"
               : "text-slate-500 hover:text-slate-700",
           )}
         >
@@ -334,23 +332,26 @@ function ResultEditor() {
       </div>
 
       {/* Main Two-Column Grid */}
-      <div className="grid gap-6 lg:grid-cols-12 items-start">
-        {/* Left Column: Form */}
+      <div className="grid gap-5 lg:grid-cols-12 items-start">
+        {/* ── Left Column: Form ── */}
         <div
           className={cn(
-            "no-print space-y-5 lg:col-span-6 lg:block xl:col-span-5",
+            "no-print space-y-4 lg:col-span-6 lg:block xl:col-span-5",
             isMobile && (mobileTab === "form" ? "block" : "hidden"),
           )}
         >
-          {/* Student Info Card */}
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div className="border-b border-slate-100 px-5 py-3.5 flex items-center gap-2">
-              <div className="size-5 rounded-md bg-slate-900 flex items-center justify-center">
-                <span className="text-[10px] text-white font-bold">S</span>
+          {/* ── Student Info Card ── */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            {/* Card header */}
+            <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-5 py-3.5">
+              <div className="flex size-7 items-center justify-center rounded-lg bg-blue-900 text-white">
+                <Users className="size-3.5" />
               </div>
-              <h2 className="text-sm font-semibold text-slate-800">Student Information</h2>
+              <h2 className="text-sm font-bold text-slate-800">Student Information</h2>
             </div>
-            <div className="p-5 grid gap-4 sm:grid-cols-2">
+
+            {/* Name + Class fields */}
+            <div className="grid gap-4 p-5 sm:grid-cols-2">
               <Field
                 label="Student Name"
                 required
@@ -360,7 +361,7 @@ function ResultEditor() {
                   value={student.name}
                   onChange={(e) => set({ name: e.target.value })}
                   placeholder="e.g. Usman Amjad"
-                  className={`bg-slate-50/50 border-slate-200 focus-visible:bg-white ${
+                  className={`border-slate-200 bg-slate-50/50 focus-visible:bg-white ${
                     !student.name.trim() ? "border-rose-400 focus-visible:ring-rose-300" : ""
                   }`}
                 />
@@ -371,23 +372,22 @@ function ResultEditor() {
                   value={student.className}
                   onChange={(e) => set({ className: e.target.value })}
                   placeholder="e.g. 10th"
-                  className="bg-slate-50/50 border-slate-200 focus-visible:bg-white"
+                  className="border-slate-200 bg-slate-50/50 focus-visible:bg-white"
                 />
               </Field>
             </div>
 
-            {/* Photo is opt-in per student: off means the card renders exactly as
-                it did before photos existed, and no empty box is left behind. */}
+            {/* Photo toggle */}
             <div className="border-t border-slate-100 px-5 py-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <Label
                     htmlFor="show-photo"
-                    className="text-sm font-semibold text-slate-800 cursor-pointer"
+                    className="cursor-pointer text-sm font-semibold text-slate-800"
                   >
                     Show photo on result card
                   </Label>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
                     Adds a small photo box beside the Progress Report heading.
                   </p>
                 </div>
@@ -401,7 +401,7 @@ function ResultEditor() {
 
               {student.showPhoto ? (
                 <div className="mt-4 flex items-center gap-4">
-                  <div className="flex h-[74px] w-[56px] shrink-0 items-center justify-center overflow-hidden rounded-md border border-dashed border-slate-300 bg-slate-50">
+                  <div className="flex h-[74px] w-[56px] shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-slate-300 bg-slate-50">
                     {student.photoDataUrl ? (
                       <img
                         src={student.photoDataUrl}
@@ -447,14 +447,6 @@ function ResultEditor() {
                         <Trash2 className="size-4" /> Remove
                       </Button>
                     ) : null}
-                    {/*
-                     * Spells out the print size rather than saying "passport
-                     * size", which it is not: 21x28mm is smaller than the common
-                     * 35x45mm and 38x25mm ID specs. The preview box here is 3:4
-                     * (0.757) and the card box is exactly 3:4 (0.75), so what is
-                     * shown here is what prints, and a 3:4 portrait photo is the
-                     * one that needs no cropping at all.
-                     */}
                     <p className="text-[11px] leading-relaxed text-muted-foreground">
                       A portrait 3:4 photo works best.
                     </p>
@@ -464,16 +456,17 @@ function ResultEditor() {
             </div>
           </div>
 
-          {/* Subjects Card */}
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div className="border-b border-slate-100 px-5 py-3.5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="size-5 rounded-md bg-blue-600 flex items-center justify-center">
-                  <span className="text-[10px] text-white font-bold">M</span>
+          {/* ── Subject Marks Card ── */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            {/* Card header */}
+            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-5 py-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="flex size-7 items-center justify-center rounded-lg bg-violet-600 text-white">
+                  <BookOpen className="size-3.5" />
                 </div>
-                <h2 className="text-sm font-semibold text-slate-800">Subject Marks</h2>
+                <h2 className="text-sm font-bold text-slate-800">Subject Marks</h2>
               </div>
-              <span className="text-xs font-medium text-slate-400 bg-slate-100 rounded-full px-2.5 py-0.5">
+              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500">
                 {student.subjects.length} subject{student.subjects.length !== 1 ? "s" : ""}
               </span>
             </div>
@@ -488,20 +481,28 @@ function ResultEditor() {
             </div>
 
             {/* Results Summary Strip */}
-            <div className="border-t border-slate-100 grid grid-cols-4 divide-x divide-slate-100 bg-slate-50">
+            <div className="grid grid-cols-4 divide-x divide-slate-100 border-t border-slate-100 bg-gradient-to-b from-slate-50 to-white">
               {[
-                { label: "Total", value: totals.grandTotal },
-                { label: "Obtained", value: totals.obtainedTotal },
-                { label: "Percentage", value: `${totals.percentage}%` },
-                { label: "Grade", value: totals.grade, highlight: true, raiseSign: true },
+                { label: "Total", value: totals.grandTotal, color: "text-slate-700" },
+                { label: "Obtained", value: totals.obtainedTotal, color: "text-slate-700" },
+                { label: "Percentage", value: `${totals.percentage}%`, color: "text-blue-700" },
+                {
+                  label: "Grade",
+                  value: totals.grade,
+                  raiseSign: true,
+                  color:
+                    totals.grade === "A+" || totals.grade === "A"
+                      ? "text-emerald-700"
+                      : totals.grade === "F" || totals.grade === "E"
+                        ? "text-rose-600"
+                        : "text-amber-600",
+                },
               ].map((item) => (
-                <div key={item.label} className="px-3 py-3 text-center">
-                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">
+                <div key={item.label} className="px-2 py-3 text-center sm:px-3">
+                  <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
                     {item.label}
                   </span>
-                  <span
-                    className={`text-lg font-black ${item.highlight ? "text-slate-900" : "text-slate-700"}`}
-                  >
+                  <span className={`text-xl font-black tabular-nums ${item.color}`}>
                     {item.raiseSign ? <GradeText text={String(item.value)} /> : item.value}
                   </span>
                 </div>
@@ -510,22 +511,22 @@ function ResultEditor() {
 
             {hasErrors && (
               <div className="border-t border-rose-100 bg-rose-50 px-5 py-2.5">
-                <p className="text-xs font-medium text-rose-600">
+                <p className="text-xs font-semibold text-rose-600">
                   ⚠️ Fix mark errors above before printing or downloading PDF.
                 </p>
               </div>
             )}
           </div>
 
-          {/* Remarks Card */}
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div className="border-b border-slate-100 px-5 py-3.5 flex items-center gap-2">
-              <div className="size-5 rounded-md bg-amber-500 flex items-center justify-center">
-                <Sparkles className="size-3 text-white" />
+          {/* ── Remarks Card ── */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-5 py-3.5">
+              <div className="flex size-7 items-center justify-center rounded-lg bg-amber-500 text-white">
+                <Sparkles className="size-3.5" />
               </div>
-              <h2 className="text-sm font-semibold text-slate-800">Remarks</h2>
+              <h2 className="text-sm font-bold text-slate-800">Remarks</h2>
             </div>
-            <div className="p-5 space-y-3">
+            <div className="space-y-3 p-5">
               <Select value="" onValueChange={(value) => set({ remarks: value })}>
                 <SelectTrigger className="w-full border-slate-200 bg-slate-50/50 text-sm">
                   <SelectValue placeholder="Choose a predefined remark..." />
@@ -544,27 +545,45 @@ function ResultEditor() {
                 value={student.remarks}
                 onChange={(e) => set({ remarks: e.target.value })}
                 placeholder="Enter or customize remarks..."
-                className="resize-none border-slate-200 bg-slate-50/50 focus-visible:bg-white text-sm"
+                className="resize-none border-slate-200 bg-slate-50/50 text-sm focus-visible:bg-white"
               />
             </div>
           </div>
         </div>
 
-        {/* Right Column: Live Preview */}
+        {/* ── Right Column: Live Preview ── */}
         <div
           className={cn(
-            "print-root lg:sticky lg:top-20 lg:col-span-6 lg:block xl:col-span-7",
+            "print-root lg:sticky lg:top-[5rem] lg:col-span-6 lg:block xl:col-span-7",
             isMobile && (mobileTab === "preview" ? "block" : "hidden"),
           )}
         >
-          <div className="a4-panel rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div className="no-print border-b border-slate-100 px-5 py-3 flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Live Preview
-              </span>
-              <span className="text-[11px] text-slate-400 bg-slate-100 rounded-full px-2.5 py-0.5">
-                A4 Portrait
-              </span>
+          <div className="a4-panel overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            {/* Preview header */}
+            <div className="no-print flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-5 py-3">
+              <div className="flex items-center gap-2">
+                <Eye className="size-3.5 text-slate-400" />
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Live Preview
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Realtime percentage mini-badge */}
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                    totals.grade === "A+" || totals.grade === "A"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : totals.grade === "F" || totals.grade === "E"
+                        ? "bg-rose-100 text-rose-700"
+                        : "bg-amber-100 text-amber-700"
+                  }`}
+                >
+                  {totals.percentage}% · {totals.grade}
+                </span>
+                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-500">
+                  A4 Portrait
+                </span>
+              </div>
             </div>
             <div className="a4-chrome p-4">
               <ResultPreview printerMarginMm={settings.printerMarginMm}>
@@ -582,20 +601,23 @@ function ResultEditor() {
         </div>
       </div>
 
-      {/* Sticky mobile action bar — keeps PDF + "next student" reachable while
-          entering marks deep in the form, without scrolling back to the top. */}
+      {/* Mobile Sticky Bottom Bar */}
       {isMobile ? (
         <div
-          className="no-print sticky bottom-0 z-30 -mx-4 mt-4 flex items-center gap-2 border-t border-slate-200 bg-white/95 px-4 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] backdrop-blur-md"
-          style={{ boxShadow: "0 -4px 16px -8px rgb(15 23 42 / 0.18)" }}
+          className="no-print sticky bottom-0 z-30 -mx-4 mt-4 flex items-center gap-2.5 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-md"
+          style={{
+            paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))",
+            boxShadow: "0 -4px 20px -4px rgb(15 23 42 / 0.12)",
+          }}
         >
+          {/* Live score */}
           <div className="min-w-0 shrink-0">
-            <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-              Total
+            <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              Score
             </span>
             <span className="block text-sm font-black tabular-nums text-slate-900">
               {totals.obtainedTotal}/{totals.grandTotal}
-              <span className="ml-1.5 text-xs font-bold text-slate-500">{totals.percentage}%</span>
+              <span className="ml-1.5 text-xs font-bold text-blue-700">{totals.percentage}%</span>
             </span>
           </div>
 
@@ -603,10 +625,14 @@ function ResultEditor() {
             size="sm"
             onClick={handlePdf}
             disabled={busy || hasErrors}
-            className="min-h-11 flex-1 gap-1.5 bg-slate-900 text-sm text-white hover:bg-slate-800"
+            className="min-h-11 flex-1 gap-1.5 bg-blue-900 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-60"
           >
             <FileDown className="size-4" />
-            {busy ? "Preparing..." : "PDF"}
+            {busy ? "Preparing..." : (
+              <>
+                <span className="hidden min-[360px]:inline">Download </span>PDF
+              </>
+            )}
           </Button>
 
           <Button
@@ -617,21 +643,14 @@ function ResultEditor() {
               nextStudentId &&
               navigate({ to: "/editor/$studentId", params: { studentId: nextStudentId } })
             }
-            className="min-h-11 shrink-0 gap-1 border-slate-300 text-sm text-slate-700 hover:bg-slate-100"
+            className="min-h-11 shrink-0 gap-1 border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100"
           >
-            Next
-            <ChevronRight className="size-4" />
+            Next <ChevronRight className="size-4" />
           </Button>
         </div>
       ) : null}
 
       {/* PDF export off-screen container */}
-      {/*
-       * `no-print` mirrors the index route: this duplicate card is fixed and
-       * invisible on screen, but in print it would still contribute its
-       * `break-after: page`. The PDF export runs in screen media, so hiding it
-       * from `@media print` leaves the capture untouched.
-       */}
       <div
         ref={exportCardRef}
         className="no-print"
