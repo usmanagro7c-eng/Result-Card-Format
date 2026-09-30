@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { Settings, Student, Subject } from "@/types/result";
 import { DEFAULT_GRADES } from "@/utils/grading";
+import { DEFAULT_PRINTER_MARGIN_MM, normalizePrinterMarginMm } from "@/lib/cardGeometry";
 
 const STUDENTS_KEY = "result-card.students.v1";
 const SETTINGS_KEY = "result-card.settings.v1";
@@ -41,6 +42,7 @@ export const DEFAULT_SETTINGS: Settings = {
   headSignatureDataUrl: null,
   defaultSession: "2026–2027",
   defaultTerm: "1st Term Examination",
+  printerMarginMm: DEFAULT_PRINTER_MARGIN_MM,
   grades: DEFAULT_GRADES,
   defaultSubjects: DEFAULT_SUBJECTS,
 };
@@ -124,7 +126,15 @@ export function ResultStoreProvider({ children }: { children: ReactNode }) {
         photoDataUrl: s.photoDataUrl ?? null,
       })),
     );
-    setSettings({ ...DEFAULT_SETTINGS, ...read<Partial<Settings>>(SETTINGS_KEY, {}) });
+    // The spread backfills fields that did not exist when the payload was saved;
+    // the printer margin is then coerced, because it is read straight into the
+    // card's padding and an unrecognised value would become a random margin.
+    const storedSettings = read<Partial<Settings>>(SETTINGS_KEY, {});
+    setSettings({
+      ...DEFAULT_SETTINGS,
+      ...storedSettings,
+      printerMarginMm: normalizePrinterMarginMm(storedSettings.printerMarginMm),
+    });
     setReady(true);
   }, []);
 

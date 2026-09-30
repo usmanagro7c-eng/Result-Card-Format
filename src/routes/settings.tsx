@@ -8,6 +8,7 @@ import {
   Image as ImageIcon,
   PenTool,
   Plus,
+  Printer,
   RotateCcw,
   Sparkles,
   Trash2,
@@ -16,7 +17,19 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DEFAULT_GRADES, resolveGrade } from "@/utils/grading";
+import {
+  DEFAULT_PRINTER_MARGIN_MM,
+  PRINTER_MARGIN_OPTIONS,
+  normalizePrinterMarginMm,
+} from "@/lib/cardGeometry";
 import { DEFAULT_SETTINGS, DEFAULT_SUBJECTS, uid, useResultStore } from "@/store/resultStore";
 import type { GradeRule } from "@/types/result";
 
@@ -220,6 +233,59 @@ function SettingsPage() {
                   toast.success("Head signature cleared");
                 }}
               />
+            </div>
+          </div>
+        </section>
+
+        {/* Printer Safety */}
+        <section className="rounded-lg border border-border bg-card p-6 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-8 items-center justify-center rounded-md bg-neutral-100 text-neutral-800">
+                <Printer className="size-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold uppercase tracking-wider">Printer Safety</h2>
+                <p className="text-xs text-muted-foreground">
+                  How much of the paper edge your printer cannot reach
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label className="text-xs font-semibold text-neutral-700">Unprintable margin</Label>
+              <Select
+                value={String(normalizePrinterMarginMm(settings.printerMarginMm))}
+                onValueChange={(value) => {
+                  const next = normalizePrinterMarginMm(Number(value));
+                  updateSettings({ printerMarginMm: next });
+                  toast.success(
+                    next === DEFAULT_PRINTER_MARGIN_MM
+                      ? "Card frame set 10mm from the paper edge"
+                      : `Card frame set ${next}mm from the paper edge`,
+                  );
+                }}
+              >
+                <SelectTrigger className="border-slate-200 bg-slate-50/50 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRINTER_MARGIN_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={String(option.value)}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                The decorative border is the outermost mark on the page, so this is what decides
+                whether its bottom edge reaches the paper. Pick the value your printer&apos;s
+                specification sheet lists as its minimum margin, or 10&nbsp;mm if you are unsure. A
+                larger margin moves the border inward and gives the card slightly less room, which
+                it will rebalance on its own.
+              </p>
             </div>
           </div>
         </section>

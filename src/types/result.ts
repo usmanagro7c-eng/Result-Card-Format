@@ -43,6 +43,14 @@ export interface Settings {
   headSignatureDataUrl: string | null;
   defaultSession: string;
   defaultTerm: string;
+  /**
+   * Unprintable band kept clear on all four sides of the sheet, in millimetres.
+   * The decorative frame is the outermost ink on the page, so this is what
+   * decides whether the bottom border reaches the paper at all. Optional so a
+   * settings payload saved before this existed still loads; it is normalised on
+   * read by `normalizePrinterMarginMm` and defaults to 10mm.
+   */
+  printerMarginMm?: number;
   grades: GradeRule[];
   defaultSubjects: Array<{ name: string; totalMarks: number }>;
 }
