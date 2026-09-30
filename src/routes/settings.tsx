@@ -134,9 +134,6 @@ function SettingsPage() {
           <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
             School &amp; Grading Settings
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Configure school identity, logo, signatures, grading thresholds, and default subjects.
-          </p>
         </div>
 
         <Button
@@ -156,14 +153,9 @@ function SettingsPage() {
             <div className="flex size-9 items-center justify-center rounded-xl bg-blue-100 text-blue-800">
               <Building2 className="size-5" />
             </div>
-            <div>
-              <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
-                School Information &amp; Header
-              </h2>
-              <p className="text-xs text-slate-500">
-                These details appear on the header of every generated Progress Report.
-              </p>
-            </div>
+            <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
+              School Information &amp; Header
+            </h2>
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -218,7 +210,6 @@ function SettingsPage() {
             <div className="grid gap-4 sm:grid-cols-3">
               <ImageUploadField
                 label="School Logo"
-                helpText="Replaces the default emblem"
                 value={settings.logoDataUrl}
                 onFile={(f) => upload(f, "logoDataUrl")}
                 onClear={() => {
@@ -229,7 +220,6 @@ function SettingsPage() {
 
               <ImageUploadField
                 label="Teacher's Signature"
-                helpText="Optional digital signature"
                 value={settings.teacherSignatureDataUrl}
                 onFile={(f) => upload(f, "teacherSignatureDataUrl")}
                 onClear={() => {
@@ -240,7 +230,6 @@ function SettingsPage() {
 
               <ImageUploadField
                 label="Head's Signature"
-                helpText="Optional digital signature"
                 value={settings.headSignatureDataUrl}
                 onFile={(f) => upload(f, "headSignatureDataUrl")}
                 onClear={() => {
@@ -259,20 +248,15 @@ function SettingsPage() {
               <div className="flex size-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
                 <Printer className="size-5" />
               </div>
-              <div>
-                <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
-                  Printer Safety &amp; Margins
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Controls how close decorative borders reach to the physical paper edge.
-                </p>
-              </div>
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
+                Printer Margins
+              </h2>
             </div>
           </div>
 
           <div className="mt-5 space-y-3">
             <div className="space-y-1.5 max-w-sm">
-              <Label className="text-xs font-bold text-slate-700">Unprintable Edge Margin</Label>
+              <Label className="text-xs font-bold text-slate-700">Edge Margin</Label>
               <Select
                 value={String(normalizePrinterMarginMm(settings.printerMarginMm))}
                 onValueChange={(value) => {
@@ -297,14 +281,6 @@ function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="rounded-xl bg-slate-50 p-3 border border-slate-200/60">
-              <p className="text-xs leading-relaxed text-slate-500">
-                Sets border distance from the paper edge to prevent clipping (default:{" "}
-                <span className="font-semibold text-slate-700">10 mm</span>). Card content
-                automatically adjusts to fit.
-              </p>
-            </div>
           </div>
         </section>
 
@@ -315,14 +291,9 @@ function SettingsPage() {
               <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800">
                 <GraduationCap className="size-5" />
               </div>
-              <div>
-                <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
-                  Configurable Grading Scale
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Define percentage thresholds for each letter grade (e.g. A+, A, B, C, D, E, F).
-                </p>
-              </div>
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
+                Grading Scale
+              </h2>
             </div>
 
             <Button
@@ -472,14 +443,9 @@ function SettingsPage() {
               <div className="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-violet-800">
                 <PenTool className="size-5" />
               </div>
-              <div>
-                <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
-                  Default Subjects &amp; Total Marks
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Pre-populated when creating any new student.
-                </p>
-              </div>
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
+                Default Subjects &amp; Total Marks
+              </h2>
             </div>
 
             <Button
@@ -574,13 +540,11 @@ function SettingsPage() {
 
 function ImageUploadField({
   label,
-  helpText,
   value,
   onFile,
   onClear,
 }: {
   label: string;
-  helpText?: string;
   value: string | null;
   onFile: (file: File | undefined) => void;
   onClear: () => void;
@@ -589,7 +553,6 @@ function ImageUploadField({
     <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-slate-50/60 p-4 shadow-2xs">
       <div>
         <Label className="block text-xs font-bold text-slate-900">{label}</Label>
-        {helpText ? <p className="mt-0.5 text-[11px] text-slate-500">{helpText}</p> : null}
 
         <div className="mt-3 flex h-24 w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-slate-300 bg-white p-2">
           {value ? (
