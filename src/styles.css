@@ -171,10 +171,15 @@
     size: A4 portrait;
     /*
      * The card *is* the page: it carries its own 10mm/12mm padding and a
-     * decorative border inset 7mm from its edges. A page margin on top of that
+     * decorative frame inset 10mm from its edges. A page margin on top of that
      * double-counts the inset, shrinking the sheet to 190x277mm and forcing the
      * bottom of the card past the printable area (measured: 1220px of content in
      * a 1047px box, so the bottom border is cut off).
+     *
+     * Printer safety is therefore bought inside the card, not here: the frame
+     * sits at the printer's own margin from the paper edge, inside the
+     * non-printable band of a normal desktop printer. See frameInsetMm() in
+     * cardGeometry.ts.
      */
     margin: 0;
   }
@@ -194,8 +199,25 @@
     color: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
+    height: auto !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  /*
+   * The app shell is sized to fill a browser window: `min-h-screen` on the
+   * shell and `flex: 1` on <main>. In print, "100vh" is a whole sheet of paper,
+   * so that shell imposes a ~297mm floor on the document regardless of how
+   * short the card is. The card is only 294mm, so the floor - not the card - sets
+   * the page count and Chromium spills onto a second sheet. The card is the only
+   * thing that should decide how many pages this is.
+   */
+  .min-h-screen {
+    min-height: 0 !important;
+  }
+
+  main {
+    flex: none !important;
   }
 
   .no-print {
@@ -240,6 +262,19 @@
     padding: 0 !important;
   }
 
+  /*
+   * The live-preview panel is a screen affordance, but it wraps the sheet: its
+   * 1px borders took 2px off the printed card (209.55mm instead of 210mm) and
+   * its `overflow: hidden` sat directly above the frame, which is exactly the
+   * kind of clipper that eats a bottom border. Neither may reach the paper.
+   */
+  .a4-panel {
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
   .print-shell {
     padding: 0 !important;
     margin: 0 !important;
@@ -257,12 +292,26 @@
     min-height: 294mm !important;
     margin: 0 auto !important;
     box-sizing: border-box !important;
+  }
+
+  /*
+   * Page breaks are opt-in, and only the bulk container opts in. A single card
+   * is the whole print job, and a trailing `break-after: page` is a request for
+   * one more sheet than there is content for - which is how Chromium ended up
+   * appending a blank second page to a card that fit on one.
+   *
+   * The bulk container stacks bare `ResultCard`s with no sheet wrapper, so the
+   * break is asked of the card itself. Stating it explicitly also stops the
+   * run from relying on each card being exactly one page tall to separate
+   * itself from the next one.
+   */
+  .print-root--multi > [data-result-card] {
     page-break-after: always;
     break-after: page;
   }
 
-  /* Avoid a trailing blank page for a single card, which is the common case. */
-  .a4-page:last-child {
+  /* Avoid a trailing blank page after the last card of a bulk run. */
+  .print-root--multi > [data-result-card]:last-child {
     page-break-after: auto;
     break-after: auto;
   }

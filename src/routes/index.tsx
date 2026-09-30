@@ -731,7 +731,7 @@ function StudentsPage() {
 
       {/* Bulk Print container */}
       {isBulkPrinting && (
-        <div className="print-root print-only">
+        <div className="print-root print-only print-root--multi">
           {selectedStudents.map((student) => (
             <ResultCard
               key={student.id}

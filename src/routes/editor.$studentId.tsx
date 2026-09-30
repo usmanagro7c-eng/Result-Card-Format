@@ -559,7 +559,7 @@ function ResultEditor() {
             isMobile && (mobileTab === "preview" ? "block" : "hidden"),
           )}
         >
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="a4-panel rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
             <div className="no-print border-b border-slate-100 px-5 py-3 flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Live Preview
@@ -628,8 +628,15 @@ function ResultEditor() {
       ) : null}
 
       {/* PDF export off-screen container */}
+      {/*
+       * `no-print` mirrors the index route: this duplicate card is fixed and
+       * invisible on screen, but in print it would still contribute its
+       * `break-after: page`. The PDF export runs in screen media, so hiding it
+       * from `@media print` leaves the capture untouched.
+       */}
       <div
         ref={exportCardRef}
+        className="no-print"
         aria-hidden="true"
         style={{
           position: "fixed",
