@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import type { Settings, Student, Subject } from "@/types/result";
 import { calculateTotals } from "@/utils/calculations";
-import { OrdinalText } from "@/utils/ordinal";
+import { OrdinalText } from "@/utils/raisedText";
 import { splitSummerWork } from "@/utils/summerWork";
 import { cn } from "@/lib/utils";
 
