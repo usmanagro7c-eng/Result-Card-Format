@@ -29,108 +29,132 @@ function AppNavbar() {
     navigate({ to: "/editor/$studentId", params: { studentId: student.id } });
   };
 
+  const isHome = currentPath === "/";
+  const isSettings = currentPath === "/settings";
   const isEditor = currentPath.startsWith("/editor/");
 
   return (
-    <header className="no-print sticky top-0 z-40 w-full border-b border-border/60 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 shadow-sm">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-        {/* Brand */}
-        <Link to="/" className="flex items-center gap-3 transition-opacity hover:opacity-90">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-slate-800 to-slate-600 text-white shadow-md">
-            <GraduationCap className="size-5" />
-          </div>
-          <div className="hidden sm:block">
-            <span className="font-bold text-slate-900 text-[15px] leading-tight block">
-              Result Card Generator
-            </span>
-            <span className="text-[11px] text-slate-500 font-medium block leading-tight">
-              {settings.schoolName || "School Progress Reports"}
-            </span>
-          </div>
-          <div className="sm:hidden">
-            <span className="font-bold text-slate-900 text-sm leading-tight block">
-              Result Cards
-            </span>
-          </div>
-        </Link>
+    <>
+      <header className="no-print sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-md shadow-xs">
+        {/* Main Top Bar */}
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+          {/* Left: Brand + Desktop Navigation */}
+          <div className="flex items-center gap-6 sm:gap-8">
+            <Link to="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-85">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-950 to-blue-800 text-white shadow-md">
+                <GraduationCap className="size-[18px]" />
+              </div>
+              <div>
+                <span className="font-extrabold text-slate-900 text-sm leading-tight block tracking-tight">
+                  Result Card Generator
+                </span>
+                <span className="text-[11px] text-slate-500 font-medium block leading-tight">
+                  {settings.schoolName || "School Progress Reports"}
+                </span>
+              </div>
+            </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-1">
-          <Link
-            to="/"
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-              currentPath === "/"
-                ? "bg-slate-900 text-white shadow-sm"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-            }`}
-          >
-            <Users className="size-4" />
-            <span>Students</span>
-            {students.length > 0 && (
-              <span
-                className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
-                  currentPath === "/" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+            {/* Desktop Nav Links */}
+            <nav className="hidden md:flex items-center gap-1 border-l border-slate-200 pl-6" aria-label="Main navigation">
+              <Link
+                to="/"
+                className={`relative flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-all ${
+                  isHome
+                    ? "text-blue-900 bg-blue-50/80"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
-                {students.length}
-              </span>
-            )}
-          </Link>
+                <Users className="size-4" />
+                <span>Students</span>
+                {students.length > 0 && (
+                  <span
+                    className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums ${
+                      isHome
+                        ? "bg-blue-900/12 text-blue-900"
+                        : "bg-slate-200 text-slate-600"
+                    }`}
+                  >
+                    {students.length}
+                  </span>
+                )}
+                {isHome && (
+                  <span className="absolute bottom-0 left-2.5 right-2.5 h-[2px] rounded-full bg-blue-900" />
+                )}
+              </Link>
 
-          <Link
-            to="/settings"
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-              currentPath === "/settings"
-                ? "bg-slate-900 text-white shadow-sm"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-            }`}
-          >
-            <SettingsIcon className="size-4" />
-            <span>Settings</span>
-          </Link>
-        </nav>
+              <Link
+                to="/settings"
+                className={`relative flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-all ${
+                  isSettings
+                    ? "text-blue-900 bg-blue-50/80"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                }`}
+              >
+                <SettingsIcon className="size-4" />
+                <span>Settings</span>
+                {isSettings && (
+                  <span className="absolute bottom-0 left-2.5 right-2.5 h-[2px] rounded-full bg-blue-900" />
+                )}
+              </Link>
+            </nav>
+          </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-2">
-          {!isEditor && (
-            <Button
-              onClick={handleQuickAdd}
-              className="h-9 gap-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800 shadow-sm text-sm px-4"
-            >
-              <Plus className="size-4" />
-              <span className="hidden sm:inline">Add Student</span>
-              <span className="sm:hidden">Add</span>
-            </Button>
-          )}
+          {/* Right side: Active Term & Session status badge */}
+          <div className="flex items-center">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 border border-slate-200/60">
+              <span className="size-1.5 rounded-full bg-emerald-500" />
+              <span className="hidden sm:inline">{settings.defaultTerm} &middot; </span>
+              {settings.defaultSession}
+            </span>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Mobile Bottom Nav */}
-      <div className="flex md:hidden border-t border-border/60 bg-slate-50/80 pb-[env(safe-area-inset-bottom)]">
-        <Link
-          to="/"
-          className={`flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2.5 text-[11px] font-medium transition-colors ${
-            currentPath === "/"
-              ? "text-slate-900 bg-white border-t-2 border-slate-900 -mt-px"
-              : "text-slate-500 hover:text-slate-700"
-          }`}
+      {/* Mobile Bottom Navigation — fixed to viewport bottom */}
+      {!isEditor && (
+        <div
+          className="no-print md:hidden fixed bottom-0 left-0 right-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur-md shadow-lg"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
-          <Users className="size-4" />
-          <span>Students {students.length > 0 ? `(${students.length})` : ""}</span>
-        </Link>
-        <Link
-          to="/settings"
-          className={`flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2.5 text-[11px] font-medium transition-colors ${
-            currentPath === "/settings"
-              ? "text-slate-900 bg-white border-t-2 border-slate-900 -mt-px"
-              : "text-slate-500 hover:text-slate-700"
-          }`}
-        >
-          <SettingsIcon className="size-4" />
-          <span>Settings</span>
-        </Link>
-      </div>
-    </header>
+          <div className="grid grid-cols-3">
+            {/* Students tab */}
+            <Link
+              to="/"
+              aria-current={isHome ? "page" : undefined}
+              className={`flex min-h-14 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-semibold transition-colors ${
+                isHome ? "text-blue-900" : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              <Users className={`size-5 ${isHome ? "" : "opacity-60"}`} />
+              <span>Students{students.length > 0 ? ` (${students.length})` : ""}</span>
+            </Link>
+
+            {/* Center FAB */}
+            <div className="flex items-center justify-center">
+              <button
+                onClick={handleQuickAdd}
+                aria-label="Add new student"
+                className="flex size-12 items-center justify-center rounded-2xl bg-blue-900 text-white shadow-lg shadow-blue-900/25 hover:bg-blue-800 active:scale-95"
+              >
+                <Plus className="size-5" />
+              </button>
+            </div>
+
+            {/* Settings tab */}
+            <Link
+              to="/settings"
+              aria-current={isSettings ? "page" : undefined}
+              className={`flex min-h-14 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-semibold transition-colors ${
+                isSettings ? "text-blue-900" : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              <SettingsIcon className={`size-5 ${isSettings ? "" : "opacity-60"}`} />
+              <span>Settings</span>
+            </Link>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
