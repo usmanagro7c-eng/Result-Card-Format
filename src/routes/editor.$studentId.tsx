@@ -36,6 +36,7 @@ import { compressImage } from "@/utils/image";
 import { generatePdf } from "@/utils/pdf";
 import { printDocument } from "@/utils/print";
 import { GradeText } from "@/utils/raisedText";
+import { DEFAULT_FIT_STATE, type CardFitState } from "@/hooks/useCardFit";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
@@ -73,6 +74,7 @@ function ResultEditor() {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
+  const [fitState, setFitState] = useState<CardFitState>(DEFAULT_FIT_STATE);
   const printed = useRef(false);
 
   // Auto-trigger print if requested via query parameter
@@ -271,6 +273,23 @@ function ResultEditor() {
               Browser storage is full — changes are not being saved.
             </span>{" "}
             Remove a few student photos or delete a student to free space, then reload this page.
+          </p>
+        </div>
+      ) : null}
+
+      {/* The card's own fit engine ran out of room to give back. Printing now
+          would clip the bottom, so say so rather than shipping a broken sheet. */}
+      {fitState.cannotFit ? (
+        <div className="no-print mb-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+          <p className="leading-snug">
+            <span className="font-semibold">
+              This card is about {Math.max(1, Math.round(fitState.overMm))}mm too tall for one A4
+              page.
+            </span>{" "}
+            Spacing has already been tightened as far as it will go. Remove a subject or summer-work
+            row, shorten the remarks, or use the default 10mm printer margin in Settings — then it
+            will print on a single sheet.
           </p>
         </div>
       ) : null}
@@ -557,6 +576,7 @@ function ResultEditor() {
                   subjects={student.subjects}
                   settings={settings}
                   includeSummerWork={includeSummerWork}
+                  onFitStateChange={setFitState}
                 />
               </ResultPreview>
             </div>
