@@ -550,7 +550,7 @@ function ResultEditor() {
               </span>
             </div>
             <div className="a4-chrome p-4">
-              <ResultPreview>
+              <ResultPreview printerMarginMm={settings.printerMarginMm}>
                 <ResultCard
                   ref={cardRef}
                   student={student}

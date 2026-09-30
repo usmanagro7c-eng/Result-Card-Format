@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { Maximize2, Minimize2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { DEFAULT_PRINTER_MARGIN_MM, normalizePrinterMarginMm } from "@/lib/cardGeometry";
 
 const A4_WIDTH_PX = 794; // 210mm at 96dpi
 const A4_HEIGHT_PX = 1123; // 297mm at 96dpi
@@ -14,6 +15,60 @@ interface ResultPreviewProps {
   children: ReactNode;
   showControls?: boolean;
   className?: string;
+  /**
+   * The printer's unprintable margin, so the preview can show where the card's
+   * frame will sit relative to the edge of the paper. See MarginGuides.
+   */
+  printerMarginMm?: number | undefined;
+}
+
+/**
+ * Tints the strip of sheet the printer cannot reach.
+ *
+ * The card's frame is placed exactly on this boundary, so a bracket drawn there
+ * would sit on top of the frame and say nothing. The dead band itself is the
+ * part the teacher has never been able to see: on screen the frame always looks
+ * comfortably inside the paper, and only a printout reveals that a 12.7mm
+ * machine was eating the bottom border. Showing the band makes the cost of a
+ * larger margin visible at the moment it is chosen - the printable area really
+ * does shrink - and confirms that the frame still clears it.
+ *
+ * Only shown above the default margin. At 10mm the frame is where it has always
+ * been, and permanent decoration on the common preview would cost more clarity
+ * than the reassurance is worth.
+ */
+function MarginGuides({ marginMm }: { marginMm: number }) {
+  // Unit is explicit because a bare number here would be read as px, which is
+  // 3.8x too small to line up with the card's own margin.
+  const size = `${marginMm}mm`;
+  return (
+    <div
+      aria-hidden
+      data-margin-guides
+      className="no-print pointer-events-none absolute inset-0 overflow-hidden"
+    >
+      <span
+        data-margin-edge="top"
+        className="absolute inset-x-0 top-0 border-b border-dashed border-sky-500/60 bg-sky-500/10"
+        style={{ height: size }}
+      />
+      <span
+        data-margin-edge="bottom"
+        className="absolute inset-x-0 bottom-0 border-t border-dashed border-sky-500/60 bg-sky-500/10"
+        style={{ height: size }}
+      />
+      <span
+        data-margin-edge="left"
+        className="absolute inset-y-0 left-0 border-r border-dashed border-sky-500/60 bg-sky-500/10"
+        style={{ width: size }}
+      />
+      <span
+        data-margin-edge="right"
+        className="absolute inset-y-0 right-0 border-l border-dashed border-sky-500/60 bg-sky-500/10"
+        style={{ width: size }}
+      />
+    </div>
+  );
 }
 
 /**
@@ -29,7 +84,12 @@ interface ResultPreviewProps {
  *   where 13.5px document text renders around 5px. Presets + fullscreen exist
  *   so the page can actually be read.
  */
-export function ResultPreview({ children, showControls = true, className }: ResultPreviewProps) {
+export function ResultPreview({
+  children,
+  showControls = true,
+  className,
+  printerMarginMm,
+}: ResultPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [autoScale, setAutoScale] = useState(0.85);
   const [manualZoom, setManualZoom] = useState<number | null>(null);
@@ -64,6 +124,12 @@ export function ResultPreview({ children, showControls = true, className }: Resu
 
   const activeScale = manualZoom !== null ? manualZoom : autoScale;
   const isAuto = manualZoom === null;
+
+  // The guides are screen-only, so the paper edge they mark is only ever a
+  // preview concern; they are deliberately absent from print and from the
+  // html2canvas clone, which render the frame itself as the outermost ink.
+  const marginMm = normalizePrinterMarginMm(printerMarginMm);
+  const showGuides = marginMm > DEFAULT_PRINTER_MARGIN_MM;
 
   const setZoom = useCallback(
     (value: number) => setManualZoom(Math.min(MAX_SCALE, Math.max(MIN_SCALE, value))),
@@ -190,9 +256,10 @@ export function ResultPreview({ children, showControls = true, className }: Resu
               width: A4_WIDTH_PX,
               minHeight: A4_HEIGHT_PX,
             }}
-            className="a4-frame bg-white shadow-[0_4px_25px_rgba(0,0,0,0.18)] ring-1 ring-neutral-300"
+            className="a4-frame relative bg-white shadow-[0_4px_25px_rgba(0,0,0,0.18)] ring-1 ring-neutral-300"
           >
             {children}
+            {showGuides ? <MarginGuides marginMm={marginMm} /> : null}
           </div>
         </div>
       </div>
