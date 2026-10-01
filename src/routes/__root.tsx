@@ -10,7 +10,7 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { GraduationCap, Users, Settings as SettingsIcon, Plus, BookOpen } from "lucide-react";
+import { Users, Settings as SettingsIcon, Plus, BookOpen } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { ResultStoreProvider, createStudent, useResultStore } from "../store/resultStore";
@@ -41,15 +41,19 @@ function AppNavbar() {
           {/* Left: Brand + Desktop Navigation */}
           <div className="flex items-center gap-6 sm:gap-8">
             <Link to="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-85">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-950 to-blue-800 text-white shadow-md">
-                <GraduationCap className="size-[18px]" />
+              <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200/80 bg-white p-1 shadow-xs">
+                <img
+                  src={settings.logoDataUrl || "/TCS Logo.png"}
+                  alt={settings.schoolName || "The Country School"}
+                  className="size-full object-contain"
+                />
               </div>
               <div>
                 <span className="font-extrabold text-slate-900 text-sm leading-tight block tracking-tight">
                   Result Card Generator
                 </span>
                 <span className="text-[11px] text-slate-500 font-medium block leading-tight">
-                  {settings.schoolName || "School Progress Reports"}
+                  {settings.schoolName || "The Country School"}
                 </span>
               </div>
             </Link>
