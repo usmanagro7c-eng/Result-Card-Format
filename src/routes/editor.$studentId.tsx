@@ -64,6 +64,15 @@ export const Route = createFileRoute("/editor/$studentId")({
   component: ResultEditor,
 });
 
+type EditorTab = "info" | "marks" | "remarks" | "preview";
+
+const EDITOR_TABS = [
+  { id: "info" as const, label: "Student Info", shortLabel: "Info", icon: Users },
+  { id: "marks" as const, label: "Subject Marks", shortLabel: "Marks", icon: BookOpen },
+  { id: "remarks" as const, label: "Remarks", shortLabel: "Remarks", icon: Sparkles },
+  { id: "preview" as const, label: "Live Preview", shortLabel: "Preview", icon: Eye },
+];
+
 function ResultEditor() {
   const { studentId } = Route.useParams();
   const { print } = Route.useSearch();
@@ -102,19 +111,19 @@ function ResultEditor() {
   }, [students, studentId]);
 
   const isMobile = useIsMobile();
-  const [mobileTab, setMobileTab] = useState<"form" | "preview">("form");
+  const [activeTab, setActiveTab] = useState<EditorTab>("marks");
 
   // The A4 card lives in the preview panel, which is display:none while the
-  // Form tab is active. Force the preview visible for any print path, whether
+  // Form tab is active on mobile. Force the preview visible for any print path, whether
   // it comes from the ?print= param or the browser's own Ctrl/Cmd+P.
   useEffect(() => {
-    const revealPreview = () => setMobileTab("preview");
+    const revealPreview = () => setActiveTab("preview");
     window.addEventListener("beforeprint", revealPreview);
     return () => window.removeEventListener("beforeprint", revealPreview);
   }, []);
 
   useEffect(() => {
-    if (print) setMobileTab("preview");
+    if (print) setActiveTab("preview");
   }, [print]);
 
   if (!ready) {
@@ -186,7 +195,7 @@ function ResultEditor() {
   };
 
   return (
-    <div className="print-shell mx-auto w-full max-w-7xl px-3 pb-6 pt-3 sm:px-6 sm:pb-12 sm:pt-4 animate-fade-in">
+    <div className="print-shell mx-auto w-full max-w-5xl px-3 pb-6 pt-3 sm:px-6 sm:pb-12 sm:pt-4 animate-fade-in">
       {/* Top Action Bar */}
       <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-2.5 sm:mb-5 sm:gap-3">
         <div className="flex items-center gap-1">
@@ -288,56 +297,85 @@ function ResultEditor() {
         </div>
       ) : null}
 
-      {/* Mobile Panel Switcher */}
-      <div
-        className={cn(
-          "no-print mb-4 grid grid-cols-2 gap-1.5 rounded-2xl border border-slate-200/80 bg-slate-100/90 p-1.5 shadow-inner",
-          !isMobile && "hidden",
-        )}
-        role="tablist"
-        aria-label="Editor panels"
-      >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={mobileTab === "form"}
-          onClick={() => setMobileTab("form")}
-          className={cn(
-            "flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-bold transition-all",
-            mobileTab === "form"
-              ? "bg-white text-blue-900 shadow-sm"
-              : "text-slate-500 hover:text-slate-700 active:scale-98",
-          )}
+      {/* Mobile 2x2 Segmented Tab Control (< sm) */}
+      <div className="no-print mb-4 sm:hidden">
+        <div
+          role="tablist"
+          aria-label="Editor panels"
+          className="grid grid-cols-2 gap-2 rounded-2xl border border-slate-200/90 bg-slate-100/90 p-1.5 shadow-inner"
         >
-          <Pencil className="size-4" /> Form
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={mobileTab === "preview"}
-          onClick={() => setMobileTab("preview")}
-          className={cn(
-            "flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-bold transition-all",
-            mobileTab === "preview"
-              ? "bg-white text-blue-900 shadow-sm"
-              : "text-slate-500 hover:text-slate-700 active:scale-98",
-          )}
-        >
-          <Eye className="size-4" /> Preview Card
-        </button>
+          {EDITOR_TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex min-h-12 items-center justify-center gap-2 rounded-xl px-2 py-2 text-xs font-bold transition-all active:scale-95",
+                  isActive
+                    ? "bg-white text-blue-950 shadow-sm"
+                    : "text-slate-600 hover:bg-white/60 hover:text-slate-900",
+                )}
+              >
+                <Icon
+                  className={cn(
+                    "size-4 shrink-0 transition-colors",
+                    isActive ? "text-blue-900" : "text-slate-400",
+                  )}
+                />
+                <span>{tab.shortLabel}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Main Two-Column Grid */}
-      <div className="grid gap-5 lg:grid-cols-12 items-start">
-        {/* ── Left Column: Form ── */}
+      {/* Desktop / Tablet Segmented Tabs (>= sm) */}
+      <div className="no-print mb-6 hidden sm:block">
         <div
-          className={cn(
-            "no-print space-y-4 lg:col-span-6 lg:block xl:col-span-5",
-            isMobile && (mobileTab === "form" ? "block" : "hidden"),
-          )}
+          role="tablist"
+          aria-label="Editor sections"
+          className="grid grid-cols-4 gap-1.5 rounded-2xl border border-slate-200/90 bg-slate-100/90 p-1.5 shadow-inner"
         >
-          {/* ── Student Info Card ── */}
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          {EDITOR_TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex min-h-11 items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all sm:text-sm active:scale-95",
+                  isActive
+                    ? "bg-white text-blue-950 shadow-sm"
+                    : "text-slate-600 hover:bg-white/60 hover:text-slate-900",
+                )}
+              >
+                <Icon
+                  className={cn(
+                    "size-4 shrink-0 transition-colors",
+                    isActive ? "text-blue-900" : "text-slate-400",
+                  )}
+                />
+                <span className="truncate">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Editor Tab Panels */}
+      <div className="space-y-4">
+        {/* ── Student Info Card ── */}
+        {activeTab === "info" && (
+          <div className="animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             {/* Card header */}
             <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5 sm:py-3.5">
               <div className="flex size-7 items-center justify-center rounded-lg bg-blue-900 text-white">
@@ -443,9 +481,11 @@ function ResultEditor() {
               ) : null}
             </div>
           </div>
+          )}
 
           {/* ── Subject Marks Card ── */}
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          {activeTab === "marks" && (
+            <div className="animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             {/* Card header */}
             <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5 sm:py-3.5">
               <div className="flex items-center gap-2.5">
@@ -505,9 +545,11 @@ function ResultEditor() {
               </div>
             )}
           </div>
+          )}
 
           {/* ── Remarks Card ── */}
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          {activeTab === "remarks" && (
+            <div className="animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5 sm:py-3.5">
               <div className="flex size-7 items-center justify-center rounded-lg bg-amber-500 text-white">
                 <Sparkles className="size-3.5" />
@@ -537,13 +579,13 @@ function ResultEditor() {
               />
             </div>
           </div>
-        </div>
+        )}
 
-        {/* ── Right Column: Live Preview ── */}
+        {/* ── Tab 4: Live Preview ── */}
         <div
           className={cn(
-            "print-root lg:sticky lg:top-[5rem] lg:col-span-6 lg:block xl:col-span-7",
-            isMobile && (mobileTab === "preview" ? "block" : "hidden"),
+            "print-root",
+            activeTab === "preview" ? "block animate-fade-in" : "hidden print:block",
           )}
         >
           <div className="a4-panel overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -571,7 +613,7 @@ function ResultEditor() {
               </div>
             </div>
             <div className="a4-chrome p-1.5 sm:p-4">
-              <ResultPreview key={mobileTab} printerMarginMm={settings.printerMarginMm}>
+              <ResultPreview key={activeTab} printerMarginMm={settings.printerMarginMm}>
                 <ResultCard
                   ref={cardRef}
                   student={student}
