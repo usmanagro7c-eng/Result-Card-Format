@@ -29,18 +29,18 @@ export const PAGE_HEIGHT_PX = PAGE_HEIGHT_MM * PX_PER_MM; // 1122.52
  * simply never reaches the paper even though the file is perfect and the
  * on-screen preview shows the whole card.
  *
- *   10mm  - home and small-office inkjets; the safe default
+ *   11mm  - standard (recommended); safe for home and office printers
  *   12.7mm- 0.5in, the traditional office laser / MFP default
  *   15mm  - for unusually wide bands (some borderless-capable MFPs, or a
  *           printer in draft/economic mode)
  */
 export const PRINTER_MARGIN_OPTIONS = [
-  { value: 10, label: "10 mm - standard (recommended)" },
+  { value: 11, label: "11 mm - standard (recommended)" },
   { value: 12.7, label: "12.7 mm - office laser (1/2 inch)" },
   { value: 15, label: "15 mm - very wide unprintable band" },
 ] as const;
 
-export const DEFAULT_PRINTER_MARGIN_MM = 10;
+export const DEFAULT_PRINTER_MARGIN_MM = 11;
 
 const SUPPORTED_MARGINS = PRINTER_MARGIN_OPTIONS.map((o) => o.value);
 

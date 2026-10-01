@@ -290,11 +290,7 @@ function SettingsPage() {
                 onValueChange={(value) => {
                   const next = normalizePrinterMarginMm(Number(value));
                   updateSettings({ printerMarginMm: next });
-                  toast.success(
-                    next === DEFAULT_PRINTER_MARGIN_MM
-                      ? "Card frame set 10mm from the paper edge"
-                      : `Card frame set ${next}mm from the paper edge`,
-                  );
+                  toast.success(`Card frame set ${next}mm from the paper edge`);
                 }}
               >
                 <SelectTrigger className="h-10 rounded-xl border-slate-200 bg-slate-50/50 text-sm font-medium focus-visible:bg-white focus-visible:ring-blue-500/30">
