@@ -40,6 +40,7 @@ import {
   uid,
   useResultStore,
 } from "@/store/resultStore";
+import { capitalizeFirstLetter } from "@/lib/utils";
 import type { GradeRule } from "@/types/result";
 
 export const Route = createFileRoute("/settings")({
@@ -507,9 +508,10 @@ function SettingsPage() {
                   className="h-9 rounded-lg border-slate-200 bg-slate-50/40 text-sm font-semibold text-slate-900 focus-visible:bg-white focus-visible:ring-blue-500/30"
                   value={subject.name}
                   placeholder="Subject name"
+                  autoCapitalize="words"
                   onChange={(e) => {
                     const next = [...settings.defaultSubjects];
-                    next[index] = { ...subject, name: e.target.value };
+                    next[index] = { ...subject, name: capitalizeFirstLetter(e.target.value) };
                     updateSettings({ defaultSubjects: next });
                   }}
                 />
