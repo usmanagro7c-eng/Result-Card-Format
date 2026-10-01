@@ -39,7 +39,7 @@ import {
   uid,
   useResultStore,
 } from "@/store/resultStore";
-import { capitalizeFirstLetter } from "@/lib/utils";
+import { capitalizeFirstLetter, cn } from "@/lib/utils";
 import type { GradeRule } from "@/types/result";
 
 export const Route = createFileRoute("/settings")({
@@ -70,8 +70,34 @@ function readImage(file: File): Promise<string> {
   });
 }
 
+type SettingsTab = "school" | "grading" | "subjects" | "margins";
+
+const SETTINGS_TABS = [
+  {
+    id: "school" as const,
+    label: "School Info",
+    icon: Building2,
+  },
+  {
+    id: "grading" as const,
+    label: "Grading Scale",
+    icon: GraduationCap,
+  },
+  {
+    id: "subjects" as const,
+    label: "Default Subjects",
+    icon: PenTool,
+  },
+  {
+    id: "margins" as const,
+    label: "Printer Margins",
+    icon: Printer,
+  },
+];
+
 function SettingsPage() {
   const { ready, settings, updateSettings } = useResultStore();
+  const [activeTab, setActiveTab] = useState<SettingsTab>("school");
 
   if (!ready) {
     return (
@@ -148,6 +174,43 @@ function SettingsPage() {
         >
           <RotateCcw className="size-3.5" /> Restore All Defaults
         </Button>
+      </div>
+
+      {/* Segmented Navigation Tabs */}
+      <div className="mt-6">
+        <div
+          role="tablist"
+          aria-label="Settings categories"
+          className="grid grid-cols-2 gap-2 rounded-2xl border border-slate-200/90 bg-slate-100/90 p-1.5 shadow-inner sm:grid-cols-4 sm:gap-2"
+        >
+          {SETTINGS_TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-all sm:min-h-11 sm:text-sm active:scale-95",
+                  isActive
+                    ? "bg-white text-blue-950 shadow-sm"
+                    : "text-slate-600 hover:bg-white/60 hover:text-slate-900",
+                )}
+              >
+                <Icon
+                  className={cn(
+                    "size-4 shrink-0 transition-colors",
+                    isActive ? "text-blue-900" : "text-slate-400",
+                  )}
+                />
+                <span className="truncate">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="mt-8 space-y-7">
