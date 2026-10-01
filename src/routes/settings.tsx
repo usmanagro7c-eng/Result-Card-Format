@@ -11,7 +11,6 @@ import {
   Plus,
   Printer,
   RotateCcw,
-  Sparkles,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -25,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DEFAULT_GRADES, resolveGrade } from "@/utils/grading";
+import { DEFAULT_GRADES } from "@/utils/grading";
 import {
   DEFAULT_PRINTER_MARGIN_MM,
   PRINTER_MARGIN_OPTIONS,
@@ -73,7 +72,6 @@ function readImage(file: File): Promise<string> {
 
 function SettingsPage() {
   const { ready, settings, updateSettings } = useResultStore();
-  const [testPercentage, setTestPercentage] = useState<number>(84.85);
 
   if (!ready) {
     return (
@@ -114,10 +112,6 @@ function SettingsPage() {
     updateSettings(DEFAULT_SETTINGS);
     toast.success("All settings restored to factory defaults");
   };
-
-  const testGrade = resolveGrade(testPercentage, settings.grades);
-  const isTopTestGrade = testGrade === "A+" || testGrade === "A";
-  const isLowTestGrade = testGrade === "F" || testGrade === "E";
 
   const defaultTotalMarks = settings.defaultSubjects.reduce(
     (sum, s) => sum + (Number(s.totalMarks) || 0),
@@ -338,43 +332,6 @@ function SettingsPage() {
             >
               <RotateCcw className="size-3" /> Reset Standard Scale
             </Button>
-          </div>
-
-          {/* Interactive Live Grade Simulator */}
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200/80 bg-gradient-to-r from-amber-50/80 via-amber-50/40 to-white p-3.5 shadow-2xs">
-            <div className="flex items-center gap-2.5">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
-                <Sparkles className="size-4" />
-              </div>
-              <span className="text-xs font-bold text-slate-800">Live Grade Tester:</span>
-              <div className="flex items-center gap-1.5">
-                <Input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  className="h-8 w-20 rounded-lg border-slate-200 bg-white text-center text-xs font-black shadow-2xs"
-                  value={testPercentage}
-                  onChange={(e) => setTestPercentage(Number(e.target.value))}
-                />
-                <span className="text-xs font-extrabold text-slate-700">%</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-slate-500">Result:</span>
-              <span
-                className={`inline-flex items-center justify-center rounded-xl px-3.5 py-1 text-xs font-black shadow-2xs ${
-                  isTopTestGrade
-                    ? "bg-emerald-600 text-white"
-                    : isLowTestGrade
-                      ? "bg-rose-600 text-white"
-                      : "bg-amber-500 text-white"
-                }`}
-              >
-                Grade {testGrade}
-              </span>
-            </div>
           </div>
 
           {/* Grade Rules Table */}
