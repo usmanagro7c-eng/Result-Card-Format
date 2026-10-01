@@ -213,9 +213,10 @@ function SettingsPage() {
         </div>
       </div>
 
-      <div className="mt-8 space-y-7">
+      <div className="mt-6">
         {/* School Information & Branding */}
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        {activeTab === "school" && (
+          <section className="animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
             <div className="flex size-9 items-center justify-center rounded-xl bg-blue-100 text-blue-800">
               <Building2 className="size-5" />
@@ -331,9 +332,11 @@ function SettingsPage() {
             </div>
           </div>
         </section>
+        )}
 
         {/* Printer Safety */}
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        {activeTab === "margins" && (
+          <section className="animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
               <div className="flex size-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
@@ -367,12 +370,17 @@ function SettingsPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <p className="pt-1 text-xs text-slate-500 leading-relaxed">
+                Sets the safe boundary from the paper edge to prevent card borders from getting clipped on inkjet/laser printers. Recommended: 11mm.
+              </p>
             </div>
           </div>
         </section>
+        )}
 
         {/* Configurable Grading System */}
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        {activeTab === "grading" && (
+          <section className="animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
               <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800">
@@ -485,9 +493,11 @@ function SettingsPage() {
             </Button>
           </div>
         </section>
+        )}
 
         {/* Default Subjects for New Students */}
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        {activeTab === "subjects" && (
+          <section className="animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
               <div className="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-violet-800">
@@ -584,6 +594,7 @@ function SettingsPage() {
             </div>
           </div>
         </section>
+        )}
       </div>
     </div>
   );
