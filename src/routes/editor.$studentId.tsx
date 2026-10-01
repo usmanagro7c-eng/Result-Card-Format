@@ -111,7 +111,7 @@ function ResultEditor() {
   }, [students, studentId]);
 
   const isMobile = useIsMobile();
-  const [activeTab, setActiveTab] = useState<EditorTab>("marks");
+  const [activeTab, setActiveTab] = useState<EditorTab>("info");
 
   // The A4 card lives in the preview panel, which is display:none while the
   // Form tab is active on mobile. Force the preview visible for any print path, whether
