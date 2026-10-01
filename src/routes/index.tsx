@@ -572,11 +572,20 @@ function StudentsPage() {
                     return (
                       <tr
                         key={student.id}
-                        className={`group transition-colors hover:bg-blue-50/30 ${
+                        onClick={() =>
+                          navigate({
+                            to: "/editor/$studentId",
+                            params: { studentId: student.id },
+                          })
+                        }
+                        className={`group cursor-pointer transition-colors hover:bg-blue-50/40 ${
                           isSelected ? "bg-blue-50/50" : ""
                         }`}
                       >
-                        <td className="px-3 py-3.5 text-center sm:px-4">
+                        <td
+                          className="px-3 py-3.5 text-center sm:px-4"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <Checkbox
                             checked={isSelected}
                             onCheckedChange={(checked) =>
@@ -600,17 +609,9 @@ function StudentsPage() {
                               {(student.name || "?")[0]?.toUpperCase()}
                             </div>
                             <div className="min-w-0">
-                              <button
-                                onClick={() =>
-                                  navigate({
-                                    to: "/editor/$studentId",
-                                    params: { studentId: student.id },
-                                  })
-                                }
-                                className="block max-w-full truncate text-left font-bold text-slate-900 transition-colors hover:text-blue-900"
-                              >
+                              <span className="block max-w-full truncate text-left font-bold text-slate-900 transition-colors group-hover:text-blue-900">
                                 {student.name || "Untitled Student"}
-                              </button>
+                              </span>
 
                               {/* Mobile-only summary chips */}
                               <div className="mt-1 flex flex-wrap items-center gap-1 md:hidden">
@@ -663,7 +664,10 @@ function StudentsPage() {
                           </span>
                         </td>
 
-                        <td className="px-2 py-3 sm:px-4 sm:py-3.5">
+                        <td
+                          className="px-2 py-3 sm:px-4 sm:py-3.5"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {/* Mobile: single trigger opens the action sheet */}
                           <button
                             onClick={() => setSheetStudent(student)}
