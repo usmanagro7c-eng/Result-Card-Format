@@ -106,13 +106,13 @@ export function SubjectTable({
                 hasError ? "bg-rose-50/40 p-2 sm:p-0" : "",
               )}
             >
-              {/* MOBILE: ultra-compact 2-line layout */}
-              <div className="space-y-2 rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-2xs sm:hidden">
+              {/* MOBILE: balanced modern card layout */}
+              <div className="space-y-2 rounded-2xl border border-slate-200/90 bg-white p-3 shadow-xs sm:hidden">
                 {/* Row 1: Subject Name + Action Icons */}
                 <div className="flex items-center gap-1.5">
                   <Input
                     className={cn(
-                      "h-9 min-w-0 flex-1 rounded-lg bg-slate-50/50 text-sm font-medium placeholder:text-slate-400 focus-visible:bg-white focus-visible:ring-blue-500/30",
+                      "h-9 min-w-0 flex-1 rounded-xl bg-slate-50/60 text-sm font-semibold placeholder:text-slate-400 focus-visible:bg-white focus-visible:ring-blue-500/30",
                       !subject.name.trim() ? "border-rose-400 focus-visible:ring-rose-300" : "border-slate-200",
                     )}
                     value={subject.name}
@@ -122,14 +122,14 @@ export function SubjectTable({
                     onChange={(e) => patch(subject.id, { name: capitalizeFirstLetter(e.target.value) })}
                   />
 
-                  <div className="flex items-center shrink-0">
+                  <div className="flex items-center shrink-0 gap-0.5">
                     <button
                       type="button"
                       disabled={index === 0}
                       title="Move up"
                       aria-label="Move up"
                       onClick={() => move(index, -1)}
-                      className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-20"
+                      className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 active:bg-slate-200 disabled:opacity-20"
                     >
                       <ArrowUp className="size-3.5" />
                     </button>
@@ -139,7 +139,7 @@ export function SubjectTable({
                       title="Move down"
                       aria-label="Move down"
                       onClick={() => move(index, 1)}
-                      className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-20"
+                      className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 active:bg-slate-200 disabled:opacity-20"
                     >
                       <ArrowDown className="size-3.5" />
                     </button>
@@ -148,24 +148,24 @@ export function SubjectTable({
                       title="Remove subject"
                       aria-label="Remove subject"
                       onClick={() => onChange(subjects.filter((s) => s.id !== subject.id))}
-                      className="flex size-8 items-center justify-center rounded-lg text-rose-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                      className="flex size-8 items-center justify-center rounded-lg text-rose-400 transition-colors hover:bg-rose-50 hover:text-rose-600 active:bg-rose-100"
                     >
                       <Trash2 className="size-3.5" />
                     </button>
                   </div>
                 </div>
 
-                {/* Row 2: Total Marks and Obtained Marks in a 2-column strip */}
-                <div className="grid grid-cols-[5.5rem_1fr] items-center gap-2">
-                  <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50/60 px-2 py-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total:</span>
+                {/* Row 2: Total Marks and Obtained Marks in two balanced columns */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200/90 bg-slate-50/70 px-2.5 py-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">Total:</span>
                     <Input
                       type="number"
                       inputMode="numeric"
                       enterKeyHint="next"
                       min={1}
                       className={cn(
-                        "h-7 w-full border-0 bg-transparent p-0 text-center text-sm font-bold shadow-none focus-visible:ring-0",
+                        "h-7 w-16 border-0 bg-transparent p-0 text-right text-sm font-bold shadow-none focus-visible:ring-0",
                         subject.totalMarks <= 0 ? "text-rose-600" : "text-slate-800",
                       )}
                       value={subject.totalMarks === 0 ? "" : subject.totalMarks}
@@ -179,13 +179,12 @@ export function SubjectTable({
                     />
                   </div>
 
-                  <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50/60 px-1.5 py-1">
-                    <span className="pl-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Obt:</span>
+                  <div className="flex items-center justify-between gap-1 rounded-xl border border-slate-200/90 bg-slate-50/70 px-1.5 py-1">
                     <HoldButton
                       label={`Decrease ${subject.name || "subject"} marks`}
                       onStep={() => stepObtained(subject, -1)}
                       disabled={subject.obtainedMarks <= 0}
-                      className="size-7 shrink-0 rounded-md border-slate-200 text-slate-600 shadow-2xs active:bg-slate-100"
+                      className="size-7 shrink-0 rounded-lg border-slate-200 bg-white text-slate-600 shadow-2xs active:bg-slate-100 active:scale-95"
                     >
                       <Minus className="size-3" />
                     </HoldButton>
@@ -200,7 +199,7 @@ export function SubjectTable({
                         isOverLimit || subject.obtainedMarks < 0 ? "text-rose-600" : "text-slate-900",
                       )}
                       value={subject.obtainedMarks === 0 ? "" : subject.obtainedMarks}
-                      placeholder="—"
+                      placeholder="0"
                       aria-label={`Obtained marks for ${subject.name || "subject"}`}
                       onChange={(e) =>
                         patch(subject.id, {
@@ -213,7 +212,7 @@ export function SubjectTable({
                       label={`Increase ${subject.name || "subject"} marks`}
                       onStep={() => stepObtained(subject, 1)}
                       disabled={subject.obtainedMarks >= subject.totalMarks}
-                      className="size-7 shrink-0 rounded-md border-slate-200 text-slate-600 shadow-2xs active:bg-slate-100"
+                      className="size-7 shrink-0 rounded-lg border-slate-200 bg-white text-slate-600 shadow-2xs active:bg-slate-100 active:scale-95"
                     >
                       <Plus className="size-3" />
                     </HoldButton>
