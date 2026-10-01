@@ -6,6 +6,7 @@ import {
   Check,
   GraduationCap,
   Image as ImageIcon,
+  Lock,
   PenTool,
   Plus,
   Printer,
@@ -30,7 +31,15 @@ import {
   PRINTER_MARGIN_OPTIONS,
   normalizePrinterMarginMm,
 } from "@/lib/cardGeometry";
-import { DEFAULT_SETTINGS, DEFAULT_SUBJECTS, uid, useResultStore } from "@/store/resultStore";
+import {
+  DEFAULT_SETTINGS,
+  DEFAULT_SUBJECTS,
+  FIXED_SCHOOL_LOGO,
+  FIXED_SCHOOL_NAME,
+  FIXED_SCHOOL_TAGLINE,
+  uid,
+  useResultStore,
+} from "@/store/resultStore";
 import type { GradeRule } from "@/types/result";
 
 export const Route = createFileRoute("/settings")({
@@ -160,24 +169,34 @@ function SettingsPage() {
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs font-bold text-slate-700">School Name</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold text-slate-700">School Name</Label>
+                <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+                  <Lock className="size-3 text-slate-400" />
+                </span>
+              </div>
               <Input
-                value={settings.schoolName}
-                onChange={(e) => updateSettings({ schoolName: e.target.value })}
-                placeholder="e.g. The Country School"
-                className="rounded-xl border-slate-200 bg-slate-50/50 font-semibold focus-visible:bg-white focus-visible:ring-blue-500/30"
+                value={FIXED_SCHOOL_NAME}
+                readOnly
+                disabled
+                className="cursor-not-allowed rounded-xl border-slate-200 bg-slate-100/70 font-bold text-slate-700 select-none"
               />
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs font-bold text-slate-700">
-                School Tagline / Affiliation
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold text-slate-700">
+                  School Tagline / Affiliation
+                </Label>
+                <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+                  <Lock className="size-3 text-slate-400" />
+                </span>
+              </div>
               <Input
-                value={settings.schoolTagline}
-                onChange={(e) => updateSettings({ schoolTagline: e.target.value })}
-                placeholder="e.g. A project of Bloomfield Hall | Since 1984"
-                className="rounded-xl border-slate-200 bg-slate-50/50 focus-visible:bg-white focus-visible:ring-blue-500/30"
+                value={FIXED_SCHOOL_TAGLINE}
+                readOnly
+                disabled
+                className="cursor-not-allowed rounded-xl border-slate-200 bg-slate-100/70 font-medium text-slate-700 select-none"
               />
             </div>
 
@@ -208,15 +227,29 @@ function SettingsPage() {
               Logo &amp; Official Signatures
             </h3>
             <div className="grid gap-4 sm:grid-cols-3">
-              <ImageUploadField
-                label="School Logo"
-                value={settings.logoDataUrl}
-                onFile={(f) => upload(f, "logoDataUrl")}
-                onClear={() => {
-                  updateSettings({ logoDataUrl: null });
-                  toast.success("Logo cleared; standard crest emblem will be used");
-                }}
-              />
+              {/* Uneditable Fixed School Logo */}
+              <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-slate-50/60 p-4 shadow-2xs">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label className="block text-xs font-bold text-slate-900">School Logo</Label>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+                      <Lock className="size-3 text-slate-400" />
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex h-24 w-full items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white p-2">
+                    <img
+                      src={FIXED_SCHOOL_LOGO}
+                      alt="TCS Logo"
+                      className="h-full max-h-20 w-auto object-contain"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-3 flex h-9 items-center justify-center rounded-xl border border-slate-200/80 bg-slate-100/80 px-3 text-xs font-semibold text-slate-500 select-none">
+                  The Country School
+                </div>
+              </div>
 
               <ImageUploadField
                 label="Teacher's Signature"
