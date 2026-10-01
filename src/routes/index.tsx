@@ -525,14 +525,7 @@ function StudentsPage() {
                   : "Try adjusting your search or filters."}
               </p>
             </div>
-            {students.length === 0 ? (
-              <Button
-                onClick={handleCreate}
-                className="gap-1.5 rounded-xl bg-blue-900 text-white hover:bg-blue-800 px-5 font-semibold"
-              >
-                <Plus className="size-4" /> Add First Student
-              </Button>
-            ) : (
+            {students.length > 0 && (
               <Button
                 variant="outline"
                 size="sm"
