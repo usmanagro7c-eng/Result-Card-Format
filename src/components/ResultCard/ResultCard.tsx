@@ -209,24 +209,18 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
         {/* Header Section */}
         <header className="text-center">
           <div className="flex items-center justify-center gap-4">
-            {settings.logoDataUrl ? (
-              <img
-                src={settings.logoDataUrl}
-                alt="School Logo"
-                className="h-20 w-20 object-contain"
-              />
-            ) : (
-              <DefaultSchoolEmblem />
-            )}
+            <img
+              src={settings.logoDataUrl || "/TCS Logo.png"}
+              alt="The Country School Logo"
+              className="h-20 w-20 object-contain"
+            />
             <div className="text-center">
               <h1 className="text-[27px] font-bold uppercase leading-tight font-doc text-neutral-900">
                 {settings.schoolName || "The Country School"}
               </h1>
-              {settings.schoolTagline ? (
-                <p className="text-[13px] text-neutral-700 italic font-sans font-medium mt-0.5">
-                  {settings.schoolTagline}
-                </p>
-              ) : null}
+              <p className="text-[13px] text-neutral-700 italic font-sans font-medium mt-0.5">
+                {settings.schoolTagline || "A project of Bloomfield Hall | Since 1984"}
+              </p>
             </div>
           </div>
 
