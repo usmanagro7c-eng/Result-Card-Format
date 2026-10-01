@@ -66,7 +66,7 @@ export const Route = createFileRoute("/")({
 });
 
 function StudentsPage() {
-  const { ready, students, settings, addStudent, deleteStudent, duplicateStudent } =
+  const { ready, students, settings, addStudent, deleteStudent, deleteStudents, duplicateStudent } =
     useResultStore();
   const navigate = useNavigate();
 
@@ -79,6 +79,7 @@ function StudentsPage() {
   const [isBulkPrinting, setIsBulkPrinting] = useState(false);
   const [sheetStudent, setSheetStudent] = useState<(typeof students)[0] | null>(null);
   const [pendingDelete, setPendingDelete] = useState<(typeof students)[0] | null>(null);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const bulkPdfRef = useRef<HTMLDivElement>(null);
@@ -148,6 +149,17 @@ function StudentsPage() {
     setSheetStudent((prev) => (prev?.id === pendingDelete.id ? null : prev));
     toast.success(`${pendingDelete.name || "Student"} removed`);
     setPendingDelete(null);
+  };
+
+  const confirmBulkDelete = () => {
+    if (selected.length === 0) return;
+    const count = selected.length;
+    const selectedSet = new Set(selected);
+    deleteStudents(selected);
+    setSelected([]);
+    setSheetStudent((prev) => (prev && selectedSet.has(prev.id) ? null : prev));
+    setBulkDeleteOpen(false);
+    toast.success(`${count} student${count > 1 ? "s" : ""} removed`);
   };
 
   /**
@@ -474,6 +486,15 @@ function StudentsPage() {
             >
               <FileDown className="size-3.5" />
               {busy ? progressText || "Generating..." : `Download PDF (${selected.length})`}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setBulkDeleteOpen(true)}
+              disabled={busy}
+              className="min-h-11 flex-1 gap-1.5 bg-rose-600 text-xs font-bold text-white hover:bg-rose-700 sm:min-h-8 sm:flex-none"
+            >
+              <Trash2 className="size-3.5" /> Delete ({selected.length})
             </Button>
           </div>
         </div>
@@ -923,6 +944,36 @@ function StudentsPage() {
               className="min-h-11 rounded-xl bg-rose-600 text-white hover:bg-rose-700"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete confirmation */}
+      <AlertDialog
+        open={bulkDeleteOpen}
+        onOpenChange={(open) => {
+          if (!open) setBulkDeleteOpen(false);
+        }}
+      >
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-extrabold">
+              Delete {selected.length} {selected.length > 1 ? "students" : "student"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {selected.length === 1
+                ? "This student and all their marks will be permanently removed. This cannot be undone."
+                : `All ${selected.length} selected students and their marks will be permanently removed. This cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="min-h-11 rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmBulkDelete}
+              className="min-h-11 rounded-xl bg-rose-600 text-white hover:bg-rose-700"
+            >
+              Delete {selected.length} {selected.length > 1 ? "Students" : "Student"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

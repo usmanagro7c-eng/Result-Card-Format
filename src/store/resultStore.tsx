@@ -92,6 +92,7 @@ interface StoreValue {
   addStudent: (student: Student) => void;
   updateStudent: (id: string, patch: Partial<Student>) => void;
   deleteStudent: (id: string) => void;
+  deleteStudents: (ids: string[]) => void;
   duplicateStudent: (id: string) => Student | undefined;
   getStudent: (id: string) => Student | undefined;
   updateSettings: (patch: Partial<Settings>) => void;
@@ -180,6 +181,11 @@ export function ResultStoreProvider({ children }: { children: ReactNode }) {
     setStudents((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
+  const deleteStudents = useCallback((ids: string[]) => {
+    const idSet = new Set(ids);
+    setStudents((prev) => prev.filter((s) => !idSet.has(s.id)));
+  }, []);
+
   const duplicateStudent = useCallback(
     (id: string) => {
       const target = students.find((s) => s.id === id);
@@ -218,6 +224,7 @@ export function ResultStoreProvider({ children }: { children: ReactNode }) {
       addStudent,
       updateStudent,
       deleteStudent,
+      deleteStudents,
       duplicateStudent,
       getStudent: (id: string) => students.find((s) => s.id === id),
       updateSettings: (patch) =>
@@ -238,6 +245,7 @@ export function ResultStoreProvider({ children }: { children: ReactNode }) {
       addStudent,
       updateStudent,
       deleteStudent,
+      deleteStudents,
       duplicateStudent,
       clearAllStudents,
       storageFull,
