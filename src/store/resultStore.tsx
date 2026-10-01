@@ -10,6 +10,7 @@ import {
 import type { Settings, Student, Subject } from "@/types/result";
 import { DEFAULT_GRADES } from "@/utils/grading";
 import { DEFAULT_PRINTER_MARGIN_MM, normalizePrinterMarginMm } from "@/lib/cardGeometry";
+import { capitalizeFirstLetter } from "@/lib/utils";
 
 const STUDENTS_KEY = "result-card.students.v1";
 const SETTINGS_KEY = "result-card.settings.v1";
@@ -58,7 +59,7 @@ export function uid() {
 export function makeSubjects(defaults: Settings["defaultSubjects"]): Subject[] {
   return defaults.map((d) => ({
     id: uid(),
-    name: d.name,
+    name: capitalizeFirstLetter(d.name),
     totalMarks: d.totalMarks,
     obtainedMarks: 0,
   }));
