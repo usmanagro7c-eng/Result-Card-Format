@@ -7,7 +7,7 @@ import type { Subject } from "@/types/result";
 import { subjectErrors } from "@/utils/calculations";
 import { SUMMER_WORK_LABEL, SUMMER_WORK_TOTAL_MARKS, findSummerWork } from "@/utils/summerWork";
 import { DEFAULT_SUBJECTS, uid } from "@/store/resultStore";
-import { cn } from "@/lib/utils";
+import { cn, capitalizeFirstLetter } from "@/lib/utils";
 
 interface Props {
   subjects: Subject[];
@@ -118,7 +118,8 @@ export function SubjectTable({
                     value={subject.name}
                     placeholder="Subject name (e.g. English)"
                     aria-label="Subject name"
-                    onChange={(e) => patch(subject.id, { name: e.target.value })}
+                    autoCapitalize="words"
+                    onChange={(e) => patch(subject.id, { name: capitalizeFirstLetter(e.target.value) })}
                   />
 
                   <div className="flex items-center shrink-0">
@@ -229,7 +230,8 @@ export function SubjectTable({
                   )}
                   value={subject.name}
                   placeholder="Subject name (e.g. English)"
-                  onChange={(e) => patch(subject.id, { name: e.target.value })}
+                  autoCapitalize="words"
+                  onChange={(e) => patch(subject.id, { name: capitalizeFirstLetter(e.target.value) })}
                 />
 
                 <Input
