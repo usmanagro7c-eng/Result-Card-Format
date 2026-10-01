@@ -275,7 +275,7 @@ function StudentsPage() {
   const hasFilters = query || classFilter !== "all" || sessionFilter !== "all";
 
   return (
-    <div className="print-shell mx-auto w-full max-w-6xl px-3.5 pb-24 pt-4 sm:px-6 sm:pb-12 sm:pt-6">
+    <div className="print-shell mx-auto w-full max-w-6xl px-3.5 pb-24 pt-4 sm:px-6 sm:pb-12 sm:pt-6 animate-fade-in">
       {/* Page Header */}
       <div className="no-print mb-5 flex flex-wrap items-center justify-between gap-3 sm:mb-6">
         <div>
@@ -458,7 +458,7 @@ function StudentsPage() {
 
       {/* Bulk Action Bar */}
       {selected.length > 0 && (
-        <div className="no-print mb-4 flex flex-col gap-3 rounded-2xl border border-blue-900/10 bg-gradient-to-r from-blue-950 to-slate-900 px-4 py-3.5 shadow-xl shadow-slate-900/15 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="no-print mb-4 flex flex-col gap-3 rounded-2xl border border-blue-900/10 bg-gradient-to-r from-blue-950 to-slate-900 px-4 py-3.5 shadow-xl shadow-slate-900/15 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between animate-slide-down">
           <div className="flex items-center gap-2.5">
             <span className="flex size-6 items-center justify-center rounded-full bg-white/20 text-xs font-black text-white">
               {selected.length}

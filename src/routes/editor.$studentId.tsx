@@ -186,7 +186,7 @@ function ResultEditor() {
   };
 
   return (
-    <div className="print-shell mx-auto w-full max-w-7xl px-3 pb-6 pt-3 sm:px-6 sm:pb-12 sm:pt-4">
+    <div className="print-shell mx-auto w-full max-w-7xl px-3 pb-6 pt-3 sm:px-6 sm:pb-12 sm:pt-4 animate-fade-in">
       {/* Top Action Bar */}
       <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-2.5 sm:mb-5 sm:gap-3">
         <div className="flex items-center gap-1">

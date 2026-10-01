@@ -119,7 +119,7 @@ function SettingsPage() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 pt-6 pb-24 sm:px-6 sm:py-8">
+    <div className="mx-auto w-full max-w-4xl px-4 pt-6 pb-24 sm:px-6 sm:py-8 animate-fade-in">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
