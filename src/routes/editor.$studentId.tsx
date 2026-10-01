@@ -291,7 +291,7 @@ function ResultEditor() {
       {/* Mobile Panel Switcher */}
       <div
         className={cn(
-          "no-print mb-4 grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1",
+          "no-print mb-4 grid grid-cols-2 gap-1.5 rounded-2xl border border-slate-200/80 bg-slate-100/90 p-1.5 shadow-inner",
           !isMobile && "hidden",
         )}
         role="tablist"
@@ -303,10 +303,10 @@ function ResultEditor() {
           aria-selected={mobileTab === "form"}
           onClick={() => setMobileTab("form")}
           className={cn(
-            "flex min-h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all",
+            "flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-bold transition-all",
             mobileTab === "form"
               ? "bg-white text-blue-900 shadow-sm"
-              : "text-slate-500 hover:text-slate-700",
+              : "text-slate-500 hover:text-slate-700 active:scale-98",
           )}
         >
           <Pencil className="size-4" /> Form
@@ -317,13 +317,13 @@ function ResultEditor() {
           aria-selected={mobileTab === "preview"}
           onClick={() => setMobileTab("preview")}
           className={cn(
-            "flex min-h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all",
+            "flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-bold transition-all",
             mobileTab === "preview"
               ? "bg-white text-blue-900 shadow-sm"
-              : "text-slate-500 hover:text-slate-700",
+              : "text-slate-500 hover:text-slate-700 active:scale-98",
           )}
         >
-          <Eye className="size-4" /> Preview
+          <Eye className="size-4" /> Preview Card
         </button>
       </div>
 
@@ -589,7 +589,7 @@ function ResultEditor() {
       {/* Mobile Sticky Bottom Bar */}
       {isMobile ? (
         <div
-          className="no-print sticky bottom-0 z-30 -mx-4 mt-4 flex items-center gap-2.5 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-md"
+          className="no-print sticky bottom-0 z-30 -mx-3 mt-4 flex items-center gap-2 border-t border-slate-200/80 bg-white/95 px-3 py-2.5 backdrop-blur-md sm:-mx-6 sm:px-6"
           style={{
             paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))",
             boxShadow: "0 -4px 20px -4px rgb(15 23 42 / 0.12)",
@@ -598,11 +598,11 @@ function ResultEditor() {
           {/* Live score */}
           <div className="min-w-0 shrink-0">
             <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Score
+              Total Marks
             </span>
-            <span className="block text-sm font-black tabular-nums text-slate-900">
+            <span className="block text-sm font-black tabular-nums text-slate-900 leading-tight">
               {totals.obtainedTotal}/{totals.grandTotal}
-              <span className="ml-1.5 text-xs font-bold text-blue-700">{totals.percentage}%</span>
+              <span className="ml-1 text-xs font-bold text-blue-700">({totals.percentage}%)</span>
             </span>
           </div>
 
@@ -610,28 +610,24 @@ function ResultEditor() {
             size="sm"
             onClick={handlePdf}
             disabled={busy || hasErrors}
-            className="min-h-11 flex-1 gap-1.5 bg-blue-900 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-60"
+            className="min-h-11 flex-1 gap-1.5 rounded-xl bg-blue-900 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-blue-800 disabled:opacity-60 active:scale-98"
           >
             <FileDown className="size-4" />
-            {busy ? "Preparing..." : (
-              <>
-                <span className="hidden min-[360px]:inline">Download </span>PDF
-              </>
-            )}
+            {busy ? "Preparing..." : "Download PDF"}
           </Button>
 
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={!nextStudentId}
-            onClick={() =>
-              nextStudentId &&
-              navigate({ to: "/editor/$studentId", params: { studentId: nextStudentId } })
-            }
-            className="min-h-11 shrink-0 gap-1 border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-          >
-            Next <ChevronRight className="size-4" />
-          </Button>
+          {nextStudentId && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                navigate({ to: "/editor/$studentId", params: { studentId: nextStudentId } })
+              }
+              className="min-h-11 shrink-0 gap-1 rounded-xl border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-100 active:scale-98"
+            >
+              Next <ChevronRight className="size-4" />
+            </Button>
+          )}
         </div>
       ) : null}
 
