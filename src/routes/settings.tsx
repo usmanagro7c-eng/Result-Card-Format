@@ -446,16 +446,16 @@ function SettingsPage() {
           </div>
 
           <div className="mt-5 space-y-2">
-            <div className="hidden grid-cols-[1fr_8rem_3rem] items-center gap-3 rounded-xl bg-slate-100/80 px-3.5 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 sm:grid">
+            <div className="grid grid-cols-[1fr_5.5rem_2.25rem] sm:grid-cols-[1fr_8rem_3rem] items-center gap-2 rounded-xl bg-slate-100/80 px-2.5 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 sm:px-3.5">
               <span>Subject Name</span>
               <span className="text-center">Total Marks</span>
-              <span className="text-right">Action</span>
+              <span className="text-right"></span>
             </div>
 
             {settings.defaultSubjects.map((subject, index) => (
               <div
                 key={index}
-                className="grid grid-cols-[1fr_8rem_3rem] items-center gap-2.5 rounded-xl border border-slate-200/70 bg-white px-3 py-2 shadow-2xs transition-all hover:border-slate-300"
+                className="grid grid-cols-[1fr_5.5rem_2.25rem] sm:grid-cols-[1fr_8rem_3rem] items-center gap-2 rounded-xl border border-slate-200/70 bg-white p-2 shadow-2xs transition-all hover:border-slate-300 sm:px-3 sm:py-2"
               >
                 <Input
                   className="h-9 rounded-lg border-slate-200 bg-slate-50/40 text-sm font-semibold text-slate-900 focus-visible:bg-white focus-visible:ring-blue-500/30"
