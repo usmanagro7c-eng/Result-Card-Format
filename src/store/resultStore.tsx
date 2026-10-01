@@ -34,10 +34,14 @@ export const PRESET_REMARKS = [
   "Unsatisfactory. Need more concentration.",
 ];
 
+export const FIXED_SCHOOL_NAME = "The Country School";
+export const FIXED_SCHOOL_TAGLINE = "A project of Bloomfield Hall | Since 1984";
+export const FIXED_SCHOOL_LOGO = "/TCS Logo.png";
+
 export const DEFAULT_SETTINGS: Settings = {
-  schoolName: "The Country School",
-  schoolTagline: "A project of Bloomfield Hall | Since 1984",
-  logoDataUrl: null,
+  schoolName: FIXED_SCHOOL_NAME,
+  schoolTagline: FIXED_SCHOOL_TAGLINE,
+  logoDataUrl: FIXED_SCHOOL_LOGO,
   teacherSignatureDataUrl: null,
   headSignatureDataUrl: null,
   defaultSession: "2026–2027",
@@ -133,6 +137,9 @@ export function ResultStoreProvider({ children }: { children: ReactNode }) {
     setSettings({
       ...DEFAULT_SETTINGS,
       ...storedSettings,
+      schoolName: FIXED_SCHOOL_NAME,
+      schoolTagline: FIXED_SCHOOL_TAGLINE,
+      logoDataUrl: FIXED_SCHOOL_LOGO,
       printerMarginMm: normalizePrinterMarginMm(storedSettings.printerMarginMm),
     });
     setReady(true);
@@ -212,7 +219,14 @@ export function ResultStoreProvider({ children }: { children: ReactNode }) {
       deleteStudent,
       duplicateStudent,
       getStudent: (id: string) => students.find((s) => s.id === id),
-      updateSettings: (patch) => setSettings((prev) => ({ ...prev, ...patch })),
+      updateSettings: (patch) =>
+        setSettings((prev) => ({
+          ...prev,
+          ...patch,
+          schoolName: FIXED_SCHOOL_NAME,
+          schoolTagline: FIXED_SCHOOL_TAGLINE,
+          logoDataUrl: FIXED_SCHOOL_LOGO,
+        })),
       clearAllStudents,
       storageFull,
     }),
