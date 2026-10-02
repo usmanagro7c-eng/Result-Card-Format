@@ -458,22 +458,36 @@ function StudentsPage() {
 
       {/* Bulk Action Bar */}
       {selected.length > 0 && (
-        <div className="no-print mb-4 flex flex-col gap-3 rounded-2xl border border-blue-900/10 bg-gradient-to-r from-blue-950 to-slate-900 px-4 py-3.5 shadow-xl shadow-slate-900/15 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between animate-slide-down">
-          <div className="flex items-center gap-2.5">
-            <span className="flex size-6 items-center justify-center rounded-full bg-white/20 text-xs font-black text-white">
-              {selected.length}
-            </span>
-            <span className="text-sm font-semibold text-white/90">
-              {selected.length} student{selected.length > 1 ? "s" : ""} selected
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
+        <div className="no-print mb-4 flex flex-col gap-3 rounded-2xl border border-blue-900/10 bg-gradient-to-r from-blue-950 to-slate-900 p-3 sm:px-4 sm:py-3.5 shadow-xl shadow-slate-900/15 sm:flex-row sm:items-center sm:justify-between animate-slide-down">
+          {/* Status + Clear button on mobile */}
+          <div className="flex items-center justify-between sm:justify-start gap-2.5">
+            <div className="flex items-center gap-2">
+              <span className="flex size-6 items-center justify-center rounded-full bg-white/20 text-xs font-black text-white">
+                {selected.length}
+              </span>
+              <span className="text-xs sm:text-sm font-semibold text-white/90">
+                {selected.length} student{selected.length > 1 ? "s" : ""} selected
+              </span>
+            </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSelected([])}
               disabled={busy}
-              className="min-h-11 flex-1 text-xs text-white/70 hover:bg-white/10 hover:text-white sm:min-h-8 sm:flex-none"
+              className="h-8 px-2.5 text-xs text-white/70 hover:bg-white/10 hover:text-white sm:hidden"
+            >
+              <X className="mr-1 size-3.5" /> Clear
+            </Button>
+          </div>
+
+          {/* Action buttons */}
+          <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto sm:items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelected([])}
+              disabled={busy}
+              className="hidden sm:inline-flex h-8 text-xs text-white/70 hover:bg-white/10 hover:text-white"
             >
               <X className="mr-1 size-3.5" /> Clear
             </Button>
@@ -482,7 +496,7 @@ function StudentsPage() {
                 size="sm"
                 onClick={handleBulkPrint}
                 disabled={busy}
-                className="min-h-11 flex-1 gap-1.5 border border-white/20 bg-white/10 text-xs text-white hover:bg-white/20 sm:min-h-8 sm:flex-none"
+                className="h-8 gap-1.5 border border-white/20 bg-white/10 text-xs text-white hover:bg-white/20"
               >
                 <Printer className="size-3.5" /> Print ({selected.length})
               </Button>
@@ -491,19 +505,22 @@ function StudentsPage() {
               size="sm"
               onClick={handleBulkPdf}
               disabled={busy}
-              className="min-h-11 flex-1 gap-1.5 bg-white text-xs font-bold text-slate-900 shadow-sm hover:bg-slate-100 sm:min-h-8 sm:flex-none"
+              className="min-h-10 sm:min-h-8 gap-1.5 bg-white text-xs font-bold text-slate-900 shadow-sm hover:bg-slate-100"
             >
-              <FileDown className="size-3.5" />
-              {busy ? progressText || "Generating..." : `Download PDF (${selected.length})`}
+              <FileDown className="size-3.5 shrink-0" />
+              <span className="truncate">
+                {busy ? progressText || "Generating..." : `Download PDF`}
+              </span>
             </Button>
             <Button
               variant="destructive"
               size="sm"
               onClick={() => setBulkDeleteOpen(true)}
               disabled={busy}
-              className="min-h-11 flex-1 gap-1.5 bg-rose-600 text-xs font-bold text-white hover:bg-rose-700 sm:min-h-8 sm:flex-none"
+              className="min-h-10 sm:min-h-8 gap-1.5 bg-rose-600 text-xs font-bold text-white hover:bg-rose-700"
             >
-              <Trash2 className="size-3.5" /> Delete ({selected.length})
+              <Trash2 className="size-3.5 shrink-0" />
+              <span className="truncate">Delete ({selected.length})</span>
             </Button>
           </div>
         </div>
@@ -958,7 +975,7 @@ function StudentsPage() {
           if (!open) setBulkDeleteOpen(false);
         }}
       >
-        <AlertDialogContent className="rounded-2xl">
+        <AlertDialogContent className="rounded-2xl max-w-[calc(100%-2rem)] sm:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-extrabold">
               Delete {selected.length} {selected.length > 1 ? "students" : "student"}?
