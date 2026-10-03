@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">TCS Result Card</string>
+    <string name="title_activity_main">TCS Result Card</string>
+    <string name="package_name">com.thecountryschool.resultcard</string>
+    <string name="custom_url_scheme">com.thecountryschool.resultcard</string>
+</resources>
