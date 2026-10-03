@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Native launch window background.
+
+    On API 28 the platform's starting window is built from android:windowBackground
+    (windowSplashScreenAnimatedIcon is an AndroidX concept and is not what the
+    platform reads there). Pointing windowBackground at plain white is what caused
+    a white screen to flash first and the logo to appear afterwards.
+
+    This layer-list paints white and then centres the TCS lockup at its natural
+    size. <bitmap>/gravity="center" never scales, so the crest cannot come out
+    squashed - the "oval" look - and because splash_lockup is emitted per density
+    bucket (drawable-ldpi .. drawable-xxxhdpi) it also fits narrow screens rather
+    than being clipped.
+
+    Deliberately no <animated-vector> here. The system starting window is a static
+    bitmap surface and cannot animate anyway, and inflating an animated drawable
+    from a window background proved fragile. The moving loading bar lives in the
+    web layer (#boot in mobile/index.html) instead.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@android:color/white" />
+    <item
+        android:gravity="center"
+        android:drawable="@drawable/splash_lockup" />
+</layer-list>

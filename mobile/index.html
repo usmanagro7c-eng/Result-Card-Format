@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -14,6 +14,7 @@
       :root {
         --sat: env(safe-area-inset-top, 0px);
         --sab: env(safe-area-inset-bottom, 0px);
+        --tcs-navy: #28246a;
       }
       html,
       body {
@@ -21,9 +22,106 @@
         touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
       }
+
+      /*
+        Launch overlay.
+
+        The native starting window is torn down as soon as the WebView paints its
+        first frame, and that frame used to be the empty #root - a blank white
+        page that lingered while React mounted. This overlay is that first frame,
+        so the branded screen the user launched into stays up instead.
+
+        It matches the native splash (same logo, same white field, same centred
+        placement) so the hand-off between the two is invisible.
+      */
+      #boot {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 26px;
+        background: #ffffff;
+        /* No transition on the way in: it must be visible on the very first frame. */
+      }
+      #boot.boot--done {
+        opacity: 0;
+        transition: opacity 260ms ease-out;
+        pointer-events: none;
+      }
+
+      /*
+        The lockup. Sized as a percentage of the viewport width so it mirrors the
+        native splash on any screen without ever overflowing a narrow one, and
+        object-fit: contain keeps the aspect ratio - stretching it here is what
+        produced the "oval" logo.
+
+        50vw is not arbitrary: the native lockups are sized so that they land on
+        roughly half the screen width at every density
+        (bucketWidth * 160 / (bucketDpi * dpWidth)), so 50vw keeps this overlay
+        the same size as the window it replaces. Without the match the hand-off
+        shows up as a visible jump in scale.
+      */
+      #boot .boot__lockup {
+        width: min(50vw, 300px);
+        height: auto;
+        max-height: 46vh;
+        object-fit: contain;
+      }
+
+      /*
+        Indeterminate loading bar, anchored to the bottom of the screen and lifted
+        clear of the navigation bar via --sab.
+      */
+      #boot .boot__bar {
+        position: absolute;
+        left: 50%;
+        bottom: calc(84px + var(--sab));
+        width: min(58vw, 260px);
+        height: 4px;
+        transform: translateX(-50%);
+        border-radius: 999px;
+        overflow: hidden;
+        background: linear-gradient(90deg, #e2e8f0, #f1f5f9);
+      }
+      #boot .boot__bar::after {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 45%;
+        border-radius: 999px;
+        background: var(--tcs-navy);
+        animation: boot-slide 1s ease-in-out infinite alternate;
+      }
+      @keyframes boot-slide {
+        from {
+          transform: translateX(0%);
+        }
+        to {
+          transform: translateX(122%);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #boot .boot__bar::after {
+          animation: none;
+          width: 100%;
+        }
+      }
     </style>
   </head>
   <body class="min-h-screen bg-slate-50 font-sans antialiased text-foreground">
+    <!--
+      First painted frame: branded, and never blank. mobile/main.tsx removes this
+      once the router has rendered.
+    -->
+    <div id="boot">
+      <img class="boot__lockup" src="/splash-lockup.png" alt="The Country School" />
+      <div class="boot__bar" role="progressbar" aria-label="Loading"></div>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="./main.tsx"></script>
   </body>
