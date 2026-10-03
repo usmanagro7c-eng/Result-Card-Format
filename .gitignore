@@ -7,29 +7,64 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-.output
-.vinxi
+# Dependencies
+node_modules/
+
+# Production build outputs (Web & SSR)
+dist/
+dist-ssr/
+.output/
+.vinxi/
 .tanstack/**
-.nitro
-*.local
+.nitro/
+
+# Mobile SPA build output
+dist-mobile/
 
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
 
+# Environment & local files
+.env
+.env.local
+.env.*.local
+*.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-*.apk
-dist-mobile/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# Testing & tool temp files
 .playwright-mcp/
+
+# Android build outputs & local configs
+*.apk
+*.aab
+android/.gradle/
+android/local.properties
+android/**/build/
+android/build/
+android/app/build/
+android/.idea/
+android/captures/
+android/*.iml
+android/**/*.iml
+android/.cxx/
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+android/app/src/main/res/xml/config.xml
+android/capacitor-cordova-android-plugins/
