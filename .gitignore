@@ -31,4 +31,5 @@ dist-ssr
 *.sln
 *.sw?
 *.apk
-android/
+dist-mobile/
+.playwright-mcp/
