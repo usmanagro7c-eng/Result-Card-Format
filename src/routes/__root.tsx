@@ -40,7 +40,10 @@ function AppNavbar() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-3 sm:px-6">
           {/* Left: Brand + Desktop Navigation */}
           <div className="flex items-center gap-6 sm:gap-8 min-w-0">
-            <Link to="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-85 min-w-0">
+            <Link
+              to="/"
+              className="flex items-center gap-2.5 transition-opacity hover:opacity-85 min-w-0"
+            >
               <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200/80 bg-white p-1 shadow-xs">
                 <img
                   src={settings.logoDataUrl || "/TCS Logo.png"}
@@ -59,7 +62,10 @@ function AppNavbar() {
             </Link>
 
             {/* Desktop Nav Links */}
-            <nav className="hidden md:flex items-center gap-1 border-l border-slate-200 pl-6" aria-label="Main navigation">
+            <nav
+              className="hidden md:flex items-center gap-1 border-l border-slate-200 pl-6"
+              aria-label="Main navigation"
+            >
               <Link
                 to="/"
                 className={`relative flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-all ${
@@ -73,9 +79,7 @@ function AppNavbar() {
                 {students.length > 0 && (
                   <span
                     className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums ${
-                      isHome
-                        ? "bg-blue-900/12 text-blue-900"
-                        : "bg-slate-200 text-slate-600"
+                      isHome ? "bg-blue-900/12 text-blue-900" : "bg-slate-200 text-slate-600"
                     }`}
                   >
                     {students.length}
@@ -106,7 +110,15 @@ function AppNavbar() {
           {/* Right side: Active Term & Session status badge */}
           <div className="flex items-center shrink-0">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-slate-600 border border-slate-200/60 shadow-2xs">
-              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              {/* Static on purpose. This used to carry `animate-pulse`, and an
+               * infinite CSS animation makes Chromium repaint every frame for
+               * the life of the process. Measured on a Galaxy Note 8 it pinned
+               * the WebView's browser process at ~165% of a core continuously,
+               * on every screen, purely to fade one 6px dot in and out. That
+               * drained the battery and added heat for a marker whose meaning
+               * (the active term and session) is static configuration, not a
+               * live reading. */}
+              <span className="size-1.5 rounded-full bg-emerald-500" />
               <span className="hidden sm:inline">{settings.defaultTerm} &middot; </span>
               <span className="truncate max-w-[85px] sm:max-w-none">{settings.defaultSession}</span>
             </span>
@@ -114,13 +126,9 @@ function AppNavbar() {
         </div>
       </header>
 
-      {/* Mobile Bottom Navigation — fixed to viewport bottom */}
+      {/* Mobile Bottom Navigation — shares the editor action bar's height token */}
       {!isEditor && (
-        <nav
-          aria-label="Mobile navigation"
-          className="no-print md:hidden fixed bottom-0 left-0 right-0 z-30 border-t border-slate-200/80 bg-white/95 backdrop-blur-lg shadow-[0_-4px_24px_rgba(0,0,0,0.06)]"
-          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-        >
+        <nav aria-label="Mobile navigation" className="no-print md:hidden bottom-bar">
           <div className="grid grid-cols-3 items-center px-2">
             {/* Students tab */}
             <Link
@@ -130,13 +138,15 @@ function AppNavbar() {
                 isHome ? "text-blue-900" : "text-slate-400 hover:text-slate-600"
               }`}
             >
-              <div className={`flex items-center justify-center rounded-xl p-1 transition-colors ${isHome ? "bg-blue-50 text-blue-900" : ""}`}>
+              <div
+                className={`flex items-center justify-center rounded-xl p-1 transition-colors ${isHome ? "bg-blue-50 text-blue-900" : ""}`}
+              >
                 <Users className="size-5" />
               </div>
-              <span className="leading-none">Students{students.length > 0 ? ` (${students.length})` : ""}</span>
-              {isHome && (
-                <span className="absolute top-0 h-0.5 w-8 rounded-full bg-blue-900" />
-              )}
+              <span className="leading-none">
+                Students{students.length > 0 ? ` (${students.length})` : ""}
+              </span>
+              {isHome && <span className="absolute top-0 h-0.5 w-8 rounded-full bg-blue-900" />}
             </Link>
 
             {/* Center Quick Add FAB */}
@@ -158,13 +168,13 @@ function AppNavbar() {
                 isSettings ? "text-blue-900" : "text-slate-400 hover:text-slate-600"
               }`}
             >
-              <div className={`flex items-center justify-center rounded-xl p-1 transition-colors ${isSettings ? "bg-blue-50 text-blue-900" : ""}`}>
+              <div
+                className={`flex items-center justify-center rounded-xl p-1 transition-colors ${isSettings ? "bg-blue-50 text-blue-900" : ""}`}
+              >
                 <SettingsIcon className="size-5" />
               </div>
               <span className="leading-none">Settings</span>
-              {isSettings && (
-                <span className="absolute top-0 h-0.5 w-8 rounded-full bg-blue-900" />
-              )}
+              {isSettings && <span className="absolute top-0 h-0.5 w-8 rounded-full bg-blue-900" />}
             </Link>
           </div>
         </nav>
@@ -274,7 +284,42 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+/**
+ * True only in the Capacitor SPA build, where `vite.mobile.config.ts` compiles
+ * this flag in. Undefined on the SSR build, hence the `typeof` guard.
+ */
+declare const __IS_MOBILE_APP__: boolean | undefined;
+
+const IS_MOBILE_APP = typeof __IS_MOBILE_APP__ !== "undefined" && Boolean(__IS_MOBILE_APP__);
+
+/**
+ * The document shell, on the server only.
+ *
+ * During SSR this component *is* the document: `<html>`, `<head>` and `<body>`
+ * have no parent yet, so emitting them is correct and Vercel gets a full HTML
+ * response.
+ *
+ * The mobile SPA must not emit them. `mobile/index.html` already ships a real
+ * document and `mobile/main.tsx` mounts the router into a `#root` div inside
+ * `<body>`, so a shell here would ask React to render `<html>`/`<body>` as
+ * children of that div. React 19 treats those three tags as `HostSingleton` and
+ * reuses the document's existing elements rather than creating new ones, which
+ * leaves the root container `#root` as a *descendant* of a node the same fiber
+ * tree owns. That inversion makes React's nested-root resolution spin forever:
+ * on the first non-delegated event (`selectionchange`) it walks from `#root` up
+ * to `<body>`, finds a React-owned ancestor whose container is not the event's
+ * target container, jumps back to that fiber and repeats. The renderer pegs one
+ * core and the app stops responding to touch.
+ *
+ * So the mobile shell renders its children only. `mobile/index.html` already
+ * declares the viewport, theme colour, manifest and stylesheet, so `HeadContent`
+ * and `Scripts` have nothing left to contribute there.
+ */
 function RootShell({ children }: { children: ReactNode }) {
+  if (IS_MOBILE_APP) {
+    return <>{children}</>;
+  }
+
   return (
     <html lang="en">
       <head>
