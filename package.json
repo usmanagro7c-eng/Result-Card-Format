@@ -10,10 +10,14 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "assets:source": "node scripts/generate-brand-assets.mjs",
+    "assets:android": "capacitor-assets generate --android",
+    "assets:verify": "node scripts/verify-brand-assets.mjs && node scripts/verify-apk-icon.mjs"
   },
   "overrides": {
-    "rolldown": "1.2.1"
+    "rolldown": "1.2.1",
+    "sharp": "0.35.5"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",
@@ -76,6 +80,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@eslint/js": "^9.32.0",
     "@tanstack/devtools-vite": "^0.8.1",
     "@types/node": "^22.16.5",
