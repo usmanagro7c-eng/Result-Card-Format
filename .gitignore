@@ -49,10 +49,19 @@ ehthumbs.db
 
 # Testing & tool temp files
 .playwright-mcp/
+.eslintcache
+*.tmp
+*.temp
 
 # Android build outputs & local configs
 *.apk
 *.aab
+*.idsig
+.gradle/
+build/
+*.hprof
+*.keystore
+*.jks
 android/.gradle/
 android/local.properties
 android/**/build/
@@ -68,3 +77,8 @@ android/app/src/main/assets/capacitor.config.json
 android/app/src/main/assets/capacitor.plugins.json
 android/app/src/main/res/xml/config.xml
 android/capacitor-cordova-android-plugins/
+
+# Generated brand previews (rebuild with scripts in scripts/)
+splash-preview.png
+*-preview.png
+*-preview-*.png
