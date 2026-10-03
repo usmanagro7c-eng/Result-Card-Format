@@ -87,6 +87,13 @@ function ResultEditor() {
   const [photoBusy, setPhotoBusy] = useState(false);
   const [fitState, setFitState] = useState<CardFitState>(DEFAULT_FIT_STATE);
   const printed = useRef(false);
+  /**
+   * Mounts the off-screen capture card for the duration of a PDF export only.
+   * Keeping it mounted permanently meant a second full 794x1123 ResultCard with
+   * its own fit observers lived on every editor screen for the whole session,
+   * which is pure overhead on a low-memory device.
+   */
+  const [isPdfExporting, setIsPdfExporting] = useState(false);
 
   // Auto-trigger print if requested via query parameter
   useEffect(() => {
@@ -158,19 +165,28 @@ function ResultEditor() {
   const totals = calculateTotals(student.subjects, settings.grades, includeSummerWork);
 
   const handlePdf = async () => {
-    const target =
-      (exportCardRef.current?.firstElementChild as HTMLElement | null) || cardRef.current;
-    if (!target) return;
     setBusy(true);
+    setIsPdfExporting(true);
     try {
+      await new Promise((r) => setTimeout(r, 100));
+      const target =
+        (exportCardRef.current?.firstElementChild as HTMLElement | null) || cardRef.current;
+      if (!target) throw new Error("Render target not found");
       const fileName = `${(student.name || "Student").replace(/\s+/g, "-")}-Result-Card.pdf`;
-      await generatePdf([target], fileName);
-      toast.success("PDF downloaded successfully");
+      const saved = await generatePdf([target], fileName);
+      toast.success(
+        saved?.inDownloads
+          ? `Saved to Downloads/${fileName}`
+          : saved?.native
+            ? `Saved to ${saved.location}`
+            : "PDF downloaded successfully",
+      );
     } catch (err) {
       console.error(err);
       toast.error("Could not generate the PDF. Please try again.");
     } finally {
       setBusy(false);
+      setIsPdfExporting(false);
     }
   };
 
@@ -195,448 +211,457 @@ function ResultEditor() {
   };
 
   return (
-    <div className="print-shell mx-auto w-full max-w-5xl px-3 pb-6 pt-3 sm:px-6 sm:pb-12 sm:pt-4 animate-fade-in">
-      {/* Top Action Bar */}
-      <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-2.5 sm:mb-5 sm:gap-3">
-        <div className="flex items-center gap-1">
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="min-h-11 gap-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 sm:min-h-9 font-semibold"
-          >
-            <Link to="/">
-              <ArrowLeft className="size-4" /> Students
-            </Link>
-          </Button>
+    <>
+      <div className="print-shell mx-auto w-full max-w-5xl px-3 pt-3 bottom-bar-clearance sm:px-6 sm:pt-4 animate-fade-in">
+        {/* Top Action Bar */}
+        <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-2.5 sm:mb-5 sm:gap-3">
+          <div className="flex items-center gap-1">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="min-h-11 gap-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 sm:min-h-9 font-semibold"
+            >
+              <Link to="/">
+                <ArrowLeft className="size-4" /> Students
+              </Link>
+            </Button>
 
-          {totalStudents > 1 && currentIndex >= 0 ? (
-            <div className="flex items-center gap-0.5 border-l border-slate-200 pl-2">
-              <span className="mr-1 hidden text-xs font-medium text-slate-400 min-[380px]:inline">
-                {currentIndex + 1} / {totalStudents}
-              </span>
-              <button
-                disabled={!prevStudentId}
-                title="Previous Student"
-                aria-label="Previous student"
-                onClick={() =>
-                  prevStudentId &&
-                  navigate({ to: "/editor/$studentId", params: { studentId: prevStudentId } })
-                }
-                className="flex size-11 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-30 sm:size-8"
-              >
-                <ChevronLeft className="size-4" />
-              </button>
-              <button
-                disabled={!nextStudentId}
-                title="Next Student"
-                aria-label="Next student"
-                onClick={() =>
-                  nextStudentId &&
-                  navigate({ to: "/editor/$studentId", params: { studentId: nextStudentId } })
-                }
-                className="flex size-11 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-30 sm:size-8"
-              >
-                <ChevronRight className="size-4" />
-              </button>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Auto-save badge — visible on all screen sizes */}
-          <div className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700">
-            <FileCheck2 className="size-3.5" />
-            <span className="hidden sm:inline">Auto-saved</span>
+            {totalStudents > 1 && currentIndex >= 0 ? (
+              <div className="flex items-center gap-0.5 border-l border-slate-200 pl-2">
+                <span className="mr-1 hidden text-xs font-medium text-slate-400 min-[380px]:inline">
+                  {currentIndex + 1} / {totalStudents}
+                </span>
+                <button
+                  disabled={!prevStudentId}
+                  title="Previous Student"
+                  aria-label="Previous student"
+                  onClick={() =>
+                    prevStudentId &&
+                    navigate({ to: "/editor/$studentId", params: { studentId: prevStudentId } })
+                  }
+                  className="flex size-11 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-30 sm:size-8"
+                >
+                  <ChevronLeft className="size-4" />
+                </button>
+                <button
+                  disabled={!nextStudentId}
+                  title="Next Student"
+                  aria-label="Next student"
+                  onClick={() =>
+                    nextStudentId &&
+                    navigate({ to: "/editor/$studentId", params: { studentId: nextStudentId } })
+                  }
+                  className="flex size-11 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-30 sm:size-8"
+                >
+                  <ChevronRight className="size-4" />
+                </button>
+              </div>
+            ) : null}
           </div>
 
-          {!isMobile && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={printDocument}
-                className="min-h-9 gap-1.5 border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-              >
-                <Printer className="size-4" />
-                Print
-              </Button>
-
-              <Button
-                size="sm"
-                onClick={handlePdf}
-                disabled={busy || hasErrors}
-                className="min-h-9 gap-1.5 bg-blue-900 text-sm font-semibold text-white shadow-sm hover:bg-blue-800 disabled:opacity-60"
-              >
-                <FileDown className="size-4" />
-                {busy ? "Preparing..." : "Download PDF"}
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Storage Full Warning */}
-      {storageFull ? (
-        <div className="no-print mb-4 flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-          <TriangleAlert className="mt-0.5 size-4 shrink-0 text-rose-500" />
-          <p className="leading-snug">
-            <span className="font-semibold">Browser storage is full — changes are not being saved.</span>{" "}
-            Remove a few student photos or delete a student to free space, then reload this page.
-          </p>
-        </div>
-      ) : null}
-
-      {/* Cannot-fit Warning */}
-      {fitState.cannotFit ? (
-        <div className="no-print mb-4 flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs font-semibold text-amber-900">
-          <TriangleAlert className="size-4 shrink-0 text-amber-500" />
-          <p>
-            Card is ~{Math.max(1, Math.round(fitState.overMm))}mm too tall for 1 page. Reduce subjects or remarks to fit.
-          </p>
-        </div>
-      ) : null}
-
-      {/* Mobile 2x2 Segmented Tab Control (< sm) */}
-      <div className="no-print mb-4 sm:hidden">
-        <div
-          role="tablist"
-          aria-label="Editor panels"
-          className="grid grid-cols-2 gap-2 rounded-2xl border border-slate-200/90 bg-slate-100/90 p-1.5 shadow-inner"
-        >
-          {EDITOR_TABS.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "flex min-h-12 items-center justify-center gap-2 rounded-xl px-2 py-2 text-xs font-bold transition-all active:scale-95",
-                  isActive
-                    ? "bg-white text-blue-950 shadow-sm"
-                    : "text-slate-600 hover:bg-white/60 hover:text-slate-900",
-                )}
-              >
-                <Icon
-                  className={cn(
-                    "size-4 shrink-0 transition-colors",
-                    isActive ? "text-blue-900" : "text-slate-400",
-                  )}
-                />
-                <span>{tab.shortLabel}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Desktop / Tablet Segmented Tabs (>= sm) */}
-      <div className="no-print mb-6 hidden sm:block">
-        <div
-          role="tablist"
-          aria-label="Editor sections"
-          className="grid grid-cols-4 gap-1.5 rounded-2xl border border-slate-200/90 bg-slate-100/90 p-1.5 shadow-inner"
-        >
-          {EDITOR_TABS.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "flex min-h-11 items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all sm:text-sm active:scale-95",
-                  isActive
-                    ? "bg-white text-blue-950 shadow-sm"
-                    : "text-slate-600 hover:bg-white/60 hover:text-slate-900",
-                )}
-              >
-                <Icon
-                  className={cn(
-                    "size-4 shrink-0 transition-colors",
-                    isActive ? "text-blue-900" : "text-slate-400",
-                  )}
-                />
-                <span className="truncate">{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Editor Tab Panels */}
-      <div className="space-y-4">
-        {/* ── Student Info Card ── */}
-        {activeTab === "info" && (
-          <div className="animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            {/* Card header */}
-            <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5 sm:py-3.5">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-blue-900 text-white">
-                <Users className="size-3.5" />
-              </div>
-              <h2 className="text-sm font-bold text-slate-800">Student Information</h2>
+          <div className="flex items-center gap-2">
+            {/* Auto-save badge — visible on all screen sizes */}
+            <div className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700">
+              <FileCheck2 className="size-3.5" />
+              <span className="hidden sm:inline">Auto-saved</span>
             </div>
 
-            {/* Name + Class fields */}
-            <div className="grid gap-3 p-3.5 sm:gap-4 sm:p-5 sm:grid-cols-2">
-              <Field
-                label="Student Name"
-                required
-                error={!student.name.trim() ? "Name is required" : undefined}
-              >
-                <Input
-                  value={student.name}
-                  onChange={(e) => set({ name: e.target.value })}
-                  placeholder="e.g. Usman Amjad"
-                  className={`border-slate-200 bg-slate-50/50 focus-visible:bg-white ${
-                    !student.name.trim() ? "border-rose-400 focus-visible:ring-rose-300" : ""
-                  }`}
-                />
-              </Field>
-
-              <Field label="Class">
-                <Input
-                  value={student.className}
-                  onChange={(e) => set({ className: e.target.value })}
-                  placeholder="e.g. 10th"
-                  className="border-slate-200 bg-slate-50/50 focus-visible:bg-white"
-                />
-              </Field>
-            </div>
-
-            {/* Photo toggle */}
-            <div className="border-t border-slate-100 px-3.5 py-3 sm:px-5 sm:py-4">
-              <div className="flex items-center justify-between gap-3">
-                <Label
-                  htmlFor="show-photo"
-                  className="cursor-pointer text-sm font-semibold text-slate-800"
+            {!isMobile && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={printDocument}
+                  className="min-h-9 gap-1.5 border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100"
                 >
-                  Show photo on result card
-                </Label>
-                <Switch
-                  id="show-photo"
-                  checked={student.showPhoto ?? false}
-                  onCheckedChange={(checked) => set({ showPhoto: checked })}
-                  aria-label="Show photo on result card"
-                />
+                  <Printer className="size-4" />
+                  Print
+                </Button>
+
+                <Button
+                  size="sm"
+                  onClick={handlePdf}
+                  disabled={busy || hasErrors}
+                  className="min-h-9 gap-1.5 bg-blue-900 text-sm font-semibold text-white shadow-sm hover:bg-blue-800 disabled:opacity-60"
+                >
+                  <FileDown className="size-4" />
+                  {busy ? "Preparing..." : "Download PDF"}
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Storage Full Warning */}
+        {storageFull ? (
+          <div className="no-print mb-4 flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-rose-500" />
+            <p className="leading-snug">
+              <span className="font-semibold">
+                Browser storage is full — changes are not being saved.
+              </span>{" "}
+              Remove a few student photos or delete a student to free space, then reload this page.
+            </p>
+          </div>
+        ) : null}
+
+        {/* Cannot-fit Warning */}
+        {fitState.cannotFit ? (
+          <div className="no-print mb-4 flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs font-semibold text-amber-900">
+            <TriangleAlert className="size-4 shrink-0 text-amber-500" />
+            <p>
+              Card is ~{Math.max(1, Math.round(fitState.overMm))}mm too tall for 1 page. Reduce
+              subjects or remarks to fit.
+            </p>
+          </div>
+        ) : null}
+
+        {/* Mobile 2x2 Segmented Tab Control (< sm) */}
+        <div className="no-print mb-4 sm:hidden">
+          <div
+            role="tablist"
+            aria-label="Editor panels"
+            className="grid grid-cols-2 gap-2 rounded-2xl border border-slate-200/90 bg-slate-100/90 p-1.5 shadow-inner"
+          >
+            {EDITOR_TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "flex min-h-12 items-center justify-center gap-2 rounded-xl px-2 py-2 text-xs font-bold transition-all active:scale-95",
+                    isActive
+                      ? "bg-white text-blue-950 shadow-sm"
+                      : "text-slate-600 hover:bg-white/60 hover:text-slate-900",
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "size-4 shrink-0 transition-colors",
+                      isActive ? "text-blue-900" : "text-slate-400",
+                    )}
+                  />
+                  <span>{tab.shortLabel}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Desktop / Tablet Segmented Tabs (>= sm) */}
+        <div className="no-print mb-6 hidden sm:block">
+          <div
+            role="tablist"
+            aria-label="Editor sections"
+            className="grid grid-cols-4 gap-1.5 rounded-2xl border border-slate-200/90 bg-slate-100/90 p-1.5 shadow-inner"
+          >
+            {EDITOR_TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "flex min-h-11 items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all sm:text-sm active:scale-95",
+                    isActive
+                      ? "bg-white text-blue-950 shadow-sm"
+                      : "text-slate-600 hover:bg-white/60 hover:text-slate-900",
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "size-4 shrink-0 transition-colors",
+                      isActive ? "text-blue-900" : "text-slate-400",
+                    )}
+                  />
+                  <span className="truncate">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Editor Tab Panels */}
+        <div className="space-y-4">
+          {/* ── Student Info Card ── */}
+          {activeTab === "info" && (
+            <div className="animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              {/* Card header */}
+              <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5 sm:py-3.5">
+                <div className="flex size-7 items-center justify-center rounded-lg bg-blue-900 text-white">
+                  <Users className="size-3.5" />
+                </div>
+                <h2 className="text-sm font-bold text-slate-800">Student Information</h2>
               </div>
 
-              {student.showPhoto ? (
-                <div className="mt-3 flex items-center gap-3.5 sm:mt-4 sm:gap-4">
-                  <div className="flex h-[74px] w-[56px] shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-slate-300 bg-slate-50">
-                    {student.photoDataUrl ? (
-                      <img
-                        src={student.photoDataUrl}
-                        alt="Student photo preview"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-[10px] uppercase text-slate-400">No photo</span>
-                    )}
-                  </div>
+              {/* Name + Class fields */}
+              <div className="grid gap-3 p-3.5 sm:gap-4 sm:p-5 sm:grid-cols-2">
+                <Field
+                  label="Student Name"
+                  required
+                  error={!student.name.trim() ? "Name is required" : undefined}
+                >
+                  <Input
+                    value={student.name}
+                    onChange={(e) => set({ name: e.target.value })}
+                    placeholder="e.g. Usman Amjad"
+                    className={`border-slate-200 bg-slate-50/50 focus-visible:bg-white ${
+                      !student.name.trim() ? "border-rose-400 focus-visible:ring-rose-300" : ""
+                    }`}
+                  />
+                </Field>
 
-                  <div className="flex flex-col gap-2">
-                    <input
-                      ref={photoInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => void handlePhotoUpload(e.target.files?.[0])}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={photoBusy}
-                      onClick={() => photoInputRef.current?.click()}
-                      className="min-h-9 gap-1.5 border-slate-300 text-sm text-slate-700 hover:bg-slate-100"
-                    >
-                      <Upload className="size-4" />
-                      {photoBusy
-                        ? "Processing..."
-                        : student.photoDataUrl
-                          ? "Change Photo"
-                          : "Upload Photo"}
-                    </Button>
-                    {student.photoDataUrl ? (
+                <Field label="Class">
+                  <Input
+                    value={student.className}
+                    onChange={(e) => set({ className: e.target.value })}
+                    placeholder="e.g. 10th"
+                    className="border-slate-200 bg-slate-50/50 focus-visible:bg-white"
+                  />
+                </Field>
+              </div>
+
+              {/* Photo toggle */}
+              <div className="border-t border-slate-100 px-3.5 py-3 sm:px-5 sm:py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <Label
+                    htmlFor="show-photo"
+                    className="cursor-pointer text-sm font-semibold text-slate-800"
+                  >
+                    Show photo on result card
+                  </Label>
+                  <Switch
+                    id="show-photo"
+                    checked={student.showPhoto ?? false}
+                    onCheckedChange={(checked) => set({ showPhoto: checked })}
+                    aria-label="Show photo on result card"
+                  />
+                </div>
+
+                {student.showPhoto ? (
+                  <div className="mt-3 flex items-center gap-3.5 sm:mt-4 sm:gap-4">
+                    <div className="flex h-[74px] w-[56px] shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-slate-300 bg-slate-50">
+                      {student.photoDataUrl ? (
+                        <img
+                          src={student.photoDataUrl}
+                          alt="Student photo preview"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-[10px] uppercase text-slate-400">No photo</span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <input
+                        ref={photoInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => void handlePhotoUpload(e.target.files?.[0])}
+                      />
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        onClick={() => set({ photoDataUrl: null })}
-                        className="min-h-9 gap-1.5 text-sm text-destructive hover:bg-destructive/10"
+                        disabled={photoBusy}
+                        onClick={() => photoInputRef.current?.click()}
+                        className="min-h-9 gap-1.5 border-slate-300 text-sm text-slate-700 hover:bg-slate-100"
                       >
-                        <Trash2 className="size-4" /> Remove
+                        <Upload className="size-4" />
+                        {photoBusy
+                          ? "Processing..."
+                          : student.photoDataUrl
+                            ? "Change Photo"
+                            : "Upload Photo"}
                       </Button>
-                    ) : null}
+                      {student.photoDataUrl ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => set({ photoDataUrl: null })}
+                          className="min-h-9 gap-1.5 text-sm text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="size-4" /> Remove
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              ) : null}
+                ) : null}
+              </div>
             </div>
-          </div>
           )}
 
           {/* ── Subject Marks Card ── */}
           {activeTab === "marks" && (
             <div className="animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            {/* Card header */}
-            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5 sm:py-3.5">
-              <div className="flex items-center gap-2.5">
-                <div className="flex size-7 items-center justify-center rounded-lg bg-violet-600 text-white">
-                  <BookOpen className="size-3.5" />
+              {/* Card header */}
+              <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5 sm:py-3.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex size-7 items-center justify-center rounded-lg bg-violet-600 text-white">
+                    <BookOpen className="size-3.5" />
+                  </div>
+                  <h2 className="text-sm font-bold text-slate-800">Subject Marks</h2>
                 </div>
-                <h2 className="text-sm font-bold text-slate-800">Subject Marks</h2>
+                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500">
+                  {student.subjects.length} subject{student.subjects.length !== 1 ? "s" : ""}
+                </span>
               </div>
-              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500">
-                {student.subjects.length} subject{student.subjects.length !== 1 ? "s" : ""}
-              </span>
-            </div>
 
-            <div className="p-3 sm:p-5">
-              <SubjectTable
-                subjects={student.subjects}
-                onChange={(subjects) => set({ subjects })}
-                includeSummerWork={includeSummerWork}
-                onIncludeSummerWorkChange={(value) => set({ includeSummerWork: value })}
-              />
-            </div>
+              <div className="p-3 sm:p-5">
+                <SubjectTable
+                  subjects={student.subjects}
+                  onChange={(subjects) => set({ subjects })}
+                  includeSummerWork={includeSummerWork}
+                  onIncludeSummerWorkChange={(value) => set({ includeSummerWork: value })}
+                />
+              </div>
 
-            {/* Results Summary Strip */}
-            <div className="grid grid-cols-4 divide-x divide-slate-100 border-t border-slate-100 bg-gradient-to-b from-slate-50 to-white">
-              {[
-                { label: "Total", value: totals.grandTotal, color: "text-slate-700" },
-                { label: "Obtained", value: totals.obtainedTotal, color: "text-slate-700" },
-                { label: "Percentage", value: `${totals.percentage}%`, color: "text-blue-700" },
-                {
-                  label: "Grade",
-                  value: totals.grade,
-                  raiseSign: true,
-                  color:
-                    totals.grade === "A+" || totals.grade === "A"
-                      ? "text-emerald-700"
-                      : totals.grade === "F" || totals.grade === "E"
-                        ? "text-rose-600"
-                        : "text-amber-600",
-                },
-              ].map((item) => (
-                <div key={item.label} className="px-1.5 py-2 text-center sm:px-3 sm:py-3">
-                  <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5 sm:mb-1">
-                    {item.label}
-                  </span>
-                  <span className={`text-lg sm:text-xl font-black tabular-nums ${item.color}`}>
-                    {item.raiseSign ? <GradeText text={String(item.value)} /> : item.value}
-                  </span>
+              {/* Results Summary Strip */}
+              <div className="grid grid-cols-4 divide-x divide-slate-100 border-t border-slate-100 bg-gradient-to-b from-slate-50 to-white">
+                {[
+                  { label: "Total", value: totals.grandTotal, color: "text-slate-700" },
+                  { label: "Obtained", value: totals.obtainedTotal, color: "text-slate-700" },
+                  { label: "Percentage", value: `${totals.percentage}%`, color: "text-blue-700" },
+                  {
+                    label: "Grade",
+                    value: totals.grade,
+                    raiseSign: true,
+                    color:
+                      totals.grade === "A+" || totals.grade === "A"
+                        ? "text-emerald-700"
+                        : totals.grade === "F" || totals.grade === "E"
+                          ? "text-rose-600"
+                          : "text-amber-600",
+                  },
+                ].map((item) => (
+                  <div key={item.label} className="px-1.5 py-2 text-center sm:px-3 sm:py-3">
+                    <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5 sm:mb-1">
+                      {item.label}
+                    </span>
+                    <span className={`text-lg sm:text-xl font-black tabular-nums ${item.color}`}>
+                      {item.raiseSign ? <GradeText text={String(item.value)} /> : item.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {hasErrors && (
+                <div className="border-t border-rose-100 bg-rose-50 px-4 py-2 sm:px-5 sm:py-2.5">
+                  <p className="text-xs font-semibold text-rose-600">
+                    ⚠️ Fix mark errors above before printing or downloading PDF.
+                  </p>
                 </div>
-              ))}
+              )}
             </div>
-
-            {hasErrors && (
-              <div className="border-t border-rose-100 bg-rose-50 px-4 py-2 sm:px-5 sm:py-2.5">
-                <p className="text-xs font-semibold text-rose-600">
-                  ⚠️ Fix mark errors above before printing or downloading PDF.
-                </p>
-              </div>
-            )}
-          </div>
           )}
 
           {/* ── Remarks Card ── */}
           {activeTab === "remarks" && (
             <div className="animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5 sm:py-3.5">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-amber-500 text-white">
-                <Sparkles className="size-3.5" />
+              <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5 sm:py-3.5">
+                <div className="flex size-7 items-center justify-center rounded-lg bg-amber-500 text-white">
+                  <Sparkles className="size-3.5" />
+                </div>
+                <h2 className="text-sm font-bold text-slate-800">Remarks</h2>
               </div>
-              <h2 className="text-sm font-bold text-slate-800">Remarks</h2>
-            </div>
-            <div className="space-y-2.5 p-3.5 sm:space-y-3 sm:p-5">
-              <Select value="" onValueChange={(value) => set({ remarks: value })}>
-                <SelectTrigger className="w-full border-slate-200 bg-slate-50/50 text-sm">
-                  <SelectValue placeholder="Choose a predefined remark..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRESET_REMARKS.map((remark) => (
-                    <SelectItem key={remark} value={remark}>
-                      {remark}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2.5 p-3.5 sm:space-y-3 sm:p-5">
+                <Select value="" onValueChange={(value) => set({ remarks: value })}>
+                  <SelectTrigger className="w-full border-slate-200 bg-slate-50/50 text-sm">
+                    <SelectValue placeholder="Choose a predefined remark..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRESET_REMARKS.map((remark) => (
+                      <SelectItem key={remark} value={remark}>
+                        {remark}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <Textarea
-                rows={3}
-                value={student.remarks}
-                onChange={(e) => set({ remarks: e.target.value })}
-                placeholder="Enter or customize remarks..."
-                className="resize-none border-slate-200 bg-slate-50/50 text-sm focus-visible:bg-white"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* ── Tab 4: Live Preview ── */}
-        <div
-          className={cn(
-            "print-root",
-            activeTab === "preview" ? "block animate-fade-in" : "hidden print:block",
-          )}
-        >
-          <div className="a4-panel overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            {/* Preview header */}
-            <div className="no-print flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-3.5 py-2.5 sm:px-5 sm:py-3">
-              <div className="flex items-center gap-2">
-                <Eye className="size-3.5 text-slate-400" />
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  Live Preview
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* Realtime percentage mini-badge */}
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                    totals.grade === "A+" || totals.grade === "A"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : totals.grade === "F" || totals.grade === "E"
-                        ? "bg-rose-100 text-rose-700"
-                        : "bg-amber-100 text-amber-700"
-                  }`}
-                >
-                  {totals.percentage}% · {totals.grade}
-                </span>
-              </div>
-            </div>
-            <div className="a4-chrome p-1.5 sm:p-4">
-              <ResultPreview key={activeTab} printerMarginMm={settings.printerMarginMm}>
-                <ResultCard
-                  ref={cardRef}
-                  student={student}
-                  subjects={student.subjects}
-                  settings={settings}
-                  includeSummerWork={includeSummerWork}
-                  onFitStateChange={setFitState}
+                <Textarea
+                  rows={3}
+                  value={student.remarks}
+                  onChange={(e) => set({ remarks: e.target.value })}
+                  placeholder="Enter or customize remarks..."
+                  className="resize-none border-slate-200 bg-slate-50/50 text-sm focus-visible:bg-white"
                 />
-              </ResultPreview>
+              </div>
+            </div>
+          )}
+
+          {/* ── Tab 4: Live Preview ── */}
+          <div
+            className={cn(
+              "print-root",
+              activeTab === "preview" ? "block animate-fade-in" : "hidden print:block",
+            )}
+          >
+            <div className="a4-panel overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              {/* Preview header */}
+              <div className="no-print flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-3.5 py-2.5 sm:px-5 sm:py-3">
+                <div className="flex items-center gap-2">
+                  <Eye className="size-3.5 text-slate-400" />
+                  <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                    Live Preview
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* Realtime percentage mini-badge */}
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                      totals.grade === "A+" || totals.grade === "A"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : totals.grade === "F" || totals.grade === "E"
+                          ? "bg-rose-100 text-rose-700"
+                          : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {totals.percentage}% · {totals.grade}
+                  </span>
+                </div>
+              </div>
+              <div className="a4-chrome p-1.5 sm:p-4">
+                <ResultPreview key={activeTab} printerMarginMm={settings.printerMarginMm}>
+                  <ResultCard
+                    ref={cardRef}
+                    student={student}
+                    subjects={student.subjects}
+                    settings={settings}
+                    includeSummerWork={includeSummerWork}
+                    onFitStateChange={setFitState}
+                  />
+                </ResultPreview>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Sticky Bottom Bar */}
+      {/*
+       * Mobile bottom action bar.
+       *
+       * Rendered as a sibling *outside* the `.animate-fade-in` container on
+       * purpose. That container keeps `transform: translateY(0)` applied
+       * permanently (the keyframe animation uses `forwards`), and a transformed
+       * ancestor becomes the containing block for `position: fixed`
+       * descendants — nesting this bar inside would pin it to the bottom of the
+       * scrolling content instead of the viewport. Height and clearance are both
+       * driven by `--bottom-bar-h`, matching the app's bottom navigation.
+       */}
       {isMobile ? (
-        <div
-          className="no-print sticky bottom-0 z-30 -mx-3 mt-4 flex items-center gap-2 border-t border-slate-200/80 bg-white/95 px-3 py-2.5 backdrop-blur-md sm:-mx-6 sm:px-6"
-          style={{
-            paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))",
-            boxShadow: "0 -4px 20px -4px rgb(15 23 42 / 0.12)",
-          }}
-        >
+        <div className="no-print bottom-bar flex items-center gap-2 px-3 pt-2.5">
           {/* Live score */}
           <div className="min-w-0 shrink-0">
             <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400">
@@ -674,29 +699,31 @@ function ResultEditor() {
       ) : null}
 
       {/* PDF export off-screen container */}
-      <div
-        ref={exportCardRef}
-        className="no-print"
-        aria-hidden="true"
-        style={{
-          position: "fixed",
-          left: 0,
-          top: 0,
-          zIndex: -9999,
-          opacity: 0,
-          pointerEvents: "none",
-        }}
-      >
-        <div style={{ width: "794px", minHeight: "1123px", background: "#ffffff" }}>
-          <ResultCard
-            student={student}
-            subjects={student.subjects}
-            settings={settings}
-            includeSummerWork={includeSummerWork}
-          />
+      {isPdfExporting && (
+        <div
+          ref={exportCardRef}
+          className="no-print"
+          aria-hidden="true"
+          style={{
+            position: "fixed",
+            left: 0,
+            top: 0,
+            zIndex: -9999,
+            opacity: 0,
+            pointerEvents: "none",
+          }}
+        >
+          <div style={{ width: "794px", minHeight: "1123px", background: "#ffffff" }}>
+            <ResultCard
+              student={student}
+              subjects={student.subjects}
+              settings={settings}
+              includeSummerWork={includeSummerWork}
+            />
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
 

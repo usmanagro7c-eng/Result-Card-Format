@@ -87,6 +87,21 @@ function StudentsPage() {
   const [singleStudentToExport, setSingleStudentToExport] = useState<(typeof students)[0] | null>(
     null,
   );
+  /**
+   * Only set while a bulk PDF capture is actually running.
+   *
+   * The off-screen capture targets used to be mounted for the whole page and
+   * mapped over the live `selected` list, so every checkbox tick — and "Select
+   * All" in particular — immediately built a full 794x1123 ResultCard per
+   * student, each with its own fit observers and table DOM. On a 4 GB device
+   * that is a large, pointless allocation sitting off screen, and it is a real
+   * contributor to the renderer being OOM-killed.
+   *
+   * Holding the batch separately also freezes the target set for the duration of
+   * the capture, so a selection change mid-export cannot mutate the nodes
+   * html2canvas is walking.
+   */
+  const [bulkStudentsToExport, setBulkStudentsToExport] = useState<typeof students | null>(null);
 
   const classes = useMemo(
     () => Array.from(new Set(students.map((s) => s.className).filter(Boolean))),
@@ -174,28 +189,34 @@ function StudentsPage() {
 
   const handleBulkPdf = async () => {
     if (selectedStudents.length === 0) return;
+    const batch = selectedStudents;
     setBusy(true);
-    setProgressText(`Preparing 0 of ${selectedStudents.length}...`);
+    setProgressText(`Preparing 0 of ${batch.length}...`);
     try {
+      setBulkStudentsToExport(batch);
       await new Promise((r) => setTimeout(r, 100));
       const nodes = Array.from(
         bulkPdfRef.current?.querySelectorAll<HTMLElement>("[data-result-card]") ?? [],
       );
       if (nodes.length === 0) throw new Error("No cards found to render");
-      await generatePdf(
-        nodes,
-        `Result-Cards-Batch-${selectedStudents.length}-Students.pdf`,
-        (current, total) => {
-          setProgressText(`Rendering page ${current} of ${total}...`);
-        },
+      const bulkName = `Result-Cards-Batch-${batch.length}-Students.pdf`;
+      const saved = await generatePdf(nodes, bulkName, (current, total) => {
+        setProgressText(`Rendering page ${current} of ${total}...`);
+      });
+      toast.success(
+        saved?.inDownloads
+          ? `Saved ${batch.length} result cards to Downloads/${bulkName}`
+          : saved?.native
+            ? `Saved ${batch.length} result cards to ${saved.location}`
+            : `Generated PDF with ${batch.length} result cards`,
       );
-      toast.success(`Generated PDF with ${selectedStudents.length} result cards`);
     } catch (err) {
       console.error(err);
       toast.error("Could not generate the bulk PDF. Please try again.");
     } finally {
       setBusy(false);
       setProgressText("");
+      setBulkStudentsToExport(null);
     }
   };
 
@@ -224,11 +245,15 @@ function StudentsPage() {
       await new Promise((r) => setTimeout(r, 100));
       const node = singlePdfRef.current?.querySelector<HTMLElement>("[data-result-card]");
       if (!node) throw new Error("Render target not found");
-      await generatePdf(
-        [node],
-        `${(student.name || "Student").replace(/\s+/g, "-")}-Result-Card.pdf`,
+      const singleName = `${(student.name || "Student").replace(/\s+/g, "-")}-Result-Card.pdf`;
+      const saved = await generatePdf([node], singleName);
+      toast.success(
+        saved?.inDownloads
+          ? `Saved ${student.name}'s PDF to Downloads/${singleName}`
+          : saved?.native
+            ? `Saved ${student.name}'s PDF to ${saved.location}`
+            : `PDF downloaded for ${student.name}`,
       );
-      toast.success(`PDF downloaded for ${student.name}`);
     } catch (err) {
       console.error(err);
       toast.error("Could not generate PDF");
@@ -810,35 +835,41 @@ function StudentsPage() {
 
       {/* Bulk PDF off-screen render */}
       {/*
-       * Off-screen render targets for html2canvas. `no-print` keeps them out of
-       * the printed layout: they are `position: fixed, opacity: 0`, but their
-       * cards still carry `break-after: page` and so could contribute page
-       * breaks of their own. Only `@media print` is affected, and the PDF
-       * export runs in screen media, so capture is unaffected.
+       * Off-screen render targets for html2canvas, mounted only for the duration
+       * of a capture. `no-print` keeps them out of the printed layout: they are
+       * `position: fixed, opacity: 0`, but their cards still carry
+       * `break-after: page` and so could contribute page breaks of their own.
+       * Only `@media print` is affected, and the PDF export runs in screen
+       * media, so capture is unaffected.
        */}
-      <div
-        ref={bulkPdfRef}
-        className="no-print"
-        aria-hidden="true"
-        style={{
-          position: "fixed",
-          left: 0,
-          top: 0,
-          zIndex: -9999,
-          opacity: 0,
-          pointerEvents: "none",
-        }}
-      >
-        {selectedStudents.map((student) => (
-          <div key={student.id} style={{ width: "794px", minHeight: "1123px", background: "#fff" }}>
-            <ResultCard
-              student={student}
-              settings={settings}
-              includeSummerWork={student.includeSummerWork ?? false}
-            />
-          </div>
-        ))}
-      </div>
+      {bulkStudentsToExport && (
+        <div
+          ref={bulkPdfRef}
+          className="no-print"
+          aria-hidden="true"
+          style={{
+            position: "fixed",
+            left: 0,
+            top: 0,
+            zIndex: -9999,
+            opacity: 0,
+            pointerEvents: "none",
+          }}
+        >
+          {bulkStudentsToExport.map((student) => (
+            <div
+              key={student.id}
+              style={{ width: "794px", minHeight: "1123px", background: "#fff" }}
+            >
+              <ResultCard
+                student={student}
+                settings={settings}
+                includeSummerWork={student.includeSummerWork ?? false}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Single PDF off-screen render */}
       {singleStudentToExport && (

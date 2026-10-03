@@ -1,5 +1,7 @@
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas-pro";
+import { Directory, Filesystem } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 import { PAGE_HEIGHT_MM, PAGE_WIDTH_MM, PX_PER_MM } from "@/lib/cardGeometry";
 
 /** One rendered page: the bitmap plus the pixel size it was rasterised at. */
@@ -139,6 +141,171 @@ function addPageImage(pdf: jsPDF, page: RenderedPage) {
 }
 
 /**
+ * Sub-folder that native PDF writes fall back to.
+ *
+ * `Directory.External` resolves to the app-specific external files dir
+ * (`/storage/emulated/0/Android/data/<pkg>/files/`), so it needs no runtime
+ * storage permission on any Android version. Used only when the public
+ * `Download/` folder is not writable.
+ */
+const NATIVE_PDF_DIR = "ResultCard";
+
+/**
+ * Folder inside external storage that Android exposes as the user-facing
+ * "Downloads" location, written via `Directory.ExternalStorage`.
+ */
+const PUBLIC_DOWNLOADS_DIR = "Download";
+
+/**
+ * Where the generated PDF ended up after being handed to the platform.
+ *
+ * Browsers download through `<a download>` and can only report success, whereas
+ * the native layer writes the file itself and therefore knows the real
+ * destination.
+ */
+export interface PdfSaveResult {
+  /** True when the native Android layer wrote the file instead of the browser. */
+  native: boolean;
+  /** Human readable destination to show the user. Native only. */
+  location?: string;
+  /**
+   * True when the file reached the public `Download/` folder. False means the
+   * platform refused and the file fell back to the app's own folder.
+   */
+  inDownloads?: boolean;
+}
+
+/** Minimal shape of the native bridge global that Capacitor injects. */
+interface CapacitorNativeGlobal {
+  Capacitor?: { isNativePlatform?: () => boolean };
+}
+
+/**
+ * True when running inside the Capacitor WebView rather than a normal browser.
+ *
+ * Mirrors the check in `src/router.tsx` so the PDF path agrees with the rest of
+ * the app about what counts as "native".
+ */
+function isNativeApp(): boolean {
+  const native = (window as unknown as CapacitorNativeGlobal).Capacitor;
+  return typeof window !== "undefined" && Boolean(native?.isNativePlatform?.());
+}
+
+/**
+ * Base64-encode an ArrayBuffer one slice at a time.
+ *
+ * `btoa` only accepts an argument list bounded by the JS engine, so a multi-
+ * megabyte PDF has to be encoded in slices rather than in one shot. The slice
+ * size is deliberately a multiple of 3: `btoa` pads each call independently,
+ * so a slice whose length is not divisible by 3 would contribute `=` characters
+ * in the *middle* of the joined string and produce malformed base64, which the
+ * native filesystem plugin rejects as invalid input.
+ */
+function toBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  const CHUNK = 0x7fe0; // 32736, a multiple of 3
+  let base64 = "";
+  for (let offset = 0; offset < bytes.length; offset += CHUNK) {
+    base64 += btoa(
+      String.fromCharCode.apply(null, Array.from(bytes.subarray(offset, offset + CHUNK))),
+    );
+  }
+  return base64;
+}
+
+/**
+ * Replace characters that are illegal in file names, so a student name can never
+ * make the native write fail.
+ */
+function safeFileName(name: string): string {
+  return name.replace(/[\\/:*?"<>|]+/g, "-").trim();
+}
+
+/**
+ * Turn a `file:///...` URI into a plain path that reads better in a toast.
+ */
+function displayPath(uri: string): string {
+  return decodeURIComponent(uri.replace(/^file:\/\//, ""));
+}
+
+/**
+ * Write the PDF into the device's public `Download/` folder.
+ *
+ * Returns the file URI, or `null` when the platform will not allow it. Writing
+ * there is a privileged operation: Android 9 and 10 need a runtime
+ * `WRITE_EXTERNAL_STORAGE` grant, and from Android 11 the permission is no
+ * longer grantable at all, so callers must be prepared to fall back.
+ */
+async function writeToDownloads(name: string, base64: string): Promise<string | null> {
+  let storage = (await Filesystem.checkPermissions()).publicStorage;
+  if (storage !== "granted") {
+    storage = (await Filesystem.requestPermissions()).publicStorage;
+  }
+  if (storage !== "granted") return null;
+
+  try {
+    const { uri } = await Filesystem.writeFile({
+      path: `${PUBLIC_DOWNLOADS_DIR}/${name}`,
+      data: base64,
+      directory: Directory.ExternalStorage,
+      recursive: true,
+    });
+    return uri;
+  } catch (error) {
+    console.warn("Could not write the PDF to Download/:", error);
+    return null;
+  }
+}
+
+/**
+ * Write the PDF natively and put it in the public `Download/` folder.
+ *
+ * `jsPDF.save()` cannot work in the WebView: it builds a `blob:` URL and clicks
+ * a hidden `<a download>`, and Android's WebView discards that unless the
+ * WebView has a `DownloadListener` attached. Capacitor never installs one and
+ * no filesystem plugin was registered, so the download reported
+ * `state: "canceled"` with 0 bytes written while `save()` itself did not throw,
+ * making the failure look like a successful no-op. Writing the file natively is
+ * the supported replacement.
+ *
+ * If the platform refuses to write to `Download/` the file is still saved into
+ * the app's own folder and offered through the Android share sheet, so the
+ * export always produces something the user can reach.
+ */
+async function savePdfNatively(pdf: jsPDF, fileName: string): Promise<PdfSaveResult> {
+  const name = safeFileName(fileName);
+  const base64 = toBase64(pdf.output("arraybuffer"));
+
+  const downloadUri = await writeToDownloads(name, base64);
+  if (downloadUri) {
+    return { native: true, location: displayPath(downloadUri), inDownloads: true };
+  }
+
+  const { uri } = await Filesystem.writeFile({
+    path: `${NATIVE_PDF_DIR}/${name}`,
+    data: base64,
+    directory: Directory.External,
+    recursive: true,
+  });
+
+  if ((await Share.canShare()).value) {
+    try {
+      await Share.share({
+        title: name,
+        dialogTitle: "Save or share result card",
+        files: [uri],
+      });
+    } catch (error) {
+      // The file is already safely on disk; a share-sheet failure must not be
+      // reported as a failed export.
+      console.warn("PDF share sheet could not open:", error);
+    }
+  }
+
+  return { native: true, location: displayPath(uri), inDownloads: false };
+}
+
+/**
  * Render one or more A4 elements into a single multi-page PDF.
  * Supports progress tracking for multi-student bulk generation.
  */
@@ -146,7 +313,7 @@ export async function generatePdf(
   elements: HTMLElement[],
   fileName: string,
   onProgress?: (current: number, total: number) => void,
-) {
+): Promise<PdfSaveResult | undefined> {
   if (elements.length === 0) return;
 
   const pdf = new jsPDF({
@@ -174,5 +341,8 @@ export async function generatePdf(
     }
   }
 
+  if (isNativeApp()) return await savePdfNatively(pdf, fileName);
+
   pdf.save(fileName);
+  return { native: false };
 }
