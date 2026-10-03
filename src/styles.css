@@ -69,6 +69,13 @@
 
 :root {
   --radius: 0.5rem;
+  /*
+   * Height of the mobile bottom bars (the editor action bar and the app's
+   * bottom navigation). Both read this so they stay the same height, and page
+   * containers reserve this much bottom padding so content is never hidden
+   * underneath them.
+   */
+  --bottom-bar-h: 4.25rem;
   --doc-paper: oklch(1 0 0);
   --doc-ink: oklch(0.16 0.02 260);
   --doc-rule: oklch(0.32 0.02 260);
@@ -85,7 +92,7 @@
   --secondary: oklch(0.955 0.012 250);
   --secondary-foreground: oklch(0.25 0.12 250);
   --muted: oklch(0.955 0.008 250);
-  --muted-foreground: oklch(0.50 0.04 258);
+  --muted-foreground: oklch(0.5 0.04 258);
   --accent: oklch(0.955 0.012 250);
   --accent-foreground: oklch(0.25 0.12 250);
   --destructive: oklch(0.577 0.245 27.325);
@@ -148,7 +155,8 @@
     border-color: var(--color-border);
   }
 
-  html, body {
+  html,
+  body {
     max-width: 100%;
     overflow-x: clip;
   }
@@ -158,11 +166,14 @@
     color: var(--color-foreground);
   }
 
-  a, button {
+  a,
+  button {
     @apply transition-colors duration-150;
   }
 
-  input, textarea, select {
+  input,
+  textarea,
+  select {
     @apply transition-shadow duration-150;
   }
 }
@@ -216,11 +227,59 @@
 }
 
 @keyframes pulseSubtle {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
     opacity: 0.8;
+  }
+}
+
+/*
+ * Shared chrome for the app's bottom bars on small screens.
+ *
+ * The editor's action bar (Total marks / Download PDF / Next) and the app's
+ * bottom navigation are the same object conceptually, so they share one class
+ * to guarantee identical height, blur and elevation.
+ *
+ * `position: fixed` is deliberate. It must NOT be nested inside an element that
+ * carries a `transform`, because a transformed ancestor becomes the containing
+ * block for fixed descendants and the bar would then pin to that ancestor
+ * instead of the viewport. The route containers animate with `.animate-fade-in`,
+ * whose `forwards` fill-mode leaves `transform: translateY(0)` applied
+ * permanently, so the editor renders its bar as a sibling *outside* that
+ * container rather than inside it.
+ */
+.bottom-bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 30;
+  min-height: var(--bottom-bar-h);
+  border-top: 1px solid oklch(0.929 0.013 255.508 / 0.8);
+  background: oklch(1 0 0 / 0.95);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 -4px 20px -4px rgb(15 23 42 / 0.12);
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+}
+
+/*
+ * Bottom padding for a scroll container whose last child would otherwise sit
+ * underneath a `.bottom-bar`. Pair with the bar's own height token.
+ *
+ * The breakpoint is 768px, not Tailwind's `sm` (640px), because that is where
+ * `useIsMobile()` flips and therefore where the bar starts rendering. Keying off
+ * `sm` would leave 640-767px screens with a bar but only 48px of clearance.
+ */
+.bottom-bar-clearance {
+  padding-bottom: calc(var(--bottom-bar-h) + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  .bottom-bar-clearance {
+    padding-bottom: 3rem;
   }
 }
 
@@ -242,12 +301,13 @@
 
 /* Touch and button micro-transitions */
 .tap-feedback {
-  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.12s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .tap-feedback:active {
   transform: scale(0.97);
 }
-
 
 @media print {
   @page {
