@@ -1,5 +1,24 @@
 apply plugin: 'com.android.application'
 
+/**
+ * Release signing credentials.
+ *
+ * Read from android/keystore.properties, which is deliberately gitignored
+ * (as is the keystore itself, via *.keystore). The keystore is the app's identity
+ * for the rest of its life - losing it means a new package has to be published,
+ * so it must be backed up outside the repo.
+ *
+ * Signing is wired in only when the properties file is present, so a clone
+ * without it can still run assembleDebug. assembleRelease in that state produces
+ * an UNSIGNED apk; check with `apksigner verify` before shipping.
+ */
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+def keystoreProperties = new Properties()
+def hasReleaseSigning = keystorePropertiesFile.exists()
+if (hasReleaseSigning) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "com.thecountryschool.resultcard"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,8 +35,27 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (hasReleaseSigning) {
+                // Normalise separators so a properties file written on Windows
+                // still resolves when the build runs on Linux/CI.
+                storeFile rootProject.file(keystoreProperties['storeFile'].replace('\\', '/'))
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            } else {
+                logger.warn('android/keystore.properties not found - the release apk will be UNSIGNED')
+            }
+            // Left off deliberately: the payload is web assets, so R8 would trim
+            // very little while risking reflection breakage in Capacitor.
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
