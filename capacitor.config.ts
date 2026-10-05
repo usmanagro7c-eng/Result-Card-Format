@@ -9,6 +9,25 @@ const config: CapacitorConfig = {
   },
   android: {
     allowMixedContent: true,
+    /**
+     * Transparent WebView background.
+     *
+     * The WebView otherwise paints opaque white the moment it exists, which is
+     * before the document has parsed, so the launch ran
+     * launcher -> blank white -> logo splash. That white gap is the "double
+     * splash": a blank stage, then the branded one.
+     *
+     * With it transparent the window background shows through instead, and that
+     * background is already the branded splash (res/drawable/splash_window.xml -
+     * white, TCS lockup, loading bar). So the launch becomes one continuous
+     * branded screen: window background -> #boot overlay -> app, with nothing
+     * blank in between.
+     *
+     * Only the pre-layout window is affected. mobile/index.html puts an opaque
+     * bg-slate-50 on <body> in the initial markup, so once the document renders,
+     * the window background is fully covered and cannot show through.
+     */
+    backgroundColor: "#00000000",
   },
   plugins: {
     SystemBars: {

@@ -23,4 +23,17 @@
     <item
         android:gravity="center"
         android:drawable="@drawable/splash_lockup" />
+
+    <!--
+        Loading bar in the same spot as the web overlay's .boot__bar, so the
+        native stage and the web stage are the same picture. Without it the launch
+        showed a bare lockup first and then a lockup-with-bar, which read as two
+        different splashes with a blink between them.
+    -->
+    <item
+        android:gravity="bottom|center_horizontal"
+        android:width="240dp"
+        android:height="4dp"
+        android:bottom="84dp"
+        android:drawable="@drawable/splash_bar" />
 </layer-list>

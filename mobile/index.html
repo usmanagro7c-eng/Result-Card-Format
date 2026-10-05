@@ -74,12 +74,17 @@
       /*
         Indeterminate loading bar, anchored to the bottom of the screen and lifted
         clear of the navigation bar via --sab.
+
+        The geometry here is deliberately fixed (240px, not a vw percentage) so it
+        matches res/drawable/splash_bar.xml exactly. The native launch window cannot
+        use viewport units, so if this side were proportional the two would only
+        roughly line up and the hand-off would show as a small jump.
       */
       #boot .boot__bar {
         position: absolute;
         left: 50%;
         bottom: calc(84px + var(--sab));
-        width: min(58vw, 260px);
+        width: 240px;
         height: 4px;
         transform: translateX(-50%);
         border-radius: 999px;
