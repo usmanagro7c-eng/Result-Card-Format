@@ -17,29 +17,42 @@ if (rootElement && !rootElement.innerHTML) {
 }
 
 /**
- * Take down the HTML launch overlay once the app has something to show.
+ * Reveal the React app smoothly once the initial route is ready.
  *
- * The native starting window only lasts until the WebView paints its first frame,
- * and that first frame is this overlay (see #boot in mobile/index.html), not the
- * React app. Without this the branded overlay would sit on top of a working app
- * forever, because nothing else removes it.
+ * During startup:
+ * 1. Android Activity paints the native starting window (splash_window.xml: pure white + TCS logo).
+ * 2. Capacitor's WebView is transparent (backgroundColor: #00000000).
+ * 3. html and body are transparent, and #root starts at opacity: 0.
  *
- * `onRendered` fires after the router commits a render; the two animation frames
- * wait for that paint to reach the compositor so the overlay is never swapped for
- * an empty frame. A timeout backstop means a router that never reports still
- * reveals the app rather than leaving the user on a splash.
+ * The user sees ONLY the single native splash screen from the moment they tap the icon.
+ * There is NO web splash overlay, NO second logo, NO moving bar, and ZERO flicker.
+ *
+ * Once the router renders the initial route, #root smoothly fades in over 350ms.
  */
-function dismissBootOverlay() {
-  const overlay = document.getElementById("boot");
-  if (!overlay) return;
+function revealApp() {
+  const root = document.getElementById("root");
+  if (!root) return;
 
-  const hide = () => {
-    overlay.classList.add("boot--done");
-    // Remove after the fade so it can never intercept taps on the app.
-    window.setTimeout(() => overlay.remove(), 320);
+  const MIN_SPLASH_MS = 500; // Snappy yet polished brand presentation time
+  const startTime = performance.now();
+
+  const show = () => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        root.classList.add("app-ready");
+        window.setTimeout(() => {
+          document.body.classList.add("app-ready");
+          root.style.willChange = "auto";
+        }, 240);
+      });
+    });
   };
 
-  const afterPaint = () => requestAnimationFrame(() => requestAnimationFrame(hide));
+  const afterPaint = () => {
+    const elapsed = performance.now() - startTime;
+    const remaining = Math.max(0, MIN_SPLASH_MS - elapsed);
+    window.setTimeout(show, remaining);
+  };
 
   let settled = false;
   const finish = () => {
@@ -57,9 +70,8 @@ function dismissBootOverlay() {
     });
   }
 
-  // Backstop: never leave the user staring at a splash because the router
-  // reported nothing.
-  window.setTimeout(finish, 4000);
+  // Backstop: never leave the user waiting if router fails to emit onRendered
+  window.setTimeout(finish, 3500);
 }
 
-void dismissBootOverlay();
+revealApp();
