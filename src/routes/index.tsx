@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Copy,
   Download,
+  Eye,
   FileDown,
   MoreHorizontal,
   Pencil,
@@ -17,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -64,6 +66,19 @@ export const Route = createFileRoute("/")({
   }),
   component: StudentsPage,
 });
+
+function getGradeStyle(grade: string) {
+  if (grade === "A+" || grade === "A") {
+    return "bg-emerald-50 text-emerald-700 border-emerald-200/90";
+  }
+  if (grade === "B" || grade === "C") {
+    return "bg-blue-50 text-blue-700 border-blue-200/90";
+  }
+  if (grade === "D") {
+    return "bg-amber-50 text-amber-700 border-amber-200/90";
+  }
+  return "bg-rose-50 text-rose-700 border-rose-200/90";
+}
 
 function StudentsPage() {
   const { ready, students, settings, addStudent, deleteStudent, deleteStudents, duplicateStudent } =
@@ -479,6 +494,43 @@ function StudentsPage() {
             )}
           </div>
         )}
+
+        {/* Horizontal Class Filter Chips */}
+        {classes.length > 1 && (
+          <div className="no-scrollbar -mx-3 px-3 flex items-center gap-1.5 overflow-x-auto pb-0.5 sm:mx-0 sm:px-0">
+            <button
+              type="button"
+              onClick={() => setClassFilter("all")}
+              className={cn(
+                "press-card shrink-0 rounded-xl px-3 py-1.5 text-xs font-bold transition-all",
+                classFilter === "all"
+                  ? "bg-blue-950 text-white shadow-xs"
+                  : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50"
+              )}
+            >
+              All Classes ({students.length})
+            </button>
+            {classes.map((cls) => {
+              const count = students.filter((s) => s.className === cls).length;
+              const isActive = classFilter === cls;
+              return (
+                <button
+                  key={cls}
+                  type="button"
+                  onClick={() => setClassFilter(cls)}
+                  className={cn(
+                    "press-card shrink-0 rounded-xl px-3 py-1.5 text-xs font-bold transition-all",
+                    isActive
+                      ? "bg-blue-950 text-white shadow-xs"
+                      : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50"
+                  )}
+                >
+                  Class {cls} ({count})
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Bulk Action Bar */}
@@ -593,8 +645,172 @@ function StudentsPage() {
           </div>
         ) : (
           <>
-            {/* Table */}
-            <div className="overflow-x-auto">
+            {/* Mobile Native Card View (< md) */}
+            <div className="md:hidden space-y-2.5 p-3 bg-slate-50/60">
+              <div className="flex items-center justify-between px-1 pb-1 text-xs font-bold text-slate-500">
+                <label
+                  className="flex items-center gap-2 cursor-pointer select-none"
+                  onClick={toggleSelectAll}
+                >
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Select all"
+                    className="size-4.5 rounded-md"
+                  />
+                  <span>Select All ({filtered.length})</span>
+                </label>
+                <span className="text-[11px] text-slate-400">
+                  {selected.length > 0 ? `${selected.length} selected` : `Showing ${filtered.length}`}
+                </span>
+              </div>
+
+              {filtered.map((student, rowIndex) => {
+                const totals = calculateTotals(
+                  student.subjects,
+                  settings.grades,
+                  student.includeSummerWork ?? false,
+                );
+                const isSelected = selected.includes(student.id);
+                const avatarColors = [
+                  "from-blue-700 to-indigo-900",
+                  "from-indigo-700 to-purple-900",
+                  "from-emerald-700 to-teal-900",
+                  "from-amber-600 to-orange-800",
+                  "from-rose-700 to-red-900",
+                  "from-cyan-700 to-blue-900",
+                ];
+                const avatarColor = avatarColors[rowIndex % avatarColors.length];
+                const pct = Math.max(0, Math.min(100, Math.round(totals.percentage)));
+
+                return (
+                  <div
+                    key={student.id}
+                    onClick={() =>
+                      navigate({
+                        to: "/editor/$studentId",
+                        params: { studentId: student.id },
+                      })
+                    }
+                    className={cn(
+                      "press-card relative overflow-hidden rounded-2xl border bg-white p-3.5 shadow-2xs transition-all",
+                      isSelected
+                        ? "border-blue-500/80 bg-blue-50/30 ring-2 ring-blue-500/20"
+                        : "border-slate-200/90 hover:border-slate-300",
+                    )}
+                  >
+                    {/* Top Row: Checkbox, Avatar, Name & Class, Grade Badge */}
+                    <div className="flex items-start justify-between gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div
+                          className="p-1 -m-1 cursor-pointer shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelected((prev) =>
+                              isSelected
+                                ? prev.filter((id) => id !== student.id)
+                                : [...prev, student.id],
+                            );
+                          }}
+                        >
+                          <Checkbox
+                            checked={isSelected}
+                            aria-label={`Select ${student.name || "student"}`}
+                            className="size-5 pointer-events-none rounded-md"
+                          />
+                        </div>
+
+                        {/* Avatar / Photo */}
+                        <div
+                          className={cn(
+                            "flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br font-black text-white text-sm shadow-xs",
+                            avatarColor,
+                          )}
+                        >
+                          {student.photoDataUrl ? (
+                            <img
+                              src={student.photoDataUrl}
+                              alt={student.name || "Student"}
+                              className="size-full object-cover"
+                            />
+                          ) : (
+                            (student.name || "?")[0]?.toUpperCase()
+                          )}
+                        </div>
+
+                        {/* Name + Subtitle */}
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-extrabold text-slate-900 text-[14px] leading-snug truncate">
+                            {student.name || "Untitled Student"}
+                          </h3>
+                          <div className="flex items-center gap-1.5 mt-0.5 text-xs text-slate-500 font-semibold">
+                            <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">
+                              {student.className ? `Class ${student.className}` : "No class"}
+                            </span>
+                            {student.rollNumber && (
+                              <span className="text-[11px] text-slate-400 font-medium">
+                                Roll #{student.rollNumber}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Grade Badge */}
+                      <span
+                        className={cn(
+                          "inline-flex items-center justify-center rounded-xl border px-2.5 py-1 text-xs font-black shadow-2xs shrink-0 tabular-nums",
+                          getGradeStyle(totals.grade),
+                        )}
+                      >
+                        {totals.grade}
+                      </span>
+                    </div>
+
+                    {/* Progress Bar & Marks Summary */}
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-semibold text-slate-600">
+                          <span className="font-extrabold text-slate-900">{totals.obtainedTotal}</span>
+                          <span className="text-slate-400"> / {totals.grandTotal} marks</span>
+                        </span>
+                        <span className="font-black text-blue-950 tabular-nums">
+                          {totals.percentage}%
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-blue-700 to-indigo-900 transition-all duration-300"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Card Footer Actions */}
+                    <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[11px] text-slate-400 font-medium">
+                        Tap card to edit marks
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSheetStudent(student);
+                        }}
+                        aria-label={`Actions for ${student.name || "student"}`}
+                        className="flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-600 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+                      >
+                        <span>Actions</span>
+                        <MoreHorizontal className="size-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table (>= md) */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-bold uppercase tracking-widest text-slate-400">
@@ -936,8 +1152,8 @@ function StudentsPage() {
 
                     <div className="mt-4 flex flex-col border-t border-slate-100">
                       <SheetAction
-                        icon={<Pencil className="size-4" />}
-                        label="Edit Marks"
+                        icon={<Pencil className="size-4.5" />}
+                        label="Edit Marks & Info"
                         onClick={() =>
                           navigate({
                             to: "/editor/$studentId",
@@ -946,18 +1162,29 @@ function StudentsPage() {
                         }
                       />
                       <SheetAction
-                        icon={<Download className="size-4" />}
+                        icon={<Eye className="size-4.5" />}
+                        label="Live Card Preview"
+                        onClick={() =>
+                          navigate({
+                            to: "/editor/$studentId",
+                            params: { studentId: sheetStudent.id },
+                            search: { tab: "preview" },
+                          })
+                        }
+                      />
+                      <SheetAction
+                        icon={<Download className="size-4.5" />}
                         label="Download PDF"
                         disabled={busy}
                         onClick={() => handleDirectPdf(sheetStudent)}
                       />
                       <SheetAction
-                        icon={<Copy className="size-4" />}
+                        icon={<Copy className="size-4.5" />}
                         label="Duplicate Student"
                         onClick={() => handleDuplicate(sheetStudent.id)}
                       />
                       <SheetAction
-                        icon={<Trash2 className="size-4" />}
+                        icon={<Trash2 className="size-4.5" />}
                         label="Delete Student"
                         destructive
                         onClick={() => requestDelete(sheetStudent)}
