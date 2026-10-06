@@ -42,9 +42,20 @@ import { DEFAULT_FIT_STATE, type CardFitState } from "@/hooks/useCardFit";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
+type EditorTab = "info" | "marks" | "remarks" | "preview";
+
 export const Route = createFileRoute("/editor/$studentId")({
-  validateSearch: (search: Record<string, unknown>): { print?: true | undefined } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { print?: true | undefined; tab?: EditorTab | undefined } => ({
     print: search["print"] === true || search["print"] === "true" ? true : undefined,
+    tab:
+      search["tab"] === "info" ||
+      search["tab"] === "marks" ||
+      search["tab"] === "remarks" ||
+      search["tab"] === "preview"
+        ? (search["tab"] as EditorTab)
+        : undefined,
   }),
   head: () => ({
     meta: [
@@ -64,8 +75,6 @@ export const Route = createFileRoute("/editor/$studentId")({
   component: ResultEditor,
 });
 
-type EditorTab = "info" | "marks" | "remarks" | "preview";
-
 const EDITOR_TABS = [
   { id: "info" as const, label: "Student Info", shortLabel: "Info", icon: Users },
   { id: "marks" as const, label: "Subject Marks", shortLabel: "Marks", icon: BookOpen },
@@ -75,7 +84,7 @@ const EDITOR_TABS = [
 
 function ResultEditor() {
   const { studentId } = Route.useParams();
-  const { print } = Route.useSearch();
+  const { print, tab } = Route.useSearch();
   const navigate = useNavigate();
   const { ready, students, getStudent, updateStudent, settings, storageFull } = useResultStore();
 
@@ -118,7 +127,12 @@ function ResultEditor() {
   }, [students, studentId]);
 
   const isMobile = useIsMobile();
-  const [activeTab, setActiveTab] = useState<EditorTab>("info");
+  const [activeTab, setActiveTab] = useState<EditorTab>(tab ?? (print ? "preview" : "info"));
+
+  // If search param changes (e.g. navigation with tab: "preview")
+  useEffect(() => {
+    if (tab) setActiveTab(tab);
+  }, [tab]);
 
   // The A4 card lives in the preview panel, which is display:none while the
   // Form tab is active on mobile. Force the preview visible for any print path, whether
@@ -317,12 +331,64 @@ function ResultEditor() {
           </div>
         ) : null}
 
-        {/* Mobile 2x2 Segmented Tab Control (< sm) */}
-        <div className="no-print mb-4 sm:hidden">
+        {/* Mobile Live Grade & Marks Summary Bar (< sm) */}
+        <div className="no-print mb-3 flex items-center justify-between rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-white p-3 shadow-xs sm:hidden">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-blue-900 text-white font-black text-xs shadow-xs">
+              {student.photoDataUrl ? (
+                <img
+                  src={student.photoDataUrl}
+                  alt={student.name || "Student"}
+                  className="size-full object-cover"
+                />
+              ) : (
+                (student.name || "?")[0]?.toUpperCase()
+              )}
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-extrabold text-slate-900 text-sm truncate leading-tight">
+                {student.name || "Untitled Student"}
+              </h3>
+              <p className="text-[11px] text-slate-500 font-semibold mt-0.5 truncate">
+                {student.className ? `Class ${student.className}` : "No class"}
+                {student.rollNumber && ` • Roll #${student.rollNumber}`}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="text-right">
+              <div className="text-xs font-black text-slate-900 tabular-nums">
+                {totals.obtainedTotal}{" "}
+                <span className="text-[10px] font-normal text-slate-400">/ {totals.grandTotal}</span>
+              </div>
+              <div className="text-[11px] font-bold text-blue-900 tabular-nums">
+                {totals.percentage}%
+              </div>
+            </div>
+            <span
+              className={cn(
+                "inline-flex items-center justify-center rounded-xl border px-2.5 py-1 text-xs font-black shadow-2xs tabular-nums",
+                totals.grade === "A+" || totals.grade === "A"
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : totals.grade === "B" || totals.grade === "C"
+                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                    : totals.grade === "D"
+                      ? "bg-amber-50 text-amber-700 border-amber-200"
+                      : "bg-rose-50 text-rose-700 border-rose-200",
+              )}
+            >
+              {totals.grade}
+            </span>
+          </div>
+        </div>
+
+        {/* Mobile Sleek Segmented Tab Control (< sm) */}
+        <div className="no-print mb-3.5 sm:hidden">
           <div
             role="tablist"
             aria-label="Editor panels"
-            className="grid grid-cols-2 gap-2 rounded-2xl border border-slate-200/90 bg-slate-100/90 p-1.5 shadow-inner"
+            className="grid grid-cols-4 gap-1 rounded-2xl border border-slate-200/90 bg-slate-100/90 p-1 shadow-inner"
           >
             {EDITOR_TABS.map((tab) => {
               const Icon = tab.icon;
@@ -335,10 +401,10 @@ function ResultEditor() {
                   aria-selected={isActive}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "flex min-h-12 items-center justify-center gap-2 rounded-xl px-2 py-2 text-xs font-bold transition-all active:scale-95",
+                    "press-card flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-extrabold transition-all",
                     isActive
-                      ? "bg-white text-blue-950 shadow-sm"
-                      : "text-slate-600 hover:bg-white/60 hover:text-slate-900",
+                      ? "bg-white text-blue-950 shadow-xs"
+                      : "text-slate-500 hover:text-slate-900",
                   )}
                 >
                   <Icon
@@ -347,7 +413,7 @@ function ResultEditor() {
                       isActive ? "text-blue-900" : "text-slate-400",
                     )}
                   />
-                  <span>{tab.shortLabel}</span>
+                  <span className="leading-tight">{tab.shortLabel}</span>
                 </button>
               );
             })}
@@ -597,6 +663,33 @@ function ResultEditor() {
                   placeholder="Enter or customize remarks..."
                   className="resize-none border-slate-200 bg-slate-50/50 text-sm focus-visible:bg-white"
                 />
+
+                {/* Quick Preset Remark Chips */}
+                <div className="pt-1">
+                  <span className="block text-[11px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                    Quick suggestions:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PRESET_REMARKS.map((r) => {
+                      const isSelected = student.remarks === r;
+                      return (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => set({ remarks: r })}
+                          className={cn(
+                            "press-card rounded-xl px-2.5 py-1 text-xs font-semibold transition-all text-left",
+                            isSelected
+                              ? "bg-amber-100 text-amber-950 border border-amber-300 shadow-2xs"
+                              : "bg-slate-100/90 text-slate-700 hover:bg-slate-200/70 border border-slate-200/50",
+                          )}
+                        >
+                          {r}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -661,23 +754,38 @@ function ResultEditor() {
        * driven by `--bottom-bar-h`, matching the app's bottom navigation.
        */}
       {isMobile ? (
-        <div className="no-print bottom-bar flex items-center gap-2 px-3 pt-2.5">
-          {/* Live score */}
-          <div className="min-w-0 shrink-0">
-            <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Total Marks
+        <div className="no-print bottom-bar flex items-center gap-2 px-3 pt-2">
+          {/* Live score pill */}
+          <div className="flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-slate-50/90 px-2.5 py-1 shrink-0">
+            <span
+              className={cn(
+                "inline-flex size-6 items-center justify-center rounded-lg text-[11px] font-black",
+                totals.grade === "A+" || totals.grade === "A"
+                  ? "bg-emerald-100 text-emerald-800"
+                  : totals.grade === "B" || totals.grade === "C"
+                    ? "bg-blue-100 text-blue-800"
+                    : totals.grade === "D"
+                      ? "bg-amber-100 text-amber-800"
+                      : "bg-rose-100 text-rose-800",
+              )}
+            >
+              {totals.grade}
             </span>
-            <span className="block text-sm font-black tabular-nums text-slate-900 leading-tight">
-              {totals.obtainedTotal}/{totals.grandTotal}
-              <span className="ml-1 text-xs font-bold text-blue-700">({totals.percentage}%)</span>
-            </span>
+            <div className="min-w-0">
+              <span className="block text-[11px] font-black tabular-nums text-slate-900 leading-tight">
+                {totals.obtainedTotal}/{totals.grandTotal}
+              </span>
+              <span className="block text-[10px] font-bold text-blue-900 tabular-nums leading-tight">
+                {totals.percentage}%
+              </span>
+            </div>
           </div>
 
           <Button
             size="sm"
             onClick={handlePdf}
             disabled={busy || hasErrors}
-            className="min-h-11 flex-1 gap-1.5 rounded-xl bg-blue-900 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-blue-800 disabled:opacity-60 active:scale-98"
+            className="press-card min-h-11 flex-1 gap-1.5 rounded-xl bg-gradient-to-r from-blue-950 to-blue-900 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-950/20 hover:from-blue-900 hover:to-blue-850 disabled:opacity-60"
           >
             <FileDown className="size-4" />
             {busy ? "Preparing..." : "Download PDF"}
@@ -690,7 +798,7 @@ function ResultEditor() {
               onClick={() =>
                 navigate({ to: "/editor/$studentId", params: { studentId: nextStudentId } })
               }
-              className="min-h-11 shrink-0 gap-1 rounded-xl border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-100 active:scale-98"
+              className="press-card min-h-11 shrink-0 gap-1 rounded-xl border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100"
             >
               Next <ChevronRight className="size-4" />
             </Button>

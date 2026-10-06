@@ -157,7 +157,7 @@ export function SubjectTable({
 
                 {/* Row 2: Total Marks and Obtained Marks in two balanced columns */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="flex items-center justify-between rounded-xl border border-slate-200/90 bg-slate-50/70 px-2.5 py-1">
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200/90 bg-slate-50/70 px-2.5 py-1.5">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">Total:</span>
                     <Input
                       type="number"
@@ -165,7 +165,7 @@ export function SubjectTable({
                       enterKeyHint="next"
                       min={1}
                       className={cn(
-                        "h-7 w-16 border-0 bg-transparent p-0 text-right text-sm font-bold shadow-none focus-visible:ring-0",
+                        "h-7 w-16 border-0 bg-transparent p-0 text-right text-sm font-black shadow-none focus-visible:ring-0",
                         subject.totalMarks <= 0 ? "text-rose-600" : "text-slate-800",
                       )}
                       value={subject.totalMarks === 0 ? "" : subject.totalMarks}
@@ -184,9 +184,9 @@ export function SubjectTable({
                       label={`Decrease ${subject.name || "subject"} marks`}
                       onStep={() => stepObtained(subject, -1)}
                       disabled={subject.obtainedMarks <= 0}
-                      className="size-7 shrink-0 rounded-lg border-slate-200 bg-white text-slate-600 shadow-2xs active:bg-slate-100 active:scale-95"
+                      className="press-card size-8 shrink-0 rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs active:bg-slate-100"
                     >
-                      <Minus className="size-3" />
+                      <Minus className="size-3.5" />
                     </HoldButton>
 
                     <Input
@@ -212,12 +212,31 @@ export function SubjectTable({
                       label={`Increase ${subject.name || "subject"} marks`}
                       onStep={() => stepObtained(subject, 1)}
                       disabled={subject.obtainedMarks >= subject.totalMarks}
-                      className="size-7 shrink-0 rounded-lg border-slate-200 bg-white text-slate-600 shadow-2xs active:bg-slate-100 active:scale-95"
+                      className="press-card size-8 shrink-0 rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs active:bg-slate-100"
                     >
-                      <Plus className="size-3" />
+                      <Plus className="size-3.5" />
                     </HoldButton>
                   </div>
                 </div>
+
+                {/* Mini score progress bar on mobile */}
+                {subject.totalMarks > 0 && (
+                  <div className="pt-0.5">
+                    <div className="h-1 w-full overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all duration-200",
+                          isOverLimit
+                            ? "bg-rose-500"
+                            : "bg-gradient-to-r from-blue-700 to-indigo-800",
+                        )}
+                        style={{
+                          width: `${Math.min(100, Math.max(0, Math.round((subject.obtainedMarks / subject.totalMarks) * 100)))}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* DESKTOP: single row with modern card styling */}
