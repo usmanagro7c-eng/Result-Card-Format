@@ -9,13 +9,15 @@ import {
   Scripts,
   useRouterState,
 } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Users, Settings as SettingsIcon, Plus, BookOpen } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { ResultStoreProvider, createStudent, useResultStore } from "../store/resultStore";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
+import { initHardwareBackButton } from "@/utils/backButton";
+import { toast } from "sonner";
 
 function AppNavbar() {
   const routerState = useRouterState();
@@ -346,12 +348,28 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function NativeHardwareBackHandler() {
+  const routerState = useRouterState();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    return initHardwareBackButton({
+      getCurrentPath: () => routerState.location.pathname,
+      onNavigateHome: () => navigate({ to: "/" }),
+      onShowToast: (msg) => toast.info(msg, { id: "back-exit-toast", duration: 2000 }),
+    });
+  }, [navigate, routerState.location.pathname]);
+
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
       <ResultStoreProvider>
+        <NativeHardwareBackHandler />
         <div className="flex min-h-screen flex-col">
           <AppNavbar />
           <main className="flex-1">
