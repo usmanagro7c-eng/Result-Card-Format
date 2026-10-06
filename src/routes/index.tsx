@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Copy,
@@ -10,6 +10,7 @@ import {
   Plus,
   Printer,
   Search,
+  Share2,
   Trash2,
   Users,
   TrendingUp,
@@ -49,7 +50,8 @@ import {
 import { ResultCard } from "@/components/ResultCard/ResultCard";
 import { createStudent, useResultStore } from "@/store/resultStore";
 import { calculateTotals } from "@/utils/calculations";
-import { generatePdf } from "@/utils/pdf";
+import { generatePdf, sharePdf } from "@/utils/pdf";
+import { registerBackHandler } from "@/utils/backButton";
 import { printDocument } from "@/utils/print";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -277,6 +279,53 @@ function StudentsPage() {
       setSingleStudentToExport(null);
     }
   };
+
+  const handleDirectShare = async (student: (typeof students)[0]) => {
+    setSingleStudentToExport(student);
+    setBusy(true);
+    try {
+      await new Promise((r) => setTimeout(r, 100));
+      const node = singlePdfRef.current?.querySelector<HTMLElement>("[data-result-card]");
+      if (!node) throw new Error("Render target not found");
+      const singleName = `${(student.name || "Student").replace(/\s+/g, "-")}-Result-Card.pdf`;
+      const result = await sharePdf([node], singleName, {
+        title: `${student.name || "Student"} - Result Card`,
+        text: `Official Progress Report & Result Card for ${student.name || "Student"} (${student.className || ""}) - The Country School`,
+        dialogTitle: "Send Result Card to Parent via WhatsApp",
+      });
+      if (result.shared) {
+        toast.success(`Share sheet opened for ${student.name || "Student"}`);
+      } else if (result.error) {
+        toast.info(result.error);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not prepare PDF for sharing");
+    } finally {
+      setBusy(false);
+      setSingleStudentToExport(null);
+    }
+  };
+
+  useEffect(() => {
+    if (sheetStudent !== null || pendingDelete !== null || bulkDeleteOpen) {
+      return registerBackHandler(() => {
+        if (sheetStudent !== null) {
+          setSheetStudent(null);
+          return true;
+        }
+        if (pendingDelete !== null) {
+          setPendingDelete(null);
+          return true;
+        }
+        if (bulkDeleteOpen) {
+          setBulkDeleteOpen(false);
+          return true;
+        }
+        return false;
+      });
+    }
+  }, [sheetStudent, pendingDelete, bulkDeleteOpen]);
 
   const stats = useMemo(() => {
     if (students.length === 0) return null;
@@ -1173,8 +1222,17 @@ function StudentsPage() {
                         }
                       />
                       <SheetAction
+                        icon={<Share2 className="size-4.5 text-emerald-600" />}
+                        label="Share via WhatsApp / Parent"
+                        subtitle="Send PDF directly to parent's chat"
+                        badge="WhatsApp"
+                        disabled={busy}
+                        onClick={() => handleDirectShare(sheetStudent)}
+                      />
+                      <SheetAction
                         icon={<Download className="size-4.5" />}
                         label="Download PDF"
+                        subtitle="Save copy to device Downloads"
                         disabled={busy}
                         onClick={() => handleDirectPdf(sheetStudent)}
                       />
@@ -1262,12 +1320,16 @@ function StudentsPage() {
 function SheetAction({
   icon,
   label,
+  subtitle,
+  badge,
   onClick,
   disabled,
   destructive,
 }: {
   icon: React.ReactNode;
   label: string;
+  subtitle?: string;
+  badge?: string;
   onClick: () => void;
   disabled?: boolean;
   destructive?: boolean;
@@ -1278,14 +1340,28 @@ function SheetAction({
         type="button"
         onClick={onClick}
         disabled={disabled}
-        className={`flex min-h-14 w-full items-center gap-3.5 px-5 text-left text-[15px] font-semibold transition-colors disabled:opacity-40 ${
+        className={`flex min-h-14 w-full items-center justify-between px-5 text-left text-[15px] font-semibold transition-colors disabled:opacity-40 ${
           destructive
             ? "text-rose-600 hover:bg-rose-50 active:bg-rose-100"
             : "text-slate-800 hover:bg-slate-50 active:bg-slate-100"
         }`}
       >
-        <span className={destructive ? "text-rose-400" : "text-slate-400"}>{icon}</span>
-        {label}
+        <div className="flex items-center gap-3.5 min-w-0">
+          <span className={destructive ? "text-rose-400" : "text-slate-400"}>{icon}</span>
+          <div className="min-w-0">
+            <span className="block truncate">{label}</span>
+            {subtitle ? (
+              <span className="block text-[11px] font-medium text-slate-400 leading-tight">
+                {subtitle}
+              </span>
+            ) : null}
+          </div>
+        </div>
+        {badge ? (
+          <span className="ml-2 rounded-lg bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800 shrink-0">
+            {badge}
+          </span>
+        ) : null}
       </button>
     </DrawerClose>
   );

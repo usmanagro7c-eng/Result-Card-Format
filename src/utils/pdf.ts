@@ -346,3 +346,99 @@ export async function generatePdf(
   pdf.save(fileName);
   return { native: false };
 }
+
+export interface SharePdfOptions {
+  title?: string;
+  text?: string;
+  dialogTitle?: string;
+}
+
+/**
+ * Render one or more A4 elements into a PDF and immediately open the native share sheet
+ * (WhatsApp, Email, Drive, etc.) with the PDF document pre-attached.
+ */
+export async function sharePdf(
+  elements: HTMLElement[],
+  fileName: string,
+  options?: SharePdfOptions,
+  onProgress?: (current: number, total: number) => void,
+): Promise<{ shared: boolean; error?: string }> {
+  if (elements.length === 0) return { shared: false, error: "No elements to render" };
+
+  const pdf = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+    compress: true,
+  });
+
+  const total = elements.length;
+
+  for (let i = 0; i < total; i++) {
+    const el = elements[i];
+    if (el) {
+      if (onProgress) onProgress(i + 1, total);
+      const page = await renderElement(el);
+      if (i > 0) pdf.addPage("a4", "portrait");
+      addPageImage(pdf, page);
+    }
+  }
+
+  const name = safeFileName(fileName);
+  const base64 = toBase64(pdf.output("arraybuffer"));
+
+  if (isNativeApp()) {
+    // 1. Write PDF to Cache directory so it is directly sharable via FileProvider
+    const { uri: cacheUri } = await Filesystem.writeFile({
+      path: name,
+      data: base64,
+      directory: Directory.Cache,
+      recursive: true,
+    });
+
+    // 2. Also save to Downloads in background so a permanent copy is kept
+    writeToDownloads(name, base64).catch(() => null);
+
+    // 3. Open native Android share sheet with file attached
+    try {
+      await Share.share({
+        title: options?.title || name,
+        text: options?.text || "The Country School Result Card",
+        dialogTitle: options?.dialogTitle || "Send Result Card to Parent via WhatsApp",
+        files: [cacheUri],
+      });
+      return { shared: true };
+    } catch (shareErr: unknown) {
+      const msg = String((shareErr as Error)?.message || "").toLowerCase();
+      if (msg.includes("canceled") || msg.includes("cancelled") || msg.includes("dismissed")) {
+        return { shared: true };
+      }
+      console.warn("Share sheet error:", shareErr);
+      return { shared: false, error: (shareErr as Error)?.message };
+    }
+  }
+
+  // Web fallback: Check if navigator.canShare supports files
+  if (typeof navigator !== "undefined" && typeof File !== "undefined") {
+    try {
+      const blob = pdf.output("blob");
+      const file = new File([blob], name, { type: "application/pdf" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: options?.title || name,
+          text: options?.text || "The Country School Result Card",
+        });
+        return { shared: true };
+      }
+    } catch (err: unknown) {
+      if ((err as Error)?.name === "AbortError") {
+        return { shared: true };
+      }
+    }
+  }
+
+  // Desktop browser fallback: download the PDF directly
+  pdf.save(name);
+  return { shared: false, error: "Browser downloaded PDF directly" };
+}

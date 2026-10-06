@@ -10,6 +10,7 @@ import {
   FileDown,
   Pencil,
   Printer,
+  Share2,
   Sparkles,
   Trash2,
   TriangleAlert,
@@ -35,7 +36,7 @@ import { SubjectTable } from "@/components/SubjectTable/SubjectTable";
 import { PRESET_REMARKS, useResultStore } from "@/store/resultStore";
 import { calculateTotals, subjectErrors } from "@/utils/calculations";
 import { compressImage } from "@/utils/image";
-import { generatePdf } from "@/utils/pdf";
+import { generatePdf, sharePdf } from "@/utils/pdf";
 import { printDocument } from "@/utils/print";
 import { GradeText } from "@/utils/raisedText";
 import { DEFAULT_FIT_STATE, type CardFitState } from "@/hooks/useCardFit";
@@ -93,6 +94,7 @@ function ResultEditor() {
   const exportCardRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [fitState, setFitState] = useState<CardFitState>(DEFAULT_FIT_STATE);
   const printed = useRef(false);
@@ -204,6 +206,36 @@ function ResultEditor() {
     }
   };
 
+  const handleSharePdf = async () => {
+    setIsSharing(true);
+    setBusy(true);
+    setIsPdfExporting(true);
+    try {
+      await new Promise((r) => setTimeout(r, 100));
+      const target =
+        (exportCardRef.current?.firstElementChild as HTMLElement | null) || cardRef.current;
+      if (!target) throw new Error("Render target not found");
+      const fileName = `${(student.name || "Student").replace(/\s+/g, "-")}-Result-Card.pdf`;
+      const result = await sharePdf([target], fileName, {
+        title: `${student.name || "Student"} - Result Card`,
+        text: `Official Progress Report & Result Card for ${student.name || "Student"} (${student.className || ""}) - The Country School`,
+        dialogTitle: "Send Result Card to Parent via WhatsApp",
+      });
+      if (result.shared) {
+        toast.success(`Share sheet opened for ${student.name || "Student"}`);
+      } else if (result.error) {
+        toast.info(result.error);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not prepare PDF for sharing");
+    } finally {
+      setIsSharing(false);
+      setBusy(false);
+      setIsPdfExporting(false);
+    }
+  };
+
   const set = (patch: Parameters<typeof updateStudent>[1]) => {
     updateStudent(student.id, patch);
   };
@@ -294,13 +326,24 @@ function ResultEditor() {
                 </Button>
 
                 <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSharePdf}
+                  disabled={busy || hasErrors}
+                  className="min-h-9 gap-1.5 border-emerald-300 bg-emerald-50/80 text-xs sm:text-sm font-bold text-emerald-800 shadow-2xs hover:bg-emerald-100 disabled:opacity-60"
+                >
+                  <Share2 className="size-3.5" />
+                  {isSharing ? "Sharing..." : "Share Card"}
+                </Button>
+
+                <Button
                   size="sm"
                   onClick={handlePdf}
                   disabled={busy || hasErrors}
                   className="min-h-9 gap-1.5 bg-blue-900 text-sm font-semibold text-white shadow-sm hover:bg-blue-800 disabled:opacity-60"
                 >
                   <FileDown className="size-4" />
-                  {busy ? "Preparing..." : "Download PDF"}
+                  {busy && !isSharing ? "Preparing..." : "Download PDF"}
                 </Button>
               </>
             )}
@@ -781,14 +824,27 @@ function ResultEditor() {
             </div>
           </div>
 
+          {/* Share via WhatsApp / Parent Button */}
           <Button
             size="sm"
+            onClick={handleSharePdf}
+            disabled={busy || hasErrors}
+            className="press-card min-h-11 flex-1 gap-1.5 rounded-xl bg-gradient-to-r from-emerald-700 to-emerald-600 text-xs sm:text-sm font-bold text-white shadow-md shadow-emerald-700/20 hover:from-emerald-600 hover:to-emerald-500 disabled:opacity-60"
+          >
+            <Share2 className="size-4 shrink-0" />
+            <span>{isSharing ? "Sharing..." : "WhatsApp"}</span>
+          </Button>
+
+          {/* Download PDF Button */}
+          <Button
+            size="sm"
+            variant="outline"
             onClick={handlePdf}
             disabled={busy || hasErrors}
-            className="press-card min-h-11 flex-1 gap-1.5 rounded-xl bg-gradient-to-r from-blue-950 to-blue-900 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-950/20 hover:from-blue-900 hover:to-blue-850 disabled:opacity-60"
+            className="press-card min-h-11 gap-1.5 rounded-xl border-slate-300 text-xs font-bold text-slate-800 hover:bg-slate-100 disabled:opacity-60 px-3 shrink-0"
           >
-            <FileDown className="size-4" />
-            {busy ? "Preparing..." : "Download PDF"}
+            <FileDown className="size-4 shrink-0" />
+            <span>PDF</span>
           </Button>
 
           {nextStudentId && (
