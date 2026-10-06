@@ -309,6 +309,28 @@
   transform: scale(0.97);
 }
 
+/* Smooth mobile card press feedback */
+.press-card {
+  transition:
+    transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+  will-change: transform;
+}
+.press-card:active {
+  transform: scale(0.98);
+}
+
+/* Hide scrollbar for horizontal chips navigation */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 @media print {
   @page {
     size: A4 portrait;

@@ -35,16 +35,16 @@ function AppNavbar() {
 
   return (
     <>
-      <header className="no-print sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-md shadow-xs">
+      <header className="no-print sticky top-0 z-40 w-full border-b border-slate-200/70 bg-white/90 backdrop-blur-xl shadow-2xs">
         {/* Main Top Bar */}
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-3 sm:px-6">
           {/* Left: Brand + Desktop Navigation */}
           <div className="flex items-center gap-6 sm:gap-8 min-w-0">
             <Link
               to="/"
-              className="flex items-center gap-2.5 transition-opacity hover:opacity-85 min-w-0"
+              className="flex items-center gap-2.5 transition-opacity hover:opacity-90 min-w-0"
             >
-              <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200/80 bg-white p-1 shadow-xs">
+              <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200/90 bg-white p-1 shadow-xs">
                 <img
                   src={settings.logoDataUrl || "/TCS Logo.png"}
                   alt={settings.schoolName || "The Country School"}
@@ -52,10 +52,10 @@ function AppNavbar() {
                 />
               </div>
               <div className="min-w-0">
-                <span className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight block tracking-tight truncate max-w-[140px] min-[380px]:max-w-[180px] sm:max-w-none">
+                <span className="font-black text-slate-900 text-xs sm:text-sm leading-tight block tracking-tight truncate max-w-[140px] min-[380px]:max-w-[180px] sm:max-w-none">
                   Result Card Generator
                 </span>
-                <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium block leading-tight truncate max-w-[140px] min-[380px]:max-w-[180px] sm:max-w-none">
+                <span className="text-[10px] sm:text-[11px] text-slate-500 font-semibold block leading-tight truncate max-w-[140px] min-[380px]:max-w-[180px] sm:max-w-none">
                   {settings.schoolName || "The Country School"}
                 </span>
               </div>
@@ -68,9 +68,9 @@ function AppNavbar() {
             >
               <Link
                 to="/"
-                className={`relative flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-all ${
+                className={`relative flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-bold transition-all ${
                   isHome
-                    ? "text-blue-900 bg-blue-50/80"
+                    ? "text-blue-950 bg-blue-50/90"
                     : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
@@ -78,30 +78,30 @@ function AppNavbar() {
                 <span>Students</span>
                 {students.length > 0 && (
                   <span
-                    className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums ${
-                      isHome ? "bg-blue-900/12 text-blue-900" : "bg-slate-200 text-slate-600"
+                    className={`ml-0.5 rounded-full px-2 py-0.5 text-[10px] font-black leading-none tabular-nums ${
+                      isHome ? "bg-blue-900 text-white" : "bg-slate-200 text-slate-700"
                     }`}
                   >
                     {students.length}
                   </span>
                 )}
                 {isHome && (
-                  <span className="absolute bottom-0 left-2.5 right-2.5 h-[2px] rounded-full bg-blue-900" />
+                  <span className="absolute bottom-0 left-3 right-3 h-[2.5px] rounded-full bg-blue-900" />
                 )}
               </Link>
 
               <Link
                 to="/settings"
-                className={`relative flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-all ${
+                className={`relative flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-bold transition-all ${
                   isSettings
-                    ? "text-blue-900 bg-blue-50/80"
+                    ? "text-blue-950 bg-blue-50/90"
                     : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
                 <SettingsIcon className="size-4" />
                 <span>Settings</span>
                 {isSettings && (
-                  <span className="absolute bottom-0 left-2.5 right-2.5 h-[2px] rounded-full bg-blue-900" />
+                  <span className="absolute bottom-0 left-3 right-3 h-[2.5px] rounded-full bg-blue-900" />
                 )}
               </Link>
             </nav>
@@ -109,16 +109,8 @@ function AppNavbar() {
 
           {/* Right side: Active Term & Session status badge */}
           <div className="flex items-center shrink-0">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-slate-600 border border-slate-200/60 shadow-2xs">
-              {/* Static on purpose. This used to carry `animate-pulse`, and an
-               * infinite CSS animation makes Chromium repaint every frame for
-               * the life of the process. Measured on a Galaxy Note 8 it pinned
-               * the WebView's browser process at ~165% of a core continuously,
-               * on every screen, purely to fade one 6px dot in and out. That
-               * drained the battery and added heat for a marker whose meaning
-               * (the active term and session) is static configuration, not a
-               * live reading. */}
-              <span className="size-1.5 rounded-full bg-emerald-500" />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100/90 px-2.5 py-1 text-[11px] sm:text-xs font-bold text-slate-700 border border-slate-200/80 shadow-2xs">
+              <span className="size-2 rounded-full bg-emerald-500 ring-2 ring-emerald-400/30" />
               <span className="hidden sm:inline">{settings.defaultTerm} &middot; </span>
               <span className="truncate max-w-[85px] sm:max-w-none">{settings.defaultSession}</span>
             </span>
@@ -129,34 +121,49 @@ function AppNavbar() {
       {/* Mobile Bottom Navigation — shares the editor action bar's height token */}
       {!isEditor && (
         <nav aria-label="Mobile navigation" className="no-print md:hidden bottom-bar">
-          <div className="grid grid-cols-3 items-center px-2">
+          <div className="grid grid-cols-3 items-center px-3 pt-1">
             {/* Students tab */}
             <Link
               to="/"
               aria-current={isHome ? "page" : undefined}
-              className={`relative flex min-h-14 flex-col items-center justify-center gap-1 py-1.5 text-[11px] font-bold transition-all active:scale-95 ${
-                isHome ? "text-blue-900" : "text-slate-400 hover:text-slate-600"
+              className={`press-card relative flex min-h-14 flex-col items-center justify-center gap-1 py-1 text-[11px] font-bold ${
+                isHome ? "text-blue-950" : "text-slate-400 hover:text-slate-600"
               }`}
             >
               <div
-                className={`flex items-center justify-center rounded-xl p-1 transition-colors ${isHome ? "bg-blue-50 text-blue-900" : ""}`}
+                className={`flex size-9 items-center justify-center rounded-xl transition-all ${
+                  isHome
+                    ? "bg-blue-100/90 text-blue-950 shadow-xs"
+                    : "text-slate-400"
+                }`}
               >
                 <Users className="size-5" />
               </div>
-              <span className="leading-none">
-                Students{students.length > 0 ? ` (${students.length})` : ""}
+              <span className="leading-none flex items-center gap-1">
+                Students
+                {students.length > 0 && (
+                  <span
+                    className={`rounded-full px-1.5 py-0.2 text-[9px] font-black leading-tight tabular-nums ${
+                      isHome ? "bg-blue-900 text-white" : "bg-slate-200 text-slate-600"
+                    }`}
+                  >
+                    {students.length}
+                  </span>
+                )}
               </span>
-              {isHome && <span className="absolute top-0 h-0.5 w-8 rounded-full bg-blue-900" />}
+              {isHome && (
+                <span className="absolute -top-1 h-0.5 w-7 rounded-full bg-blue-900" />
+              )}
             </Link>
 
             {/* Center Quick Add FAB */}
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center -translate-y-2">
               <button
                 onClick={handleQuickAdd}
                 aria-label="Add new student"
-                className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-950 to-blue-800 text-white shadow-lg shadow-blue-900/30 transition-transform hover:scale-105 active:scale-95 active:shadow-md"
+                className="press-card flex size-13 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-950 via-blue-900 to-indigo-800 text-white shadow-xl shadow-blue-950/35 ring-4 ring-white transition-all hover:scale-105 active:scale-95 active:shadow-md"
               >
-                <Plus className="size-6 stroke-[2.5]" />
+                <Plus className="size-7 stroke-[2.5]" />
               </button>
             </div>
 
@@ -164,17 +171,23 @@ function AppNavbar() {
             <Link
               to="/settings"
               aria-current={isSettings ? "page" : undefined}
-              className={`relative flex min-h-14 flex-col items-center justify-center gap-1 py-1.5 text-[11px] font-bold transition-all active:scale-95 ${
-                isSettings ? "text-blue-900" : "text-slate-400 hover:text-slate-600"
+              className={`press-card relative flex min-h-14 flex-col items-center justify-center gap-1 py-1 text-[11px] font-bold ${
+                isSettings ? "text-blue-950" : "text-slate-400 hover:text-slate-600"
               }`}
             >
               <div
-                className={`flex items-center justify-center rounded-xl p-1 transition-colors ${isSettings ? "bg-blue-50 text-blue-900" : ""}`}
+                className={`flex size-9 items-center justify-center rounded-xl transition-all ${
+                  isSettings
+                    ? "bg-blue-100/90 text-blue-950 shadow-xs"
+                    : "text-slate-400"
+                }`}
               >
                 <SettingsIcon className="size-5" />
               </div>
               <span className="leading-none">Settings</span>
-              {isSettings && <span className="absolute top-0 h-0.5 w-8 rounded-full bg-blue-900" />}
+              {isSettings && (
+                <span className="absolute -top-1 h-0.5 w-7 rounded-full bg-blue-900" />
+              )}
             </Link>
           </div>
         </nav>
