@@ -137,8 +137,8 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
   const teacherSig = student.teacherSignatureDataUrl || settings.teacherSignatureDataUrl;
   const headSig = student.headSignatureDataUrl || settings.headSignatureDataUrl;
   // Read straight off the student rather than taking a prop: the photo has no
-  // override case (unlike the subjects prop), so all five call sites â€” editor
-  // preview, print sheet, bulk print and both PDF renders â€” pick it up for free.
+  // override case (unlike the subjects prop), so all five call sites — editor
+  // preview, print sheet, bulk print and both PDF renders — pick it up for free.
   const showPhoto = student.showPhoto ?? false;
   const photoDataUrl = student.photoDataUrl ?? null;
 
@@ -279,7 +279,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                 </span>
               </p>
               <p className="text-[14px] font-semibold italic text-neutral-800">
-                Session {student.session || "2026â€“2027"}
+                Session {student.session || "2026–2027"}
               </p>
             </div>
 
@@ -294,7 +294,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               <span className="font-bold text-neutral-900">Name:</span>
               <span className="font-semibold text-neutral-950 flex-1">
                 <span className="inline-block border-b border-dotted border-neutral-950 pb-[1px]">
-                  {student.name || "â€”"}
+                  {student.name || "—"}
                 </span>
               </span>
             </div>
@@ -346,7 +346,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                         {index + 1}
                       </td>
                       <td className="border border-neutral-900 px-3 py-[var(--card-row-pad)] text-left font-bold text-neutral-900">
-                        {sub.name || "â€”"}
+                        {sub.name || "—"}
                       </td>
                       <td className="border border-neutral-900 px-3 py-[var(--card-row-pad)] text-center font-semibold text-neutral-900">
                         {sub.totalMarks}
@@ -376,7 +376,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
                           summerDimColor,
                         )}
                       >
-                        {summerWork.name || "â€”"}
+                        {summerWork.name || "—"}
                       </td>
                       <td
                         className={cn(
@@ -463,7 +463,7 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(function R
               Remarks:
             </span>
             <span className="text-[14.5px] font-semibold italic text-neutral-900 underline underline-offset-4 decoration-neutral-400">
-              {student.remarks ? `"${student.remarks}"` : "â€”"}
+              {student.remarks ? `"${student.remarks}"` : "—"}
             </span>
           </div>
         </section>

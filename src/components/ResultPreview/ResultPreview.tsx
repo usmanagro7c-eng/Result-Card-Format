@@ -297,7 +297,7 @@ export function ResultPreview({
                 width: A4_WIDTH_PX,
                 minHeight: A4_HEIGHT_PX,
               }}
-              className="a4-frame relative bg-white shadow-[0_4px_25px_rgba(0,0,0,0.18)] ring-1 ring-neutral-300"
+              className="a4-frame relative bg-white shadow-2xl shadow-slate-900/15 ring-1 ring-slate-200/90"
             >
               {children}
               {showGuides ? <MarginGuides marginMm={marginMm} /> : null}
