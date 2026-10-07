@@ -56,17 +56,18 @@ await (async () => {
 
 /*
  * -------------------------------------------------------------
- * 2. High-End Royal Executive Splash Lockup (Center Artwork)
+ * 2. High-End Royal Executive Splash Lockup (Center Artwork - Enlarged)
  * -------------------------------------------------------------
  */
-console.log("\ngenerating royal executive splash lockup:");
+console.log("\ngenerating royal executive splash lockup (enlarged & prominent):");
 
 const LOCKUP_CANVAS_W = 1200;
-const LOCKUP_CANVAS_H = 1350;
+const LOCKUP_CANVAS_H = 1500;
 
-const crestW = 580;
+// Crest enlarged to 760px wide (more prominent on all screens)
+const crestW = 760;
 const crestH = Math.round(crestW / aspect);
-const crestTop = 30;
+const crestTop = 20;
 
 const lockupSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="${LOCKUP_CANVAS_W}" height="${LOCKUP_CANVAS_H}" viewBox="0 0 ${LOCKUP_CANVAS_W} ${LOCKUP_CANVAS_H}">
@@ -83,42 +84,42 @@ const lockupSvg = `
   </defs>
 
   <!-- Centered Content below Crest -->
-  <g transform="translate(${LOCKUP_CANVAS_W / 2}, ${crestTop + crestH + 45})" text-anchor="middle">
+  <g transform="translate(${LOCKUP_CANVAS_W / 2}, ${crestTop + crestH + 48})" text-anchor="middle">
     
-    <!-- School Title -->
-    <text y="0" font-family="'Segoe UI', -apple-system, sans-serif" font-size="64" font-weight="800" fill="#1e1b4b" letter-spacing="1.2">
+    <!-- School Title - Larger & Bolder -->
+    <text y="0" font-family="'Segoe UI', -apple-system, sans-serif" font-size="78" font-weight="800" fill="#1e1b4b" letter-spacing="1.5">
       The Country School
     </text>
 
     <!-- Motto -->
-    <text y="52" font-family="'Segoe UI', -apple-system, sans-serif" font-size="26" font-weight="600" font-style="italic" fill="#64748b" letter-spacing="0.5">
+    <text y="58" font-family="'Segoe UI', -apple-system, sans-serif" font-size="32" font-weight="600" font-style="italic" fill="#64748b" letter-spacing="0.6">
       Towards Academic Excellence
     </text>
 
     <!-- Ornamental Gold Divider -->
-    <g transform="translate(0, 92)">
-      <line x1="-160" y1="0" x2="-22" y2="0" stroke="url(#goldLineL)" stroke-width="2.5" stroke-linecap="round" />
-      <polygon points="0,-7 7,0 0,7 -7,0" fill="#d97706" />
-      <line x1="22" y1="0" x2="160" y2="0" stroke="url(#goldLineR)" stroke-width="2.5" stroke-linecap="round" />
+    <g transform="translate(0, 106)">
+      <line x1="-190" y1="0" x2="-24" y2="0" stroke="url(#goldLineL)" stroke-width="3" stroke-linecap="round" />
+      <polygon points="0,-8 8,0 0,8 -8,0" fill="#d97706" />
+      <line x1="24" y1="0" x2="190" y2="0" stroke="url(#goldLineR)" stroke-width="3" stroke-linecap="round" />
     </g>
 
     <!-- Modern Navy Pill Badge -->
-    <g transform="translate(0, 142)">
-      <rect x="-225" y="0" width="450" height="56" rx="28" fill="#28246a" />
-      <rect x="-224" y="1" width="448" height="54" rx="27" fill="none" stroke="#4338ca" stroke-width="1.5" opacity="0.5" />
+    <g transform="translate(0, 160)">
+      <rect x="-265" y="0" width="530" height="66" rx="33" fill="#28246a" />
+      <rect x="-264" y="1" width="528" height="64" rx="32" fill="none" stroke="#4338ca" stroke-width="1.8" opacity="0.5" />
       
       <!-- Academic Cap Icon -->
-      <g transform="translate(-178, 15) scale(1.1)">
+      <g transform="translate(-215, 17) scale(1.3)">
         <path d="M12 2L1 7l11 5 9-4.09V17h2V7L12 2z" fill="#f59e0b" />
         <path d="M4.5 10.5V16c0 2.5 3.5 4.5 7.5 4.5s7.5-2 7.5-4.5v-5.5l-7.5 3.4-7.5-3.4z" fill="#f59e0b" />
       </g>
 
-      <text x="14" y="37" font-family="'Segoe UI', -apple-system, sans-serif" font-size="21" font-weight="700" fill="#ffffff" letter-spacing="2.2">
+      <text x="16" y="44" font-family="'Segoe UI', -apple-system, sans-serif" font-size="25" font-weight="700" fill="#ffffff" letter-spacing="2.6">
         RESULT CARD PORTAL
       </text>
     </g>
 
-    <text y="250" font-family="'Segoe UI', -apple-system, sans-serif" font-size="18" font-weight="700" fill="#94a3b8" letter-spacing="2">
+    <text y="285" font-family="'Segoe UI', -apple-system, sans-serif" font-size="22" font-weight="700" fill="#94a3b8" letter-spacing="2.5">
       OFFICIAL EVALUATION SYSTEM
     </text>
 
@@ -157,29 +158,29 @@ const lockupMaster = await sharp({
 
 await sharp(lockupMaster).toFile(`${OUT}/splash-lockup.png`);
 await sharp(lockupMaster).toFile(`public/splash-lockup.png`);
-console.log("  saved splash-lockup.png (master)");
+console.log("  saved splash-lockup.png (master enlarged)");
 
 /*
  * -------------------------------------------------------------
- * 3. Bottom Footer Artwork (Grounded Verified Seal)
+ * 3. Bottom Footer Artwork (Grounded Verified Seal - Enlarged)
  * -------------------------------------------------------------
  */
 console.log("\ngenerating splash footer:");
 
-const FOOTER_CANVAS_W = 1000;
-const FOOTER_CANVAS_H = 160;
+const FOOTER_CANVAS_W = 1100;
+const FOOTER_CANVAS_H = 190;
 
 const footerSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="${FOOTER_CANVAS_W}" height="${FOOTER_CANVAS_H}" viewBox="0 0 ${FOOTER_CANVAS_W} ${FOOTER_CANVAS_H}">
-  <g transform="translate(${FOOTER_CANVAS_W / 2}, 60)" text-anchor="middle">
+  <g transform="translate(${FOOTER_CANVAS_W / 2}, 70)" text-anchor="middle">
     <!-- Verified Shield Icon -->
-    <circle cx="0" cy="-38" r="16" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.8" />
-    <path d="M-6 -38 L-2 -34 L6 -42" fill="none" stroke="#28246a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="0" cy="-44" r="18" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2" />
+    <path d="M-7 -44 L-2 -39 L7 -49" fill="none" stroke="#28246a" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
 
-    <text y="-4" font-family="'Segoe UI', -apple-system, sans-serif" font-size="22" font-weight="700" fill="#475569" letter-spacing="2.2">
+    <text y="-6" font-family="'Segoe UI', -apple-system, sans-serif" font-size="26" font-weight="700" fill="#475569" letter-spacing="2.4">
       THE COUNTRY SCHOOL SYSTEM
     </text>
-    <text y="26" font-family="'Segoe UI', -apple-system, sans-serif" font-size="16" font-weight="600" fill="#94a3b8" letter-spacing="1.2">
+    <text y="28" font-family="'Segoe UI', -apple-system, sans-serif" font-size="19" font-weight="600" fill="#94a3b8" letter-spacing="1.4">
       ACADEMIC SESSION 2026–2027
     </text>
   </g>
@@ -210,19 +211,19 @@ console.log("  saved splash-footer.png (master)");
 
 /*
  * -------------------------------------------------------------
- * 4. Density-Aware Android Resource Sizing
+ * 4. Density-Aware Android Resource Sizing (Enlarged)
  * -------------------------------------------------------------
  */
 const BUCKETS = [
-  { bucket: "ldpi", lockupW: 160, footerW: 180 },
-  { bucket: "mdpi", lockupW: 220, footerW: 250 },
-  { bucket: "hdpi", lockupW: 330, footerW: 370 },
-  { bucket: "xhdpi", lockupW: 440, footerW: 490 },
-  { bucket: "xxhdpi", lockupW: 660, footerW: 730 },
-  { bucket: "xxxhdpi", lockupW: 820, footerW: 900 },
+  { bucket: "ldpi", lockupW: 220, footerW: 240 },
+  { bucket: "mdpi", lockupW: 300, footerW: 330 },
+  { bucket: "hdpi", lockupW: 460, footerW: 500 },
+  { bucket: "xhdpi", lockupW: 620, footerW: 660 },
+  { bucket: "xxhdpi", lockupW: 880, footerW: 940 },
+  { bucket: "xxxhdpi", lockupW: 1060, footerW: 1100 },
 ];
 
-console.log("\nemitting android density buckets:");
+console.log("\nemitting enlarged android density buckets:");
 for (const { bucket, lockupW: lw, footerW: fw } of BUCKETS) {
   const dir = `${RES}/drawable-${bucket}`;
   mkdirSync(dir, { recursive: true });
@@ -236,4 +237,4 @@ for (const { bucket, lockupW: lw, footerW: fw } of BUCKETS) {
   console.log(`  drawable-${bucket.padEnd(8)} lockup: ${lw}px, footer: ${fw}px`);
 }
 
-console.log("\nbrand assets generated successfully.");
+console.log("\nenlarged brand assets generated successfully.");
