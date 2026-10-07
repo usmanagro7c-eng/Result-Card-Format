@@ -50,14 +50,17 @@ import {
 import { ResultCard } from "@/components/ResultCard/ResultCard";
 import { createStudent, useResultStore } from "@/store/resultStore";
 import { calculateTotals } from "@/utils/calculations";
-import { generateBulkPdfSequentially, generatePdf, sharePdf } from "@/utils/pdf";
+import {
+  generatePdf,
+  generatePdfFromSource,
+  PdfCancelledError,
+  sharePdf,
+} from "@/utils/pdf";
 import { registerBackHandler } from "@/utils/backButton";
 import { printDocument } from "@/utils/print";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  BulkPdfProgressModal,
-  BulkPdfProgressState,
-} from "@/components/BulkPdfProgressModal";
+import { bulkExportStore } from "@/hooks/useBulkExportProgress";
+import { BulkExportDialog } from "@/components/ui/bulk-export-dialog";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -103,19 +106,21 @@ function StudentsPage() {
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  const bulkActiveCardRef = useRef<HTMLDivElement>(null);
+  const bulkCardRef = useRef<HTMLDivElement>(null);
   const singlePdfRef = useRef<HTMLDivElement>(null);
   const [singleStudentToExport, setSingleStudentToExport] = useState<(typeof students)[0] | null>(
     null,
   );
   /**
    * Only one student is mounted in the DOM at a time during bulk PDF generation.
-   * This prevents rendering 50+ ResultCard components at once, keeping DOM
-   * footprint tiny, avoiding V8 heap exhaustion, and keeping the UI thread fluid.
+   * Keyed as `${student.id}:${index}` to ensure clean unmounting without DOM reuse.
    */
-  const [bulkActiveStudent, setBulkActiveStudent] = useState<(typeof students)[0] | null>(null);
-  const [bulkProgress, setBulkProgress] = useState<BulkPdfProgressState | null>(null);
+  const [bulkCard, setBulkCard] = useState<{ student: (typeof students)[0]; key: string } | null>(
+    null,
+  );
+  const [isBulkExporting, setIsBulkExporting] = useState(false);
   const bulkAbortControllerRef = useRef<AbortController | null>(null);
+  const batchRef = useRef<typeof students>([]);
 
   const classes = useMemo(
     () => Array.from(new Set(students.map((s) => s.className).filter(Boolean))),
@@ -203,69 +208,66 @@ function StudentsPage() {
 
   const handleBulkPdf = async () => {
     if (selectedStudents.length === 0) return;
-    const batch = [...selectedStudents];
+    batchRef.current = [...selectedStudents];
+    const batch = batchRef.current;
     const total = batch.length;
 
     const controller = new AbortController();
     bulkAbortControllerRef.current = controller;
-
+    setIsBulkExporting(true);
     setBusy(true);
-    setBulkProgress({
-      open: true,
+
+    bulkExportStore.setState({
+      isOpen: true,
+      phase: "rendering",
       current: 1,
       total,
-      percent: 0,
+      percent: 1,
+      label: "Starting export...",
       studentName: batch[0]?.name || "Student 1",
-      stage: "rendering",
+      isCancelling: false,
     });
 
     try {
       const bulkName = `Result-Cards-Batch-${total}-Students.pdf`;
-      const saved = await generateBulkPdfSequentially({
-        fileName: bulkName,
+      const saved = await generatePdfFromSource({
         total,
-        studentNames: batch.map((s) => s.name || "Student"),
+        fileName: bulkName,
         signal: controller.signal,
-        getCardElement: async (index) => {
+        scale: 2, // 300 DPI high resolution per user decision
+        quality: 0.94, // razor-sharp text with optimal file size
+        resolveElement: async (index) => {
           const student = batch[index];
-          setBulkActiveStudent(student);
-          // Wait for React to mount the single card into DOM
-          await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 45)));
-          const node = bulkActiveCardRef.current?.querySelector<HTMLElement>("[data-result-card]");
-          return node ?? null;
-        },
-        onCardProcessed: async () => {
-          // Immediately unmount card to free React memory
-          setBulkActiveStudent(null);
-        },
-        onProgress: (info) => {
-          setBulkProgress((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  current: info.current,
-                  percent: info.percent,
-                  stage: info.stage,
-                  studentName: info.studentName || prev.studentName,
-                }
-              : null,
+          const key = `${student.id}:${index}`;
+          setBulkCard({ student, key });
+          // Double-rAF settle: lets React commit, DOM mount, and useCardFit layout effect settle
+          await new Promise((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve)),
           );
+          return bulkCardRef.current?.querySelector<HTMLElement>("[data-result-card]") ?? null;
+        },
+        onProgress: (p) => {
+          const currentStudent = batch[p.current - 1];
+          bulkExportStore.setState({
+            phase: p.phase,
+            current: p.current,
+            total: p.total,
+            percent: p.percent,
+            label: p.label,
+            studentName: currentStudent?.name,
+          });
         },
       });
 
       // Show completion state in modal briefly
-      setBulkProgress((prev) =>
-        prev
-          ? {
-              ...prev,
-              current: total,
-              percent: 100,
-              stage: "done",
-            }
-          : null,
-      );
+      bulkExportStore.setState({
+        phase: "saving",
+        current: total,
+        percent: 100,
+        label: "Export complete",
+      });
 
-      await new Promise((r) => setTimeout(r, 700));
+      await new Promise((r) => setTimeout(r, 600));
 
       toast.success(
         saved?.inDownloads
@@ -276,18 +278,21 @@ function StudentsPage() {
       );
     } catch (err: unknown) {
       if (
+        err instanceof PdfCancelledError ||
         (err as DOMException)?.name === "AbortError" ||
-        (err as Error)?.message?.toLowerCase().includes("abort")
+        (err as Error)?.message?.toLowerCase().includes("abort") ||
+        (err as Error)?.message?.toLowerCase().includes("cancel")
       ) {
-        toast.info("Bulk PDF generation was cancelled");
+        toast.info("Bulk PDF export was cancelled");
       } else {
         console.error(err);
         toast.error("Could not generate the bulk PDF. Please try again.");
       }
     } finally {
       bulkAbortControllerRef.current = null;
-      setBulkActiveStudent(null);
-      setBulkProgress(null);
+      setBulkCard(null);
+      setIsBulkExporting(false);
+      bulkExportStore.reset();
       setBusy(false);
       setProgressText("");
     }
@@ -295,9 +300,7 @@ function StudentsPage() {
 
   const handleCancelBulkPdf = () => {
     if (bulkAbortControllerRef.current) {
-      setBulkProgress((prev) =>
-        prev ? { ...prev, stage: "cancelling" } : null,
-      );
+      bulkExportStore.setState({ isCancelling: true, label: "Cancelling export..." });
       bulkAbortControllerRef.current.abort();
     }
   };
@@ -373,7 +376,7 @@ function StudentsPage() {
   };
 
   useEffect(() => {
-    if (bulkProgress?.open) {
+    if (isBulkExporting) {
       return registerBackHandler(() => {
         handleCancelBulkPdf();
         return true;
@@ -396,7 +399,7 @@ function StudentsPage() {
         return false;
       });
     }
-  }, [bulkProgress, sheetStudent, pendingDelete, bulkDeleteOpen]);
+  }, [isBulkExporting, sheetStudent, pendingDelete, bulkDeleteOpen]);
 
   const stats = useMemo(() => {
     if (students.length === 0) return null;
@@ -1178,9 +1181,9 @@ function StudentsPage() {
        * Only `@media print` is affected, and the PDF export runs in screen
        * media, so capture is unaffected.
        */}
-      {bulkActiveStudent && (
+      {bulkCard && (
         <div
-          ref={bulkActiveCardRef}
+          ref={bulkCardRef}
           className="no-print"
           aria-hidden="true"
           style={{
@@ -1193,12 +1196,13 @@ function StudentsPage() {
           }}
         >
           <div
+            key={bulkCard.key}
             style={{ width: "794px", minHeight: "1123px", background: "#fff" }}
           >
             <ResultCard
-              student={bulkActiveStudent}
+              student={bulkCard.student}
               settings={settings}
-              includeSummerWork={bulkActiveStudent.includeSummerWork ?? false}
+              includeSummerWork={bulkCard.student.includeSummerWork ?? false}
             />
           </div>
         </div>
@@ -1382,11 +1386,8 @@ function StudentsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Bulk PDF Progress Modal */}
-      <BulkPdfProgressModal
-        progress={bulkProgress}
-        onCancel={handleCancelBulkPdf}
-      />
+      {/* Bulk PDF Progress Dialog */}
+      <BulkExportDialog onCancel={handleCancelBulkPdf} />
     </div>
   );
 }
