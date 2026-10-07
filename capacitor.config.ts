@@ -27,7 +27,7 @@ const config: CapacitorConfig = {
      * bg-slate-50 on <body> in the initial markup, so once the document renders,
      * the window background is fully covered and cannot show through.
      */
-    backgroundColor: "#00000000",
+    backgroundColor: "#f8fafc",
   },
   plugins: {
     SystemBars: {

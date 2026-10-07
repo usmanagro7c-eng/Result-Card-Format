@@ -23,5 +23,8 @@
     <item
         android:gravity="center"
         android:drawable="@drawable/splash_lockup" />
-
+    <item
+        android:gravity="bottom|center_horizontal"
+        android:bottom="36dp"
+        android:drawable="@drawable/splash_footer" />
 </layer-list>

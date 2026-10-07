@@ -3,22 +3,15 @@ import { mkdirSync } from "node:fs";
 
 /*
  * Regenerates the brand source art in `assets/` and installs the Android
- * splash lockup into res/.
+ * splash lockup and footer into res/.
  *
  *   node scripts/generate-brand-assets.mjs
- *
- * Run this after changing public/TCS Logo.png, then `npm run assets:android`
- * to refresh the launcher icons.
  */
 const LOGO = "public/TCS Logo.png";
 const OUT = "assets";
 const RES = "android/app/src/main/res";
 
 const WHITE = "#FFFFFF";
-const NAVY = "#28246A";
-const SCHOOL_NAME = "The Country School";
-const FONT = "Segoe UI";
-
 mkdirSync(OUT, { recursive: true });
 
 const meta = await sharp(LOGO).metadata();
@@ -33,72 +26,10 @@ async function canvas(size, bg, layers) {
     .toBuffer();
 }
 
-/** Tight bounding box of pixels that are not fully transparent. */
-async function inkBox(buf) {
-  const { data, info } = await sharp(buf).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  let minX = info.width,
-    maxX = -1,
-    minY = info.height,
-    maxY = -1;
-  for (let y = 0; y < info.height; y++) {
-    for (let x = 0; x < info.width; x++) {
-      if (data[(y * info.width + x) * info.channels + 3] > 8) {
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-      }
-    }
-  }
-  return { minX, maxX, minY, maxY, w: maxX - minX + 1, h: maxY - minY + 1 };
-}
-
-/** Renders SCHOOL_NAME to a transparent PNG, auto-sized to the glyph run. */
-async function renderWordmark(fontSize, weight = 700) {
-  // The probe canvas has to be at least as large as the SVG overlay, otherwise
-  // sharp refuses the composite.
-  const probeW = 3000;
-  const probeH = 420;
-  const probe = await sharp({
-    create: {
-      width: probeW,
-      height: probeH,
-      channels: 4,
-      background: { r: 0, g: 0, b: 0, alpha: 0 },
-    },
-  })
-    .composite([
-      {
-        input: Buffer.from(
-          `<svg xmlns="http://www.w3.org/2000/svg" width="${probeW}" height="${probeH}">
-             <text x="20" y="${Math.round(fontSize * 1.25)}"
-                   font-family="${FONT}" font-size="${fontSize}" font-weight="${weight}"
-                   fill="${NAVY}" xml:space="preserve">${SCHOOL_NAME}</text>
-           </svg>`,
-        ),
-        left: 0,
-        top: 0,
-      },
-    ])
-    .png()
-    .toBuffer();
-
-  const box = await inkBox(probe);
-  const text = await sharp(probe)
-    .extract({ left: box.minX, top: box.minY, width: box.w, height: box.h })
-    .png()
-    .toBuffer();
-  return { buf: text, w: box.w, h: box.h };
-}
-
 /*
- * Icons.
- *
- * icon-only.png       1024x1024 legacy launcher icon, composited as-is; logo at
- *                     ~78% width so pre-API-26 squircle/circle masks keep it whole.
- * icon-foreground.png 1024x1024 adaptive foreground; only the central 66.6% is
- *                     guaranteed visible, so the logo stays at ~59% width.
- * icon-background.png 1024x1024 flat white, matching values/ic_launcher_background.xml.
+ * -------------------------------------------------------------
+ * 1. Launcher Icons
+ * -------------------------------------------------------------
  */
 console.log("icons:");
 await (async () => {
@@ -124,104 +55,185 @@ await (async () => {
 })();
 
 /*
- * Splash lockup: logo with the school name set underneath it.
- *
- * This replaces @capacitor/assets for the splash entirely. That tool emits one
- * bitmap per density/orientation bucket at fixed aspect ratios (port xxxhdpi is
- * 1280x1920 = 0.667), but a real device screen is a different ratio (this one is
- * 1080x2220 = 0.486). A bitmap used as `android:background` is stretched to fill
- * the window, so those two ratios differ by ~0.73 per axis and the logo comes
- * out visibly squashed - the "oval" look.
- *
- * Instead the lockup is shown through a layer-list with android:gravity
- * "center", which centres without scaling, so the logo stays pixel-identical on
- * every screen. Two consequences drive the layout below:
- *
- *   - The lockup must be emitted per density bucket. `android:gravity` never
- *     scales, so one oversized master bitmap would simply be clipped on a 1080px
- *     screen. Android scales by the density ratio, which preserves aspect, so
- *     per-bucket sizing is safe.
- *   - It must not live in drawable-nodpi, because a fixed pixel size cannot fit
- *     both a 720px budget phone and a 1440px flagship.
- *
- * Widths are tuned to roughly 40-57% of the screen at each density so the lockup
- * is comfortably inside the frame everywhere.
+ * -------------------------------------------------------------
+ * 2. High-End Royal Executive Splash Lockup (Center Artwork)
+ * -------------------------------------------------------------
  */
-console.log("\nsplash lockup:");
-const BUCKETS = [
-  ["ldpi", 140],
-  ["mdpi", 200],
-  ["hdpi", 300],
-  ["xhdpi", 420],
-  ["xxhdpi", 620],
-  ["xxxhdpi", 780],
-];
+console.log("\ngenerating royal executive splash lockup:");
 
-// Rendered large once, then downscaled per bucket so the wordmark and crest stay
-// crisp at every density.
-const logoW = 1040;
-const logoH = Math.round(logoW / aspect);
-const wordmark = await renderWordmark(150);
-const gap = 140;
-const sideMargin = 100;
+const LOCKUP_CANVAS_W = 1200;
+const LOCKUP_CANVAS_H = 1350;
 
-const lockupW = Math.max(logoW, wordmark.w) + sideMargin * 2;
-const lockupH = logoH + gap + wordmark.h + sideMargin;
+const crestW = 580;
+const crestH = Math.round(crestW / aspect);
+const crestTop = 30;
 
-const master = await sharp({
+const lockupSvg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${LOCKUP_CANVAS_W}" height="${LOCKUP_CANVAS_H}" viewBox="0 0 ${LOCKUP_CANVAS_W} ${LOCKUP_CANVAS_H}">
+  <defs>
+    <!-- Subtle accent line gradients -->
+    <linearGradient id="goldLineL" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e2e8f0" stop-opacity="0" />
+      <stop offset="100%" stop-color="#d97706" stop-opacity="1" />
+    </linearGradient>
+    <linearGradient id="goldLineR" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d97706" stop-opacity="1" />
+      <stop offset="100%" stop-color="#e2e8f0" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Centered Content below Crest -->
+  <g transform="translate(${LOCKUP_CANVAS_W / 2}, ${crestTop + crestH + 45})" text-anchor="middle">
+    
+    <!-- School Title -->
+    <text y="0" font-family="'Segoe UI', -apple-system, sans-serif" font-size="64" font-weight="800" fill="#1e1b4b" letter-spacing="1.2">
+      The Country School
+    </text>
+
+    <!-- Motto -->
+    <text y="52" font-family="'Segoe UI', -apple-system, sans-serif" font-size="26" font-weight="600" font-style="italic" fill="#64748b" letter-spacing="0.5">
+      Towards Academic Excellence
+    </text>
+
+    <!-- Ornamental Gold Divider -->
+    <g transform="translate(0, 92)">
+      <line x1="-160" y1="0" x2="-22" y2="0" stroke="url(#goldLineL)" stroke-width="2.5" stroke-linecap="round" />
+      <polygon points="0,-7 7,0 0,7 -7,0" fill="#d97706" />
+      <line x1="22" y1="0" x2="160" y2="0" stroke="url(#goldLineR)" stroke-width="2.5" stroke-linecap="round" />
+    </g>
+
+    <!-- Modern Navy Pill Badge -->
+    <g transform="translate(0, 142)">
+      <rect x="-225" y="0" width="450" height="56" rx="28" fill="#28246a" />
+      <rect x="-224" y="1" width="448" height="54" rx="27" fill="none" stroke="#4338ca" stroke-width="1.5" opacity="0.5" />
+      
+      <!-- Academic Cap Icon -->
+      <g transform="translate(-178, 15) scale(1.1)">
+        <path d="M12 2L1 7l11 5 9-4.09V17h2V7L12 2z" fill="#f59e0b" />
+        <path d="M4.5 10.5V16c0 2.5 3.5 4.5 7.5 4.5s7.5-2 7.5-4.5v-5.5l-7.5 3.4-7.5-3.4z" fill="#f59e0b" />
+      </g>
+
+      <text x="14" y="37" font-family="'Segoe UI', -apple-system, sans-serif" font-size="21" font-weight="700" fill="#ffffff" letter-spacing="2.2">
+        RESULT CARD PORTAL
+      </text>
+    </g>
+
+    <text y="250" font-family="'Segoe UI', -apple-system, sans-serif" font-size="18" font-weight="700" fill="#94a3b8" letter-spacing="2">
+      OFFICIAL EVALUATION SYSTEM
+    </text>
+
+  </g>
+</svg>
+`;
+
+const crestBuf = await sharp(LOGO)
+  .resize(crestW, crestH, { fit: "contain" })
+  .png()
+  .toBuffer();
+
+const lockupMaster = await sharp({
   create: {
-    width: lockupW,
-    height: lockupH,
+    width: LOCKUP_CANVAS_W,
+    height: LOCKUP_CANVAS_H,
     channels: 4,
     background: { r: 0, g: 0, b: 0, alpha: 0 },
   },
 })
   .composite([
     {
-      input: await sharp(LOGO).resize(logoW, logoH, { fit: "fill" }).png().toBuffer(),
-      left: Math.round((lockupW - logoW) / 2),
-      top: 0,
+      input: crestBuf,
+      left: Math.round((LOCKUP_CANVAS_W - crestW) / 2),
+      top: crestTop,
     },
     {
-      input: wordmark.buf,
-      left: Math.round((lockupW - wordmark.w) / 2),
-      top: logoH + gap,
+      input: Buffer.from(lockupSvg),
+      left: 0,
+      top: 0,
     },
   ])
+  .trim() // Trim transparent boundaries tightly
   .png({ compressionLevel: 9 })
   .toBuffer();
 
-await sharp(master).toFile(`${OUT}/splash-lockup.png`);
-console.log(
-  `  splash-lockup.png (master)  ${lockupW}x${lockupH}  logo ${logoW}x${logoH} + "${SCHOOL_NAME}" ${wordmark.w}x${wordmark.h}`,
-);
+await sharp(lockupMaster).toFile(`${OUT}/splash-lockup.png`);
+await sharp(lockupMaster).toFile(`public/splash-lockup.png`);
+console.log("  saved splash-lockup.png (master)");
 
 /*
- * Web copy for the #boot launch overlay in mobile/index.html.
- *
- * That overlay renders the lockup at min(50vw, 300px), which on a ~420dpi phone
- * is roughly 540 physical pixels, so 760px wide covers it with headroom for
- * denser screens without carrying the 1575px master over the wire on every cold
- * start.
+ * -------------------------------------------------------------
+ * 3. Bottom Footer Artwork (Grounded Verified Seal)
+ * -------------------------------------------------------------
  */
-const WEB_LOCKUP_W = 760;
-const webLockupH = Math.round((lockupH / lockupW) * WEB_LOCKUP_W);
-await sharp(master)
-  .resize({ width: WEB_LOCKUP_W })
-  .png({ compressionLevel: 9, palette: true, quality: 92 })
-  .toFile("public/splash-lockup.png");
-console.log(
-  `  public/splash-lockup.png  ${WEB_LOCKUP_W}x${webLockupH}  -> used by the #boot overlay`,
-);
+console.log("\ngenerating splash footer:");
 
-for (const [bucket, width] of BUCKETS) {
+const FOOTER_CANVAS_W = 1000;
+const FOOTER_CANVAS_H = 160;
+
+const footerSvg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${FOOTER_CANVAS_W}" height="${FOOTER_CANVAS_H}" viewBox="0 0 ${FOOTER_CANVAS_W} ${FOOTER_CANVAS_H}">
+  <g transform="translate(${FOOTER_CANVAS_W / 2}, 60)" text-anchor="middle">
+    <!-- Verified Shield Icon -->
+    <circle cx="0" cy="-38" r="16" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.8" />
+    <path d="M-6 -38 L-2 -34 L6 -42" fill="none" stroke="#28246a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+
+    <text y="-4" font-family="'Segoe UI', -apple-system, sans-serif" font-size="22" font-weight="700" fill="#475569" letter-spacing="2.2">
+      THE COUNTRY SCHOOL SYSTEM
+    </text>
+    <text y="26" font-family="'Segoe UI', -apple-system, sans-serif" font-size="16" font-weight="600" fill="#94a3b8" letter-spacing="1.2">
+      ACADEMIC SESSION 2026–2027
+    </text>
+  </g>
+</svg>
+`;
+
+const footerMaster = await sharp({
+  create: {
+    width: FOOTER_CANVAS_W,
+    height: FOOTER_CANVAS_H,
+    channels: 4,
+    background: { r: 0, g: 0, b: 0, alpha: 0 },
+  },
+})
+  .composite([
+    {
+      input: Buffer.from(footerSvg),
+      left: 0,
+      top: 0,
+    },
+  ])
+  .trim()
+  .png({ compressionLevel: 9 })
+  .toBuffer();
+
+await sharp(footerMaster).toFile(`${OUT}/splash-footer.png`);
+console.log("  saved splash-footer.png (master)");
+
+/*
+ * -------------------------------------------------------------
+ * 4. Density-Aware Android Resource Sizing
+ * -------------------------------------------------------------
+ */
+const BUCKETS = [
+  { bucket: "ldpi", lockupW: 160, footerW: 180 },
+  { bucket: "mdpi", lockupW: 220, footerW: 250 },
+  { bucket: "hdpi", lockupW: 330, footerW: 370 },
+  { bucket: "xhdpi", lockupW: 440, footerW: 490 },
+  { bucket: "xxhdpi", lockupW: 660, footerW: 730 },
+  { bucket: "xxxhdpi", lockupW: 820, footerW: 900 },
+];
+
+console.log("\nemitting android density buckets:");
+for (const { bucket, lockupW: lw, footerW: fw } of BUCKETS) {
   const dir = `${RES}/drawable-${bucket}`;
   mkdirSync(dir, { recursive: true });
-  const resized = await sharp(master).resize({ width }).png({ compressionLevel: 9 }).toBuffer();
-  await sharp(resized).toFile(`${dir}/splash_lockup.png`);
-  console.log(
-    `  drawable-${bucket.padEnd(8)} ${width}px wide -> res/drawable-${bucket}/splash_lockup.png`,
-  );
+
+  const resizedLockup = await sharp(lockupMaster).resize({ width: lw }).png({ compressionLevel: 9 }).toBuffer();
+  await sharp(resizedLockup).toFile(`${dir}/splash_lockup.png`);
+
+  const resizedFooter = await sharp(footerMaster).resize({ width: fw }).png({ compressionLevel: 9 }).toBuffer();
+  await sharp(resizedFooter).toFile(`${dir}/splash_footer.png`);
+
+  console.log(`  drawable-${bucket.padEnd(8)} lockup: ${lw}px, footer: ${fw}px`);
 }
 
-console.log("\ndone.");
+console.log("\nbrand assets generated successfully.");

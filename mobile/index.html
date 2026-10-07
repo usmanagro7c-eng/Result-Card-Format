@@ -20,34 +20,17 @@
       body {
         margin: 0;
         padding: 0;
-        background-color: transparent;
+        background-color: #f8fafc;
         padding-top: var(--sat);
         touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
       }
-      body.app-ready {
-        background-color: #f8fafc;
-      }
-
-      /*
-        Smooth reveal container.
-        Starts transparent so the native Android windowBackground (splash_window.xml)
-        shows through uninterrupted with zero DOM duplicate overlays.
-        Fades in smoothly once React mounts and renders the home route.
-      */
       #root {
         min-height: 100vh;
-        background-color: #f8fafc;
-        opacity: 0;
-        transition: opacity 220ms ease-out;
-        will-change: opacity;
-      }
-      #root.app-ready {
-        opacity: 1;
       }
     </style>
   </head>
-  <body class="min-h-screen font-sans antialiased text-foreground">
+  <body class="min-h-screen bg-slate-50 font-sans antialiased text-foreground">
     <div id="root"></div>
     <script type="module" src="./main.tsx"></script>
   </body>

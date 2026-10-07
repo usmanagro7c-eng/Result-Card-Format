@@ -42,34 +42,20 @@
         <item name="android:background">@drawable/splash_window</item>
         <item name="android:windowBackground">@drawable/splash_window</item>
         <item name="android:forceDarkAllowed">false</item>
+        <item name="android:statusBarColor">@android:color/white</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@android:color/white</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 
-    <!--
-        Launch theme.
-
-        The parent was Theme.SplashScreen (androidx). On API < 31 that compat
-        layer replaces android:windowBackground with its own composition built
-        from windowSplashScreenBackground, and on this device that produced a
-        completely BLANK white starting window - verified on camera by blocking
-        the WebView's first paint, which showed 96.9% white and zero TCS pixels.
-        So the launch ran plain white -> then the web #boot overlay with the
-        logo and bar, which is the double splash that was reported.
-
-        Deriving from a normal AppCompat theme instead lets the platform build the
-        starting window straight from android:windowBackground, i.e. the branded
-        splash_window layer-list, so the native stage shows the logo and the
-        loading bar and the two stages become one continuous splash.
-
-        windowSplashScreenBackground / windowSplashScreenAnimatedIcon /
-        postSplashScreenTheme are deliberately gone: they only mean anything to
-        Theme.SplashScreen, and on Android 12+ the platform reads
-        windowSplashScreenAnimatedIcon from the merged theme, so it is set on the
-        application theme instead (see AppTheme) for those versions.
-    -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:windowBackground">@drawable/splash_window</item>
         <item name="android:forceDarkAllowed">false</item>
+        <item name="android:statusBarColor">@android:color/white</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@android:color/white</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 </resources>

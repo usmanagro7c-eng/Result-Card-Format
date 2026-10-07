@@ -3,6 +3,9 @@ package com.thecountryschool.resultcard;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.webkit.JavascriptInterface;
 import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
@@ -10,11 +13,60 @@ import com.getcapacitor.WebViewListener;
 
 public class MainActivity extends BridgeActivity {
     private static final String TAG = "ResultCard";
+    private View nativeSplashOverlay;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         WebView.setWebContentsDebuggingEnabled(true);
+
+        /**
+         * 1. Native splash overlay.
+         *
+         * Sits directly on the Activity decor view and mirrors R.drawable.splash_window.
+         * The transition from the OS window background to this view is 100% pixel-identical.
+         * The WebView renders completely behind this overlay with full opaque performance,
+         * avoiding any Skia alpha-blending overhead or blank frames.
+         */
+        nativeSplashOverlay = new View(this);
+        nativeSplashOverlay.setBackgroundResource(R.drawable.splash_window);
+        nativeSplashOverlay.setClickable(true);
+        nativeSplashOverlay.setFocusable(false);
+        ViewGroup decorView = (ViewGroup) getWindow().getDecorView();
+        decorView.addView(
+                nativeSplashOverlay,
+                new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                )
+        );
+
+        /**
+         * 2. Expose dismissal interface to the WebView.
+         *
+         * When React commits its initial home render, NativeSplash.dismissSplash()
+         * smoothly animates alpha from 1f to 0f at 60 FPS using Android's native
+         * hardware compositor, then removes the overlay from memory.
+         */
+        getBridge().getWebView().addJavascriptInterface(new Object() {
+            @JavascriptInterface
+            public void dismissSplash() {
+                runOnUiThread(() -> {
+                    if (nativeSplashOverlay != null) {
+                        nativeSplashOverlay.animate()
+                                .alpha(0f)
+                                .setDuration(350)
+                                .withEndAction(() -> {
+                                    if (nativeSplashOverlay != null && nativeSplashOverlay.getParent() != null) {
+                                        ((ViewGroup) nativeSplashOverlay.getParent()).removeView(nativeSplashOverlay);
+                                        nativeSplashOverlay = null;
+                                    }
+                                })
+                                .start();
+                    }
+                });
+            }
+        }, "NativeSplash");
 
         /**
          * Chromium kills the renderer process when the page exceeds its memory

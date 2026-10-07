@@ -16,62 +16,55 @@ if (rootElement && !rootElement.innerHTML) {
   );
 }
 
-/**
- * Reveal the React app smoothly once the initial route is ready.
- *
- * During startup:
- * 1. Android Activity paints the native starting window (splash_window.xml: pure white + TCS logo).
- * 2. Capacitor's WebView is transparent (backgroundColor: #00000000).
- * 3. html and body are transparent, and #root starts at opacity: 0.
- *
- * The user sees ONLY the single native splash screen from the moment they tap the icon.
- * There is NO web splash overlay, NO second logo, NO moving bar, and ZERO flicker.
- *
- * Once the router renders the initial route, #root smoothly fades in over 350ms.
- */
-function revealApp() {
-  const root = document.getElementById("root");
-  if (!root) return;
+declare global {
+  interface Window {
+    NativeSplash?: {
+      dismissSplash: () => void;
+    };
+  }
+}
 
-  const MIN_SPLASH_MS = 500; // Snappy yet polished brand presentation time
+/**
+ * Dismiss the native Android splash overlay once the app has mounted and rendered.
+ *
+ * The Android Activity maintains a native view overlay with R.drawable.splash_window
+ * from the instant of cold start.
+ * Once TanStack Router renders the initial route, this triggers a native 350ms
+ * hardware-accelerated fade out on the Android UI thread.
+ */
+function initSplashDismissal() {
+  const MIN_SPLASH_MS = 750; // Stable, premium brand presentation time
   const startTime = performance.now();
 
-  const show = () => {
+  const dismiss = () => {
+    // Two requestAnimationFrames guarantee the DOM layout and paints have reached the compositor
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        root.classList.add("app-ready");
-        window.setTimeout(() => {
-          document.body.classList.add("app-ready");
-          root.style.willChange = "auto";
-        }, 240);
+        window.NativeSplash?.dismissSplash();
       });
     });
   };
 
-  const afterPaint = () => {
+  const scheduleDismiss = () => {
     const elapsed = performance.now() - startTime;
     const remaining = Math.max(0, MIN_SPLASH_MS - elapsed);
-    window.setTimeout(show, remaining);
+    window.setTimeout(dismiss, remaining);
   };
 
   let settled = false;
   const finish = () => {
     if (settled) return;
     settled = true;
-    afterPaint();
+    scheduleDismiss();
   };
 
-  if (router.state.status !== "idle") {
+  const unsubscribe = router.subscribe("onRendered", () => {
+    unsubscribe();
     finish();
-  } else {
-    const unsubscribe = router.subscribe("onRendered", () => {
-      unsubscribe();
-      finish();
-    });
-  }
+  });
 
-  // Backstop: never leave the user waiting if router fails to emit onRendered
-  window.setTimeout(finish, 3500);
+  // Backstop: ensure splash always dismisses within 3 seconds
+  window.setTimeout(finish, 3000);
 }
 
-revealApp();
+initSplashDismissal();
