@@ -50,10 +50,14 @@ import {
 import { ResultCard } from "@/components/ResultCard/ResultCard";
 import { createStudent, useResultStore } from "@/store/resultStore";
 import { calculateTotals } from "@/utils/calculations";
-import { generatePdf, sharePdf } from "@/utils/pdf";
+import { generateBulkPdfSequentially, generatePdf, sharePdf } from "@/utils/pdf";
 import { registerBackHandler } from "@/utils/backButton";
 import { printDocument } from "@/utils/print";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  BulkPdfProgressModal,
+  BulkPdfProgressState,
+} from "@/components/BulkPdfProgressModal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -99,26 +103,19 @@ function StudentsPage() {
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  const bulkPdfRef = useRef<HTMLDivElement>(null);
+  const bulkActiveCardRef = useRef<HTMLDivElement>(null);
   const singlePdfRef = useRef<HTMLDivElement>(null);
   const [singleStudentToExport, setSingleStudentToExport] = useState<(typeof students)[0] | null>(
     null,
   );
   /**
-   * Only set while a bulk PDF capture is actually running.
-   *
-   * The off-screen capture targets used to be mounted for the whole page and
-   * mapped over the live `selected` list, so every checkbox tick — and "Select
-   * All" in particular — immediately built a full 794x1123 ResultCard per
-   * student, each with its own fit observers and table DOM. On a 4 GB device
-   * that is a large, pointless allocation sitting off screen, and it is a real
-   * contributor to the renderer being OOM-killed.
-   *
-   * Holding the batch separately also freezes the target set for the duration of
-   * the capture, so a selection change mid-export cannot mutate the nodes
-   * html2canvas is walking.
+   * Only one student is mounted in the DOM at a time during bulk PDF generation.
+   * This prevents rendering 50+ ResultCard components at once, keeping DOM
+   * footprint tiny, avoiding V8 heap exhaustion, and keeping the UI thread fluid.
    */
-  const [bulkStudentsToExport, setBulkStudentsToExport] = useState<typeof students | null>(null);
+  const [bulkActiveStudent, setBulkActiveStudent] = useState<(typeof students)[0] | null>(null);
+  const [bulkProgress, setBulkProgress] = useState<BulkPdfProgressState | null>(null);
+  const bulkAbortControllerRef = useRef<AbortController | null>(null);
 
   const classes = useMemo(
     () => Array.from(new Set(students.map((s) => s.className).filter(Boolean))),
@@ -206,34 +203,102 @@ function StudentsPage() {
 
   const handleBulkPdf = async () => {
     if (selectedStudents.length === 0) return;
-    const batch = selectedStudents;
+    const batch = [...selectedStudents];
+    const total = batch.length;
+
+    const controller = new AbortController();
+    bulkAbortControllerRef.current = controller;
+
     setBusy(true);
-    setProgressText(`Preparing 0 of ${batch.length}...`);
+    setBulkProgress({
+      open: true,
+      current: 1,
+      total,
+      percent: 0,
+      studentName: batch[0]?.name || "Student 1",
+      stage: "rendering",
+    });
+
     try {
-      setBulkStudentsToExport(batch);
-      await new Promise((r) => setTimeout(r, 100));
-      const nodes = Array.from(
-        bulkPdfRef.current?.querySelectorAll<HTMLElement>("[data-result-card]") ?? [],
-      );
-      if (nodes.length === 0) throw new Error("No cards found to render");
-      const bulkName = `Result-Cards-Batch-${batch.length}-Students.pdf`;
-      const saved = await generatePdf(nodes, bulkName, (current, total) => {
-        setProgressText(`Rendering page ${current} of ${total}...`);
+      const bulkName = `Result-Cards-Batch-${total}-Students.pdf`;
+      const saved = await generateBulkPdfSequentially({
+        fileName: bulkName,
+        total,
+        studentNames: batch.map((s) => s.name || "Student"),
+        signal: controller.signal,
+        getCardElement: async (index) => {
+          const student = batch[index];
+          setBulkActiveStudent(student);
+          // Wait for React to mount the single card into DOM
+          await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 45)));
+          const node = bulkActiveCardRef.current?.querySelector<HTMLElement>("[data-result-card]");
+          return node ?? null;
+        },
+        onCardProcessed: async () => {
+          // Immediately unmount card to free React memory
+          setBulkActiveStudent(null);
+        },
+        onProgress: (info) => {
+          setBulkProgress((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  current: info.current,
+                  percent: info.percent,
+                  stage: info.stage,
+                  studentName: info.studentName || prev.studentName,
+                }
+              : null,
+          );
+        },
       });
+
+      // Show completion state in modal briefly
+      setBulkProgress((prev) =>
+        prev
+          ? {
+              ...prev,
+              current: total,
+              percent: 100,
+              stage: "done",
+            }
+          : null,
+      );
+
+      await new Promise((r) => setTimeout(r, 700));
+
       toast.success(
         saved?.inDownloads
-          ? `Saved ${batch.length} result cards to Downloads/${bulkName}`
+          ? `Saved ${total} result cards to Downloads/${bulkName}`
           : saved?.native
-            ? `Saved ${batch.length} result cards to ${saved.location}`
-            : `Generated PDF with ${batch.length} result cards`,
+            ? `Saved ${total} result cards to ${saved.location}`
+            : `Generated PDF with ${total} result cards`,
       );
-    } catch (err) {
-      console.error(err);
-      toast.error("Could not generate the bulk PDF. Please try again.");
+    } catch (err: unknown) {
+      if (
+        (err as DOMException)?.name === "AbortError" ||
+        (err as Error)?.message?.toLowerCase().includes("abort")
+      ) {
+        toast.info("Bulk PDF generation was cancelled");
+      } else {
+        console.error(err);
+        toast.error("Could not generate the bulk PDF. Please try again.");
+      }
     } finally {
+      bulkAbortControllerRef.current = null;
+      setBulkActiveStudent(null);
+      setBulkProgress(null);
       setBusy(false);
       setProgressText("");
-      setBulkStudentsToExport(null);
+    }
+  };
+
+  const handleCancelBulkPdf = () => {
+    if (bulkAbortControllerRef.current) {
+      setBulkProgress((prev) =>
+        prev ? { ...prev, stage: "cancelling" } : null,
+      );
+      bulkAbortControllerRef.current.abort();
     }
   };
 
@@ -308,6 +373,12 @@ function StudentsPage() {
   };
 
   useEffect(() => {
+    if (bulkProgress?.open) {
+      return registerBackHandler(() => {
+        handleCancelBulkPdf();
+        return true;
+      });
+    }
     if (sheetStudent !== null || pendingDelete !== null || bulkDeleteOpen) {
       return registerBackHandler(() => {
         if (sheetStudent !== null) {
@@ -325,7 +396,7 @@ function StudentsPage() {
         return false;
       });
     }
-  }, [sheetStudent, pendingDelete, bulkDeleteOpen]);
+  }, [bulkProgress, sheetStudent, pendingDelete, bulkDeleteOpen]);
 
   const stats = useMemo(() => {
     if (students.length === 0) return null;
@@ -1107,9 +1178,9 @@ function StudentsPage() {
        * Only `@media print` is affected, and the PDF export runs in screen
        * media, so capture is unaffected.
        */}
-      {bulkStudentsToExport && (
+      {bulkActiveStudent && (
         <div
-          ref={bulkPdfRef}
+          ref={bulkActiveCardRef}
           className="no-print"
           aria-hidden="true"
           style={{
@@ -1121,18 +1192,15 @@ function StudentsPage() {
             pointerEvents: "none",
           }}
         >
-          {bulkStudentsToExport.map((student) => (
-            <div
-              key={student.id}
-              style={{ width: "794px", minHeight: "1123px", background: "#fff" }}
-            >
-              <ResultCard
-                student={student}
-                settings={settings}
-                includeSummerWork={student.includeSummerWork ?? false}
-              />
-            </div>
-          ))}
+          <div
+            style={{ width: "794px", minHeight: "1123px", background: "#fff" }}
+          >
+            <ResultCard
+              student={bulkActiveStudent}
+              settings={settings}
+              includeSummerWork={bulkActiveStudent.includeSummerWork ?? false}
+            />
+          </div>
         </div>
       )}
 
@@ -1313,6 +1381,12 @@ function StudentsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bulk PDF Progress Modal */}
+      <BulkPdfProgressModal
+        progress={bulkProgress}
+        onCancel={handleCancelBulkPdf}
+      />
     </div>
   );
 }

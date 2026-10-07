@@ -11,12 +11,20 @@ interface RenderedPage {
   height: number;
 }
 
+export interface RenderElementOptions {
+  scale?: number;
+  quality?: number;
+}
+
 /**
  * Renders an A4 element into a crisp canvas image.
  * Uses an isolated, unscaled clone container to prevent CSS transform: scale()
  * from distorting text coordinates and letter kerning.
  */
-async function renderElement(element: HTMLElement): Promise<RenderedPage> {
+async function renderElement(
+  element: HTMLElement,
+  options?: RenderElementOptions,
+): Promise<RenderedPage> {
   // Create an unscaled isolated container attached directly to the body.
   // Sized in millimetres, not pixels, so the capture box is the A4 sheet exactly:
   // 794x1123px is 209.9x297.1mm, and asking for it that way is how the export
@@ -62,18 +70,19 @@ async function renderElement(element: HTMLElement): Promise<RenderedPage> {
     );
 
     // Short tick to allow DOM layout to settle
-    await new Promise((resolve) => setTimeout(resolve, 80));
+    await new Promise((resolve) => setTimeout(resolve, 60));
+
+    const scale = options?.scale ?? (isNativeApp() ? 1.6 : 1.8);
+    const quality = options?.quality ?? 0.88;
 
     /*
      * Crop to the card's own box, which is the A4 sheet. `height` is left unset
      * on purpose: if the content ever outgrows the sheet, the canvas grows with
      * it and is scaled down on the way onto the page, whereas an explicit height
-     * would hard-crop the signature block off the bottom. The card's own fit
-     * engine keeps the content inside the sheet in the first place, so this is a
-     * safety net rather than the normal path.
+     * would hard-crop the signature block off the bottom.
      */
     const canvas = await html2canvas(clone, {
-      scale: 2, // 300 DPI high-resolution output
+      scale,
       backgroundColor: "#ffffff",
       useCORS: true,
       logging: false,
@@ -92,10 +101,18 @@ async function renderElement(element: HTMLElement): Promise<RenderedPage> {
       },
     });
 
+    const dataUrl = canvas.toDataURL("image/jpeg", quality);
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // Immediately zero out canvas dimensions to release underlying GPU texture buffer
+    canvas.width = 0;
+    canvas.height = 0;
+
     return {
-      dataUrl: canvas.toDataURL("image/jpeg", 0.98),
-      width: canvas.width,
-      height: canvas.height,
+      dataUrl,
+      width,
+      height,
     };
   } finally {
     if (document.body.contains(container)) {
@@ -192,16 +209,24 @@ function isNativeApp(): boolean {
 }
 
 /**
- * Base64-encode an ArrayBuffer one slice at a time.
- *
- * `btoa` only accepts an argument list bounded by the JS engine, so a multi-
- * megabyte PDF has to be encoded in slices rather than in one shot. The slice
- * size is deliberately a multiple of 3: `btoa` pads each call independently,
- * so a slice whose length is not divisible by 3 would contribute `=` characters
- * in the *middle* of the joined string and produce malformed base64, which the
- * native filesystem plugin rejects as invalid input.
+ * Base64-encode an ArrayBuffer using native C++ FileReader when available
+ * to prevent freezing the JavaScript main thread or exhausting V8 heap memory.
  */
-function toBase64(buffer: ArrayBuffer): string {
+async function toBase64(buffer: ArrayBuffer): Promise<string> {
+  if (typeof Blob !== "undefined" && typeof FileReader !== "undefined") {
+    return new Promise((resolve, reject) => {
+      const blob = new Blob([buffer], { type: "application/pdf" });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const res = reader.result as string;
+        const comma = res.indexOf(",");
+        resolve(comma !== -1 ? res.substring(comma + 1) : res);
+      };
+      reader.onerror = () => reject(new Error("Failed to convert buffer to base64"));
+      reader.readAsDataURL(blob);
+    });
+  }
+
   const bytes = new Uint8Array(buffer);
   const CHUNK = 0x7fe0; // 32736, a multiple of 3
   let base64 = "";
@@ -262,19 +287,12 @@ async function writeToDownloads(name: string, base64: string): Promise<string | 
  *
  * `jsPDF.save()` cannot work in the WebView: it builds a `blob:` URL and clicks
  * a hidden `<a download>`, and Android's WebView discards that unless the
- * WebView has a `DownloadListener` attached. Capacitor never installs one and
- * no filesystem plugin was registered, so the download reported
- * `state: "canceled"` with 0 bytes written while `save()` itself did not throw,
- * making the failure look like a successful no-op. Writing the file natively is
+ * WebView has a `DownloadListener` attached. Writing the file natively is
  * the supported replacement.
- *
- * If the platform refuses to write to `Download/` the file is still saved into
- * the app's own folder and offered through the Android share sheet, so the
- * export always produces something the user can reach.
  */
 async function savePdfNatively(pdf: jsPDF, fileName: string): Promise<PdfSaveResult> {
   const name = safeFileName(fileName);
-  const base64 = toBase64(pdf.output("arraybuffer"));
+  const base64 = await toBase64(pdf.output("arraybuffer"));
 
   const downloadUri = await writeToDownloads(name, base64);
   if (downloadUri) {
@@ -296,8 +314,6 @@ async function savePdfNatively(pdf: jsPDF, fileName: string): Promise<PdfSaveRes
         files: [uri],
       });
     } catch (error) {
-      // The file is already safely on disk; a share-sheet failure must not be
-      // reported as a failed export.
       console.warn("PDF share sheet could not open:", error);
     }
   }
@@ -305,14 +321,124 @@ async function savePdfNatively(pdf: jsPDF, fileName: string): Promise<PdfSaveRes
   return { native: true, location: displayPath(uri), inDownloads: false };
 }
 
+export interface BulkPdfProgress {
+  current: number;
+  total: number;
+  percent: number;
+  stage: "rendering" | "building" | "saving" | "done";
+  studentName?: string;
+}
+
+export interface BulkGenerateOptions {
+  fileName: string;
+  total: number;
+  studentNames?: string[];
+  getCardElement: (index: number) => Promise<HTMLElement | null>;
+  onCardProcessed?: (index: number) => Promise<void> | void;
+  onProgress?: (progress: BulkPdfProgress) => void;
+  signal?: AbortSignal;
+}
+
+/**
+ * High-performance sequential bulk PDF generator.
+ * Mounts exactly ONE card into the DOM at a time, captures its canvas,
+ * adds it to jsPDF, immediately clears memory, and yields control back to
+ * the browser event loop. This prevents WebView freezing, ANRs, and OOM crashes
+ * when generating batches of 50+ students.
+ */
+export async function generateBulkPdfSequentially(
+  options: BulkGenerateOptions,
+): Promise<PdfSaveResult | undefined> {
+  const { fileName, total, studentNames, getCardElement, onCardProcessed, onProgress, signal } =
+    options;
+  if (total <= 0) return;
+
+  const pdf = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+    compress: true,
+  });
+
+  const renderScale = isNativeApp() ? 1.5 : 1.75;
+  const renderQuality = 0.88;
+
+  for (let i = 0; i < total; i++) {
+    if (signal?.aborted) {
+      throw new DOMException("Operation aborted by user", "AbortError");
+    }
+
+    const studentName = studentNames?.[i];
+    onProgress?.({
+      current: i + 1,
+      total,
+      percent: Math.round((i / total) * 90),
+      stage: "rendering",
+      studentName,
+    });
+
+    const el = await getCardElement(i);
+    if (!el) {
+      throw new Error(`Failed to obtain card element for student index ${i}`);
+    }
+
+    if (signal?.aborted) {
+      throw new DOMException("Operation aborted by user", "AbortError");
+    }
+
+    const page = await renderElement(el, { scale: renderScale, quality: renderQuality });
+    if (i > 0) pdf.addPage("a4", "portrait");
+    addPageImage(pdf, page);
+
+    if (onCardProcessed) {
+      await onCardProcessed(i);
+    }
+
+    // Yield control to the browser event loop so UI paints smoothly at 60 FPS
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+
+  if (signal?.aborted) {
+    throw new DOMException("Operation aborted by user", "AbortError");
+  }
+
+  onProgress?.({
+    current: total,
+    total,
+    percent: 95,
+    stage: "saving",
+  });
+
+  // Short delay so the UI reflects the saving stage
+  await new Promise((resolve) => setTimeout(resolve, 40));
+
+  let result: PdfSaveResult | undefined;
+  if (isNativeApp()) {
+    result = await savePdfNatively(pdf, fileName);
+  } else {
+    pdf.save(fileName);
+    result = { native: false };
+  }
+
+  onProgress?.({
+    current: total,
+    total,
+    percent: 100,
+    stage: "done",
+  });
+
+  return result;
+}
+
 /**
  * Render one or more A4 elements into a single multi-page PDF.
- * Supports progress tracking for multi-student bulk generation.
+ * Supports progress tracking and cancellation for multi-student bulk generation.
  */
 export async function generatePdf(
   elements: HTMLElement[],
   fileName: string,
   onProgress?: (current: number, total: number) => void,
+  options?: { signal?: AbortSignal; scale?: number; quality?: number },
 ): Promise<PdfSaveResult | undefined> {
   if (elements.length === 0) return;
 
@@ -324,21 +450,26 @@ export async function generatePdf(
   });
 
   const total = elements.length;
+  const scale = options?.scale ?? (isNativeApp() ? (total > 1 ? 1.5 : 1.8) : 1.8);
+  const quality = options?.quality ?? (total > 1 ? 0.88 : 0.92);
 
   for (let i = 0; i < total; i++) {
+    if (options?.signal?.aborted) {
+      throw new DOMException("Operation aborted by user", "AbortError");
+    }
     const el = elements[i];
     if (el) {
       if (onProgress) onProgress(i + 1, total);
-      const page = await renderElement(el);
+      const page = await renderElement(el, { scale, quality });
       if (i > 0) pdf.addPage("a4", "portrait");
-      /*
-       * Full-bleed: the captured image *is* the card, and the card is the A4
-       * sheet, so it maps onto the page at 0,0 with no margin of jsPDF's own.
-       * All the printer safety lives inside the card, in the frame inset - the
-       * PDF page itself stays exactly 210x297mm.
-       */
       addPageImage(pdf, page);
+      // Yield to event loop
+      await new Promise((resolve) => setTimeout(resolve, 20));
     }
+  }
+
+  if (options?.signal?.aborted) {
+    throw new DOMException("Operation aborted by user", "AbortError");
   }
 
   if (isNativeApp()) return await savePdfNatively(pdf, fileName);
@@ -373,19 +504,22 @@ export async function sharePdf(
   });
 
   const total = elements.length;
+  const scale = isNativeApp() ? (total > 1 ? 1.5 : 1.8) : 1.8;
+  const quality = total > 1 ? 0.88 : 0.92;
 
   for (let i = 0; i < total; i++) {
     const el = elements[i];
     if (el) {
       if (onProgress) onProgress(i + 1, total);
-      const page = await renderElement(el);
+      const page = await renderElement(el, { scale, quality });
       if (i > 0) pdf.addPage("a4", "portrait");
       addPageImage(pdf, page);
+      await new Promise((resolve) => setTimeout(resolve, 20));
     }
   }
 
   const name = safeFileName(fileName);
-  const base64 = toBase64(pdf.output("arraybuffer"));
+  const base64 = await toBase64(pdf.output("arraybuffer"));
 
   if (isNativeApp()) {
     // 1. Write PDF to Cache directory so it is directly sharable via FileProvider
