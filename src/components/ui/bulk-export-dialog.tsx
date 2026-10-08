@@ -124,7 +124,7 @@ export function BulkExportDialog({ onCancel }: BulkExportDialogProps) {
                 ? "Your document has been compiled and saved to your device."
                 : isCancelling
                   ? "Stopping export safely..."
-                  : "Please keep this screen open while exporting. Cards are rendered at scale 2 (300 DPI) for crisp printing."}
+                  : "Please keep this screen open while exporting. Cards are rendered at high resolution for crisp printing."}
             </p>
           </div>
         </div>

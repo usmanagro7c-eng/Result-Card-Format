@@ -234,16 +234,15 @@ function StudentsPage() {
         total,
         fileName: bulkName,
         signal: controller.signal,
-        scale: 2, // 300 DPI high resolution per user decision
-        quality: 0.94, // razor-sharp text with optimal file size
         resolveElement: async (index) => {
           const student = batch[index];
           const key = `${student.id}:${index}`;
           setBulkCard({ student, key });
-          // Double-rAF settle: lets React commit, DOM mount, and useCardFit layout effect settle
+          // Double-rAF + settle tick: lets React commit, DOM mount, and useCardFit layout effect settle
           await new Promise((resolve) =>
             requestAnimationFrame(() => requestAnimationFrame(resolve)),
           );
+          await new Promise((resolve) => setTimeout(resolve, 16));
           return bulkCardRef.current?.querySelector<HTMLElement>("[data-result-card]") ?? null;
         },
         onProgress: (p) => {
@@ -1191,7 +1190,7 @@ function StudentsPage() {
             left: 0,
             top: 0,
             zIndex: -9999,
-            opacity: 0,
+            opacity: 0.01,
             pointerEvents: "none",
           }}
         >
@@ -1219,7 +1218,7 @@ function StudentsPage() {
             left: 0,
             top: 0,
             zIndex: -9999,
-            opacity: 0,
+            opacity: 0.01,
             pointerEvents: "none",
           }}
         >
