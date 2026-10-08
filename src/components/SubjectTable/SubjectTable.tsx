@@ -193,6 +193,7 @@ export function SubjectTable({
                       type="number"
                       inputMode="numeric"
                       enterKeyHint="next"
+                      data-obtained-index={index}
                       min={0}
                       className={cn(
                         "h-7 min-w-0 flex-1 border-0 bg-transparent p-0 text-center text-sm font-black shadow-none focus-visible:ring-0",
@@ -201,6 +202,19 @@ export function SubjectTable({
                       value={subject.obtainedMarks === 0 ? "" : subject.obtainedMarks}
                       placeholder="0"
                       aria-label={`Obtained marks for ${subject.name || "subject"}`}
+                      onFocus={(e) => e.target.select()}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const nextInput = document.querySelector<HTMLInputElement>(
+                            `[data-obtained-index="${index + 1}"]`,
+                          );
+                          if (nextInput) {
+                            nextInput.focus();
+                            nextInput.select();
+                          }
+                        }
+                      }}
                       onChange={(e) =>
                         patch(subject.id, {
                           obtainedMarks: e.target.value === "" ? 0 : Number(e.target.value),
@@ -274,6 +288,7 @@ export function SubjectTable({
                 <Input
                   type="number"
                   inputMode="numeric"
+                  data-obtained-index={index}
                   min={0}
                   className={cn(
                     "h-9 rounded-lg border-slate-200 bg-slate-50/40 text-center font-black focus-visible:bg-white focus-visible:ring-blue-500/30",
@@ -283,6 +298,19 @@ export function SubjectTable({
                   )}
                   value={subject.obtainedMarks === 0 ? "" : subject.obtainedMarks}
                   placeholder="Obtained"
+                  onFocus={(e) => e.target.select()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const nextInput = document.querySelector<HTMLInputElement>(
+                        `[data-obtained-index="${index + 1}"]`,
+                      );
+                      if (nextInput) {
+                        nextInput.focus();
+                        nextInput.select();
+                      }
+                    }
+                  }}
                   onChange={(e) =>
                     patch(subject.id, {
                       obtainedMarks: e.target.value === "" ? 0 : Number(e.target.value),

@@ -10,13 +10,14 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { Users, Settings as SettingsIcon, Plus, BookOpen } from "lucide-react";
+import { Users, Settings as SettingsIcon, Plus, BookOpen, Sun, Moon } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { ResultStoreProvider, createStudent, useResultStore } from "../store/resultStore";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { initHardwareBackButton } from "@/utils/backButton";
+import { useTheme } from "@/utils/theme";
 import { toast } from "sonner";
 
 function AppNavbar() {
@@ -24,6 +25,7 @@ function AppNavbar() {
   const navigate = useNavigate();
   const currentPath = routerState.location.pathname;
   const { students, settings, addStudent } = useResultStore();
+  const { toggleTheme } = useTheme();
 
   const handleQuickAdd = () => {
     const student = createStudent(settings);
@@ -109,13 +111,25 @@ function AppNavbar() {
             </nav>
           </div>
 
-          {/* Right side: Active Term & Session status badge */}
-          <div className="flex items-center shrink-0">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100/90 px-2.5 py-1 text-[11px] sm:text-xs font-bold text-slate-700 border border-slate-200/80 shadow-2xs">
+          {/* Right side: Active Term & Session status badge + Dark Mode Toggle */}
+          <div className="flex items-center shrink-0 gap-1.5 sm:gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100/90 dark:bg-slate-800/90 px-2.5 py-1 text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 shadow-2xs">
               <span className="size-2 rounded-full bg-emerald-500 ring-2 ring-emerald-400/30" />
               <span className="hidden sm:inline">{settings.defaultTerm} &middot; </span>
               <span className="truncate max-w-[85px] sm:max-w-none">{settings.defaultSession}</span>
             </span>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleTheme}
+              aria-label="Toggle dark mode"
+              title="Toggle theme"
+              className="size-8 p-0 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white relative"
+            >
+              <Sun className="size-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute size-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
+            </Button>
           </div>
         </div>
       </header>

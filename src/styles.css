@@ -178,6 +178,83 @@
   }
 }
 
+/* ---- Midnight Dark Mode Visual Enhancements ---- */
+.dark body {
+  background-color: #0b0f19;
+  color: #f1f5f9;
+}
+
+.dark header {
+  background-color: rgba(15, 23, 42, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .bg-white {
+  background-color: #111827 !important;
+}
+
+.dark .bg-slate-50\/60,
+.dark .bg-slate-50\/50,
+.dark .bg-slate-50\/80,
+.dark .bg-slate-50\/90,
+.dark .bg-slate-50 {
+  background-color: #0f172a !important;
+}
+
+.dark .bg-slate-100,
+.dark .bg-slate-100\/90 {
+  background-color: #1e293b !important;
+}
+
+.dark .border-slate-200,
+.dark .border-slate-200\/90,
+.dark .border-slate-200\/80,
+.dark .border-slate-200\/70,
+.dark .border-slate-100 {
+  border-color: #1e293b !important;
+}
+
+.dark .text-slate-900,
+.dark .text-slate-800 {
+  color: #f8fafc !important;
+}
+
+.dark .text-slate-700,
+.dark .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+.dark .text-slate-500,
+.dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+.dark .shadow-sm,
+.dark .shadow-xs,
+.dark .shadow-2xs {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Exception: Never invert the printable A4 result card! It must remain pure white paper */
+.dark .a4-page,
+.dark [data-result-card] {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+.dark [data-result-card] * {
+  color: revert !important;
+  background-color: revert !important;
+  border-color: revert !important;
+}
+
 /* ---- Printable A4 document ---- */
 .a4-page {
   width: 210mm;
@@ -236,20 +313,54 @@
   }
 }
 
+@keyframes tabSlideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes tabSlideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+  }
+}
+
+.animate-tab-slide-right {
+  animation: tabSlideInRight 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-tab-slide-left {
+  animation: tabSlideInLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.glow-grade-emerald {
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
 /*
  * Shared chrome for the app's bottom bars on small screens.
  *
- * The editor's action bar (Total marks / Download PDF / Next) and the app's
- * bottom navigation are the same object conceptually, so they share one class
- * to guarantee identical height, blur and elevation.
- *
- * `position: fixed` is deliberate. It must NOT be nested inside an element that
- * carries a `transform`, because a transformed ancestor becomes the containing
- * block for fixed descendants and the bar would then pin to that ancestor
- * instead of the viewport. The route containers animate with `.animate-fade-in`,
- * whose `forwards` fill-mode leaves `transform: translateY(0)` applied
- * permanently, so the editor renders its bar as a sibling *outside* that
- * container rather than inside it.
+ * Glassmorphic styling with backdrop blur and subtle border.
  */
 .bottom-bar {
   position: fixed;
@@ -257,12 +368,18 @@
   bottom: 0;
   z-index: 30;
   min-height: var(--bottom-bar-h);
-  border-top: 1px solid oklch(0.929 0.013 255.508 / 0.8);
-  background: oklch(1 0 0 / 0.95);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 -4px 20px -4px rgb(15 23 42 / 0.12);
+  border-top: 1px solid rgba(226, 232, 240, 0.85);
+  background: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 -8px 24px -4px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+}
+
+.dark .bottom-bar {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.88);
+  box-shadow: 0 -8px 24px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 /*

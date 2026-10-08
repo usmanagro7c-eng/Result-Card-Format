@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -41,6 +42,8 @@ import { printDocument } from "@/utils/print";
 import { GradeText } from "@/utils/raisedText";
 import { DEFAULT_FIT_STATE, type CardFitState } from "@/hooks/useCardFit";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { triggerConfetti } from "@/utils/confetti";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { cn } from "@/lib/utils";
 
 type EditorTab = "info" | "marks" | "remarks" | "preview";
@@ -130,6 +133,43 @@ function ResultEditor() {
 
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<EditorTab>(tab ?? (print ? "preview" : "info"));
+  const TAB_ORDER: EditorTab[] = useMemo(() => ["info", "marks", "remarks", "preview"], []);
+  const [tabDirection, setTabDirection] = useState<"right" | "left">("right");
+
+  const handleTabChange = (newTab: EditorTab) => {
+    const currentIdx = TAB_ORDER.indexOf(activeTab);
+    const newIdx = TAB_ORDER.indexOf(newTab);
+    setTabDirection(newIdx >= currentIdx ? "right" : "left");
+    setActiveTab(newTab);
+  };
+
+  // 1-finger horizontal swipe gesture on editor to switch between students
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handleEditorTouchStart = (e: React.TouchEvent) => {
+    if (activeTab === "preview") return; // avoid interfering with preview gestures
+    const t = e.touches[0];
+    if (t) touchStartRef.current = { x: t.clientX, y: t.clientY };
+  };
+
+  const handleEditorTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current || activeTab === "preview") return;
+    const t = e.changedTouches[0];
+    if (!t) return;
+    const dx = t.clientX - touchStartRef.current.x;
+    const dy = t.clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+
+    if (Math.abs(dx) > 75 && Math.abs(dy) < 55) {
+      if (dx < 0 && nextStudentId) {
+        toast.info("Swiped to Next Student →", { duration: 900 });
+        navigate({ to: "/editor/$studentId", params: { studentId: nextStudentId } });
+      } else if (dx > 0 && prevStudentId) {
+        toast.info("← Swiped to Previous Student", { duration: 900 });
+        navigate({ to: "/editor/$studentId", params: { studentId: prevStudentId } });
+      }
+    }
+  };
 
   // If search param changes (e.g. navigation with tab: "preview")
   useEffect(() => {
@@ -151,12 +191,28 @@ function ResultEditor() {
 
   if (!ready) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 px-4 py-32 text-center">
-        <div className="relative size-12">
-          <div className="size-12 rounded-full border-4 border-slate-100" />
-          <div className="absolute inset-0 size-12 rounded-full border-4 border-transparent border-t-blue-600 animate-spin" />
+      <div className="mx-auto max-w-5xl px-3 pt-4 sm:px-6 space-y-4">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-9 w-28 rounded-xl" />
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-24 rounded-xl" />
+            <Skeleton className="h-9 w-28 rounded-xl" />
+          </div>
         </div>
-        <p className="text-sm font-medium text-slate-500">Loading result card...</p>
+        <div className="grid grid-cols-4 gap-1.5 p-1 rounded-2xl border border-slate-200/90 bg-slate-100/90">
+          <Skeleton className="h-10 rounded-xl" />
+          <Skeleton className="h-10 rounded-xl" />
+          <Skeleton className="h-10 rounded-xl" />
+          <Skeleton className="h-10 rounded-xl" />
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+          <Skeleton className="h-5 w-40 rounded-md" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Skeleton className="h-11 w-full rounded-xl" />
+            <Skeleton className="h-11 w-full rounded-xl" />
+          </div>
+          <Skeleton className="h-24 w-full rounded-xl" />
+        </div>
       </div>
     );
   }
@@ -179,6 +235,16 @@ function ResultEditor() {
   const hasErrors = Object.keys(errors).length > 0;
   const includeSummerWork = student.includeSummerWork ?? false;
   const totals = calculateTotals(student.subjects, settings.grades, includeSummerWork);
+
+  // Celebration Confetti when A+ grade student preview is viewed
+  useEffect(() => {
+    if (activeTab === "preview" && (totals.grade === "A+" || totals.percentage >= 90)) {
+      const timer = setTimeout(() => {
+        triggerConfetti();
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, totals.grade, totals.percentage]);
 
   const handlePdf = async () => {
     setBusy(true);
@@ -258,7 +324,11 @@ function ResultEditor() {
 
   return (
     <>
-      <div className="print-shell mx-auto w-full max-w-5xl px-3 pt-3 bottom-bar-clearance sm:px-6 sm:pt-4 animate-fade-in">
+      <div
+        className="print-shell mx-auto w-full max-w-5xl px-3 pt-3 bottom-bar-clearance sm:px-6 sm:pt-4 touch-pan-y"
+        onTouchStart={handleEditorTouchStart}
+        onTouchEnd={handleEditorTouchEnd}
+      >
         {/* Top Action Bar */}
         <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-2.5 sm:mb-5 sm:gap-3">
           <div className="flex items-center gap-1">
@@ -402,18 +472,18 @@ function ResultEditor() {
           <div className="flex items-center gap-2 shrink-0">
             <div className="text-right">
               <div className="text-xs font-black text-slate-900 tabular-nums">
-                {totals.obtainedTotal}{" "}
+                <AnimatedCounter value={totals.obtainedTotal} />{" "}
                 <span className="text-[10px] font-normal text-slate-400">/ {totals.grandTotal}</span>
               </div>
               <div className="text-[11px] font-bold text-blue-900 tabular-nums">
-                {totals.percentage}%
+                <AnimatedCounter value={totals.percentage} decimals={1} />%
               </div>
             </div>
             <span
               className={cn(
                 "inline-flex items-center justify-center rounded-xl border px-2.5 py-1 text-xs font-black shadow-2xs tabular-nums",
                 totals.grade === "A+" || totals.grade === "A"
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 glow-grade-emerald"
                   : totals.grade === "B" || totals.grade === "C"
                     ? "bg-blue-50 text-blue-700 border-blue-200"
                     : totals.grade === "D"
@@ -442,7 +512,7 @@ function ResultEditor() {
                   type="button"
                   role="tab"
                   aria-selected={isActive}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                   className={cn(
                     "press-card flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-extrabold transition-all",
                     isActive
@@ -479,7 +549,7 @@ function ResultEditor() {
                   type="button"
                   role="tab"
                   aria-selected={isActive}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                   className={cn(
                     "flex min-h-11 items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all sm:text-sm active:scale-95",
                     isActive
@@ -504,7 +574,12 @@ function ResultEditor() {
         <div className="space-y-4">
           {/* ── Student Info Card ── */}
           {activeTab === "info" && (
-            <div className="animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div
+              className={cn(
+                "overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm",
+                tabDirection === "right" ? "animate-tab-slide-right" : "animate-tab-slide-left",
+              )}
+            >
               {/* Card header */}
               <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5 sm:py-3.5">
                 <div className="flex size-7 items-center justify-center rounded-lg bg-blue-900 text-white">
@@ -614,7 +689,12 @@ function ResultEditor() {
 
           {/* ── Subject Marks Card ── */}
           {activeTab === "marks" && (
-            <div className="animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div
+              className={cn(
+                "overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm",
+                tabDirection === "right" ? "animate-tab-slide-right" : "animate-tab-slide-left",
+              )}
+            >
               {/* Card header */}
               <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5 sm:py-3.5">
                 <div className="flex items-center gap-2.5">
@@ -660,7 +740,17 @@ function ResultEditor() {
                       {item.label}
                     </span>
                     <span className={`text-lg sm:text-xl font-black tabular-nums ${item.color}`}>
-                      {item.raiseSign ? <GradeText text={String(item.value)} /> : item.value}
+                      {item.label === "Obtained" ? (
+                        <AnimatedCounter value={totals.obtainedTotal} />
+                      ) : item.label === "Percentage" ? (
+                        <>
+                          <AnimatedCounter value={totals.percentage} decimals={1} />%
+                        </>
+                      ) : item.raiseSign ? (
+                        <GradeText text={String(item.value)} />
+                      ) : (
+                        item.value
+                      )}
                     </span>
                   </div>
                 ))}
@@ -678,7 +768,12 @@ function ResultEditor() {
 
           {/* ── Remarks Card ── */}
           {activeTab === "remarks" && (
-            <div className="animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div
+              className={cn(
+                "overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm",
+                tabDirection === "right" ? "animate-tab-slide-right" : "animate-tab-slide-left",
+              )}
+            >
               <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5 sm:py-3.5">
                 <div className="flex size-7 items-center justify-center rounded-lg bg-amber-500 text-white">
                   <Sparkles className="size-3.5" />
@@ -741,7 +836,9 @@ function ResultEditor() {
           <div
             className={cn(
               "print-root",
-              activeTab === "preview" ? "block animate-fade-in" : "hidden print:block",
+              activeTab === "preview"
+                ? cn("block", tabDirection === "right" ? "animate-tab-slide-right" : "animate-tab-slide-left")
+                : "hidden print:block",
             )}
           >
             <div className="a4-panel overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -756,15 +853,16 @@ function ResultEditor() {
                 <div className="flex items-center gap-2">
                   {/* Realtime percentage mini-badge */}
                   <span
-                    className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums",
                       totals.grade === "A+" || totals.grade === "A"
-                        ? "bg-emerald-100 text-emerald-700"
+                        ? "bg-emerald-100 text-emerald-700 glow-grade-emerald"
                         : totals.grade === "F" || totals.grade === "E"
                           ? "bg-rose-100 text-rose-700"
-                          : "bg-amber-100 text-amber-700"
-                    }`}
+                          : "bg-amber-100 text-amber-700",
+                    )}
                   >
-                    {totals.percentage}% · {totals.grade}
+                    <AnimatedCounter value={totals.percentage} decimals={1} />% &middot; {totals.grade}
                   </span>
                 </div>
               </div>
@@ -804,7 +902,7 @@ function ResultEditor() {
               className={cn(
                 "inline-flex size-6 items-center justify-center rounded-lg text-[11px] font-black",
                 totals.grade === "A+" || totals.grade === "A"
-                  ? "bg-emerald-100 text-emerald-800"
+                  ? "bg-emerald-100 text-emerald-800 glow-grade-emerald"
                   : totals.grade === "B" || totals.grade === "C"
                     ? "bg-blue-100 text-blue-800"
                     : totals.grade === "D"
@@ -816,10 +914,10 @@ function ResultEditor() {
             </span>
             <div className="min-w-0">
               <span className="block text-[11px] font-black tabular-nums text-slate-900 leading-tight">
-                {totals.obtainedTotal}/{totals.grandTotal}
+                <AnimatedCounter value={totals.obtainedTotal} />/{totals.grandTotal}
               </span>
               <span className="block text-[10px] font-bold text-blue-900 tabular-nums leading-tight">
-                {totals.percentage}%
+                <AnimatedCounter value={totals.percentage} decimals={1} />%
               </span>
             </div>
           </div>

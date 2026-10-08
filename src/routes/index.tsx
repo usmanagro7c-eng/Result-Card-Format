@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -49,6 +50,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ResultCard } from "@/components/ResultCard/ResultCard";
 import { createStudent, useResultStore } from "@/store/resultStore";
+import type { Student } from "@/types/result";
 import { calculateTotals } from "@/utils/calculations";
 import {
   generatePdf,
@@ -78,7 +80,7 @@ export const Route = createFileRoute("/")({
 
 function getGradeStyle(grade: string) {
   if (grade === "A+" || grade === "A") {
-    return "bg-emerald-50 text-emerald-700 border-emerald-200/90";
+    return "bg-emerald-50 text-emerald-700 border-emerald-200/90 glow-grade-emerald";
   }
   if (grade === "B" || grade === "C") {
     return "bg-blue-50 text-blue-700 border-blue-200/90";
@@ -236,6 +238,7 @@ function StudentsPage() {
         signal: controller.signal,
         resolveElement: async (index) => {
           const student = batch[index];
+          if (!student) return null;
           const key = `${student.id}:${index}`;
           setBulkCard({ student, key });
           // Double-rAF + settle tick: lets React commit, DOM mount, and useCardFit layout effect settle
@@ -253,7 +256,9 @@ function StudentsPage() {
             total: p.total,
             percent: p.percent,
             label: p.label,
-            studentName: currentStudent?.name,
+            ...(currentStudent?.name !== undefined && {
+              studentName: currentStudent.name,
+            }),
           });
         },
       });
@@ -398,6 +403,7 @@ function StudentsPage() {
         return false;
       });
     }
+    return undefined;
   }, [isBulkExporting, sheetStudent, pendingDelete, bulkDeleteOpen]);
 
   const stats = useMemo(() => {
@@ -728,12 +734,31 @@ function StudentsPage() {
       {/* Student Table */}
       <div className="no-print overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {!ready ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-4 text-slate-400">
-            <div className="relative size-12">
-              <div className="size-12 rounded-full border-4 border-slate-100" />
-              <div className="absolute inset-0 size-12 rounded-full border-4 border-transparent border-t-blue-600 animate-spin" />
-            </div>
-            <p className="text-sm font-medium">Loading students...</p>
+          <div className="p-3.5 space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs space-y-3 animate-pulse"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                    <Skeleton className="size-10 rounded-xl shrink-0" />
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <Skeleton className="h-4 w-32 rounded-md" />
+                      <Skeleton className="h-3 w-20 rounded-md" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-6 w-12 rounded-xl shrink-0" />
+                </div>
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-3 w-28 rounded-md" />
+                    <Skeleton className="h-3 w-10 rounded-md" />
+                  </div>
+                  <Skeleton className="h-2 w-full rounded-full" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-5 px-6 text-center">
@@ -794,139 +819,33 @@ function StudentsPage() {
                   student.includeSummerWork ?? false,
                 );
                 const isSelected = selected.includes(student.id);
-                const avatarColors = [
-                  "from-blue-700 to-indigo-900",
-                  "from-indigo-700 to-purple-900",
-                  "from-emerald-700 to-teal-900",
-                  "from-amber-600 to-orange-800",
-                  "from-rose-700 to-red-900",
-                  "from-cyan-700 to-blue-900",
-                ];
-                const avatarColor = avatarColors[rowIndex % avatarColors.length];
-                const pct = Math.max(0, Math.min(100, Math.round(totals.percentage)));
 
                 return (
-                  <div
+                  <SwipeableStudentCard
                     key={student.id}
-                    onClick={() =>
+                    student={student}
+                    rowIndex={rowIndex}
+                    isSelected={isSelected}
+                    totals={totals}
+                    onToggleSelect={() => {
+                      setSelected((prev) =>
+                        isSelected
+                          ? prev.filter((id) => id !== student.id)
+                          : [...prev, student.id],
+                      );
+                    }}
+                    onNavigate={() =>
                       navigate({
                         to: "/editor/$studentId",
                         params: { studentId: student.id },
                       })
                     }
-                    className={cn(
-                      "press-card relative overflow-hidden rounded-2xl border bg-white p-3.5 shadow-2xs transition-all",
-                      isSelected
-                        ? "border-blue-500/80 bg-blue-50/30 ring-2 ring-blue-500/20"
-                        : "border-slate-200/90 hover:border-slate-300",
-                    )}
-                  >
-                    {/* Top Row: Checkbox, Avatar, Name & Class, Grade Badge */}
-                    <div className="flex items-start justify-between gap-2.5">
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <div
-                          className="p-1 -m-1 cursor-pointer shrink-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelected((prev) =>
-                              isSelected
-                                ? prev.filter((id) => id !== student.id)
-                                : [...prev, student.id],
-                            );
-                          }}
-                        >
-                          <Checkbox
-                            checked={isSelected}
-                            aria-label={`Select ${student.name || "student"}`}
-                            className="size-5 pointer-events-none rounded-md"
-                          />
-                        </div>
-
-                        {/* Avatar / Photo */}
-                        <div
-                          className={cn(
-                            "flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br font-black text-white text-sm shadow-xs",
-                            avatarColor,
-                          )}
-                        >
-                          {student.photoDataUrl ? (
-                            <img
-                              src={student.photoDataUrl}
-                              alt={student.name || "Student"}
-                              className="size-full object-cover"
-                            />
-                          ) : (
-                            (student.name || "?")[0]?.toUpperCase()
-                          )}
-                        </div>
-
-                        {/* Name + Subtitle */}
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-extrabold text-slate-900 text-[14px] leading-snug truncate">
-                            {student.name || "Untitled Student"}
-                          </h3>
-                          <div className="flex items-center gap-1.5 mt-0.5 text-xs text-slate-500 font-semibold">
-                            <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">
-                              {student.className ? `Class ${student.className}` : "No class"}
-                            </span>
-                            {student.rollNumber && (
-                              <span className="text-[11px] text-slate-400 font-medium">
-                                Roll #{student.rollNumber}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Grade Badge */}
-                      <span
-                        className={cn(
-                          "inline-flex items-center justify-center rounded-xl border px-2.5 py-1 text-xs font-black shadow-2xs shrink-0 tabular-nums",
-                          getGradeStyle(totals.grade),
-                        )}
-                      >
-                        {totals.grade}
-                      </span>
-                    </div>
-
-                    {/* Progress Bar & Marks Summary */}
-                    <div className="mt-3">
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="font-semibold text-slate-600">
-                          <span className="font-extrabold text-slate-900">{totals.obtainedTotal}</span>
-                          <span className="text-slate-400"> / {totals.grandTotal} marks</span>
-                        </span>
-                        <span className="font-black text-blue-950 tabular-nums">
-                          {totals.percentage}%
-                        </span>
-                      </div>
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-blue-700 to-indigo-900 transition-all duration-300"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Card Footer Actions */}
-                    <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between">
-                      <span className="text-[11px] text-slate-400 font-medium">
-                        Tap card to edit marks
-                      </span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSheetStudent(student);
-                        }}
-                        aria-label={`Actions for ${student.name || "student"}`}
-                        className="flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-600 hover:bg-slate-100 active:bg-slate-200 transition-colors"
-                      >
-                        <span>Actions</span>
-                        <MoreHorizontal className="size-3.5" />
-                      </button>
-                    </div>
-                  </div>
+                    onShare={() => handleDirectShare(student)}
+                    onPdf={() => handleDirectPdf(student)}
+                    onDuplicate={() => handleDuplicate(student.id)}
+                    onDelete={() => requestDelete(student)}
+                    onOpenActions={() => setSheetStudent(student)}
+                  />
                 );
               })}
             </div>
@@ -1057,7 +976,7 @@ function StudentsPage() {
                           <span
                             className={`inline-flex items-center justify-center rounded-lg px-2.5 py-0.5 text-xs font-black ${
                               isTopGrade
-                                ? "bg-emerald-100 text-emerald-700"
+                                ? "bg-emerald-100 text-emerald-700 glow-grade-emerald"
                                 : isLowGrade
                                   ? "bg-rose-100 text-rose-700"
                                   : "bg-amber-100 text-amber-700"
@@ -1387,6 +1306,290 @@ function StudentsPage() {
 
       {/* Bulk PDF Progress Dialog */}
       <BulkExportDialog onCancel={handleCancelBulkPdf} />
+    </div>
+  );
+}
+
+function SwipeableStudentCard({
+  student,
+  rowIndex,
+  isSelected,
+  totals,
+  onToggleSelect,
+  onNavigate,
+  onShare,
+  onPdf,
+  onDuplicate,
+  onDelete,
+  onOpenActions,
+}: {
+  student: Student;
+  rowIndex: number;
+  isSelected: boolean;
+  totals: ReturnType<typeof calculateTotals>;
+  onToggleSelect: () => void;
+  onNavigate: () => void;
+  onShare: () => void;
+  onPdf: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+  onOpenActions: () => void;
+}) {
+  const [offsetX, setOffsetX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const swipeDirectionRef = useRef<"horizontal" | "vertical" | null>(null);
+  const startOffsetRef = useRef(0);
+
+  const avatarColors = [
+    "from-blue-700 to-indigo-900",
+    "from-indigo-700 to-purple-900",
+    "from-emerald-700 to-teal-900",
+    "from-amber-600 to-orange-800",
+    "from-rose-700 to-red-900",
+    "from-cyan-700 to-blue-900",
+  ];
+  const avatarColor = avatarColors[rowIndex % avatarColors.length];
+  const pct = Math.max(0, Math.min(100, Math.round(totals.percentage)));
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    if (!t) return;
+    touchStartRef.current = { x: t.clientX, y: t.clientY, time: Date.now() };
+    startOffsetRef.current = offsetX;
+    swipeDirectionRef.current = null;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const t = e.touches[0];
+    if (!t) return;
+    const dx = t.clientX - touchStartRef.current.x;
+    const dy = t.clientY - touchStartRef.current.y;
+
+    if (swipeDirectionRef.current === null) {
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        swipeDirectionRef.current = Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
+      }
+    }
+
+    if (swipeDirectionRef.current === "horizontal") {
+      setIsDragging(true);
+      const targetOffset = startOffsetRef.current + dx;
+      const clamped = Math.max(-140, Math.min(140, targetOffset));
+      setOffsetX(clamped);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const t = e.changedTouches[0];
+    const dx = t ? t.clientX - touchStartRef.current.x : 0;
+    const dt = Date.now() - touchStartRef.current.time;
+    const wasHorizontal = swipeDirectionRef.current === "horizontal";
+
+    touchStartRef.current = null;
+    swipeDirectionRef.current = null;
+    setIsDragging(false);
+
+    if (wasHorizontal) {
+      const finalOffset = startOffsetRef.current + dx;
+      if (finalOffset > 40) {
+        setOffsetX(130); // Reveal WhatsApp / PDF
+      } else if (finalOffset < -40) {
+        setOffsetX(-130); // Reveal Duplicate / Delete
+      } else {
+        setOffsetX(0);
+      }
+    }
+  };
+
+  const handleTouchCancel = () => {
+    touchStartRef.current = null;
+    swipeDirectionRef.current = null;
+    setIsDragging(false);
+  };
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-slate-100 shadow-2xs">
+      {/* Left Action Tray (Revealed on Right Swipe: WhatsApp & PDF) */}
+      <div className="absolute inset-y-0 left-0 flex w-[130px] items-stretch z-0">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOffsetX(0);
+            onShare();
+          }}
+          className="flex flex-1 flex-col items-center justify-center gap-1 bg-emerald-600 active:bg-emerald-700 text-white font-bold text-[11px] transition-colors"
+        >
+          <Share2 className="size-4.5" />
+          <span>Share</span>
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOffsetX(0);
+            onPdf();
+          }}
+          className="flex flex-1 flex-col items-center justify-center gap-1 bg-blue-700 active:bg-blue-800 text-white font-bold text-[11px] transition-colors"
+        >
+          <FileDown className="size-4.5" />
+          <span>PDF</span>
+        </button>
+      </div>
+
+      {/* Right Action Tray (Revealed on Left Swipe: Duplicate & Delete) */}
+      <div className="absolute inset-y-0 right-0 flex w-[130px] items-stretch justify-end z-0">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOffsetX(0);
+            onDuplicate();
+          }}
+          className="flex flex-1 flex-col items-center justify-center gap-1 bg-indigo-600 active:bg-indigo-700 text-white font-bold text-[11px] transition-colors"
+        >
+          <Copy className="size-4.5" />
+          <span>Copy</span>
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOffsetX(0);
+            onDelete();
+          }}
+          className="flex flex-1 flex-col items-center justify-center gap-1 bg-rose-600 active:bg-rose-700 text-white font-bold text-[11px] transition-colors"
+        >
+          <Trash2 className="size-4.5" />
+          <span>Delete</span>
+        </button>
+      </div>
+
+      {/* Foreground Card */}
+      <div
+        onClick={() => {
+          if (offsetX !== 0) {
+            setOffsetX(0);
+          } else {
+            onNavigate();
+          }
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
+        style={{ transform: `translateX(${offsetX}px)` }}
+        className={cn(
+          "relative z-10 bg-white p-3.5 select-none touch-pan-y cursor-pointer transition-transform",
+          isDragging ? "duration-0" : "duration-200 ease-out",
+          isSelected && "bg-blue-50/40 ring-1 ring-blue-500/20",
+        )}
+      >
+        {/* Top Row: Checkbox, Avatar, Name & Class, Grade Badge */}
+        <div className="flex items-start justify-between gap-2.5">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div
+              className="p-1 -m-1 cursor-pointer shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleSelect();
+              }}
+            >
+              <Checkbox
+                checked={isSelected}
+                aria-label={`Select ${student.name || "student"}`}
+                className="size-5 pointer-events-none rounded-md"
+              />
+            </div>
+
+            {/* Avatar / Photo */}
+            <div
+              className={cn(
+                "flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br font-black text-white text-sm shadow-xs",
+                avatarColor,
+              )}
+            >
+              {student.photoDataUrl ? (
+                <img
+                  src={student.photoDataUrl}
+                  alt={student.name || "Student"}
+                  className="size-full object-cover"
+                />
+              ) : (
+                (student.name || "?")[0]?.toUpperCase()
+              )}
+            </div>
+
+            {/* Name + Subtitle */}
+            <div className="min-w-0 flex-1">
+              <h3 className="font-extrabold text-slate-900 text-[14px] leading-snug truncate">
+                {student.name || "Untitled Student"}
+              </h3>
+              <div className="flex items-center gap-1.5 mt-0.5 text-xs text-slate-500 font-semibold">
+                <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">
+                  {student.className ? `Class ${student.className}` : "No class"}
+                </span>
+                {student.rollNumber && (
+                  <span className="text-[11px] text-slate-400 font-medium">
+                    Roll #{student.rollNumber}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Grade Badge */}
+          <span
+            className={cn(
+              "inline-flex items-center justify-center rounded-xl border px-2.5 py-1 text-xs font-black shadow-2xs shrink-0 tabular-nums",
+              getGradeStyle(totals.grade),
+            )}
+          >
+            {totals.grade}
+          </span>
+        </div>
+
+        {/* Progress Bar & Marks Summary */}
+        <div className="mt-3">
+          <div className="flex items-center justify-between text-xs mb-1">
+            <span className="font-semibold text-slate-600">
+              <span className="font-extrabold text-slate-900">{totals.obtainedTotal}</span>
+              <span className="text-slate-400"> / {totals.grandTotal} marks</span>
+            </span>
+            <span className="font-black text-blue-950 tabular-nums">
+              {totals.percentage}%
+            </span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-blue-700 to-indigo-900 transition-all duration-300"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Card Footer Actions */}
+        <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between">
+          <span className="text-[11px] text-slate-400 font-medium">
+            Swipe card or tap to edit
+          </span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenActions();
+            }}
+            aria-label={`Actions for ${student.name || "student"}`}
+            className="flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-600 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+          >
+            <span>Actions</span>
+            <MoreHorizontal className="size-3.5" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
